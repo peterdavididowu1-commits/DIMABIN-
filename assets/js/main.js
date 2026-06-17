@@ -122,7 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
           parentPhone,
           parentEmail,
           homeAddress,
-          medicalNote
+          medicalNote,
+          status: 'Pending'
         };
 
         const result = await saveAdmission(record);

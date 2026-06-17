@@ -415,6 +415,9 @@
         <li class="db-menu-item" data-target="messages">
           <a href="#"><i class="fa-solid fa-envelope-open-text"></i> Contact Inquiries</a>
         </li>
+        <li class="db-menu-item" data-target="logs">
+          <a href="#"><i class="fa-solid fa-clock-rotate-left"></i> System Audit Logs</a>
+        </li>
         <li class="db-menu-item" data-target="settings">
           <a href="#"><i class="fa-solid fa-sliders"></i> Security Setup</a>
         </li>
@@ -565,11 +568,12 @@
                 <th>Grade Target</th>
                 <th>Guardian Identity</th>
                 <th>Guardian Line</th>
+                <th style="text-align: center;">Status</th>
                 <th style="text-align: center;">Actions</th>
               </tr>
             </thead>
             <tbody id="admissionsMainTableBody">
-              <tr><td colspan="7" class="text-center" style="padding: 3rem; color: var(--text-muted);"><i class="fa-solid fa-hourglass fa-spin" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block;"></i> Loading admissions records...</td></tr>
+              <tr><td colspan="8" class="text-center" style="padding: 3rem; color: var(--text-muted);"><i class="fa-solid fa-hourglass fa-spin" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block;"></i> Loading admissions records...</td></tr>
             </tbody>
           </table>
         </div>
@@ -660,6 +664,37 @@
             </thead>
             <tbody id="studentsTableBody">
               <tr><td colspan="8" class="text-center" style="padding: 3rem; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block;"></i> Retrieving active registers from database...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           SECTION 6: SYSTEM ACTIVITY LOGS PANEL
+           ========================================== -->
+      <section id="sect-logs" class="db-section">
+        <div class="db-header">
+          <div>
+            <h2>Admission Audit & Activity Registry</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Trace all applicant approval statuses, credential submissions, letters sent, and system actions.</p>
+          </div>
+          <div class="floating-header-actions" style="display: flex; gap: 0.75rem;">
+            <button class="btn btn-outline" id="refreshLogsBtn"><i class="fa-solid fa-redo"></i> Refresh Logs</button>
+          </div>
+        </div>
+
+        <div class="card-table-wrap">
+          <table class="db-table">
+            <thead>
+              <tr>
+                <th style="width: 20%;">Date & Time</th>
+                <th style="width: 25%;">Activity Action</th>
+                <th>Detailed Operational Report</th>
+                <th style="width: 15%;">Operator</th>
+              </tr>
+            </thead>
+            <tbody id="logsTableBody">
+              <tr><td colspan="4" class="text-center" style="padding: 3rem; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block;"></i> Reading activity registers...</td></tr>
             </tbody>
           </table>
         </div>
@@ -940,6 +975,49 @@
     </div>
   </div>
 
+  <!-- ==========================================
+       OVERLAY CREDENTIALS DISPATCH MODAL
+       ========================================== -->
+  <div class="db-modal" id="credentialsModal">
+    <div class="db-modal-content" style="max-width: 550px;">
+      <div class="db-modal-header" style="background-color: var(--secondary); color: white;">
+        <h3 id="credsTitle"><i class="fa-solid fa-paper-plane"></i> Automated dispatch notifications deployed</h3>
+        <button class="db-modal-close-btn" id="credsModalCloseBtn" style="color: white; border: none; background: transparent; font-size: 1.5rem; cursor: pointer;">&times;</button>
+      </div>
+      <div class="db-modal-body" style="padding: 1.5rem;">
+        <div style="background-color: #dcfce7; padding: 1rem; border-radius: 8px; border: 1px solid #bbf7d0; margin-bottom: 1.5rem; display: flex; gap: 0.75rem; align-items: flex-start;">
+          <i class="fa-solid fa-circle-check" style="color: #16a34a; font-size: 1.5rem; margin-top: 0.15rem;"></i>
+          <div>
+            <h4 style="color: #14532d; margin-bottom: 0.25rem;">Onboarding dispatch complete</h4>
+            <p style="color: #166534; font-size: 0.85rem; line-height: 1.4;">The student ledger account card has been provisioned on Firebase registers. Notification alerts containing entry instructions have been securely generated and dispatched.</p>
+          </div>
+        </div>
+
+        <h4 style="margin-bottom: 0.5rem; color: var(--text-dark); border-bottom: 1px solid #e2e8f0; padding-bottom: 0.25rem;">Biometrics & Credentials</h4>
+        <div style="background-color: #f8fafc; padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem; font-family: monospace; font-size: 0.9rem;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;"><strong>Student Identity:</strong> <span id="dispStudentName" style="font-weight: bold; color: var(--text-dark);">---</span></div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;"><strong>Admission Number:</strong> <span id="dispAdmissionNumber" style="color: var(--primary); font-weight: bold;">---</span></div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;"><strong>Portal Username:</strong> <span id="dispUsername">---</span></div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem;"><strong>Temp Entry Password:</strong> <span id="dispPassword" style="color: var(--accent); font-weight: bold;">---</span></div>
+          <div style="display: flex; justify-content: space-between;"><strong>Portal Live URL:</strong> <a id="dispPortalUrl" href="#" target="_blank" style="color: var(--primary); text-decoration: underline;">---</a></div>
+        </div>
+
+        <h4 style="margin-bottom: 0.5rem; color: var(--text-dark); border-bottom: 1px solid #e2e8f0; padding-bottom: 0.25rem;"><i class="fa-solid fa-envelope"></i> Dispatched Email Payload</h4>
+        <div style="background-color: #fafafa; border: 1px solid #eee; padding: 0.8rem; border-radius: 4px; font-size: 0.8rem; margin-bottom: 1.5rem; white-space: pre-line; line-height: 1.4; max-height: 120px; overflow-y: auto;" id="dispEmailPayload">
+          ---
+        </div>
+
+        <h4 style="margin-bottom: 0.5rem; color: var(--text-dark); border-bottom: 1px solid #e2e8f0; padding-bottom: 0.25rem;"><i class="fa-solid fa-sms"></i> Dispatched SMS Payload</h4>
+        <div style="background-color: #fafafa; border: 1px solid #eee; padding: 0.8rem; border-radius: 4px; font-size: 0.8rem; white-space: pre-line; line-height: 1.4; max-height: 80px; overflow-y: auto;" id="dispSmsPayload">
+          ---
+        </div>
+      </div>
+      <div class="db-modal-footer" style="padding: 1rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end;">
+        <button class="btn btn-secondary" id="credsModalDoneBtn">Acknowledge Dispatch</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Database & Core Module Connection -->
   <script type="module">
     import { 
@@ -956,7 +1034,12 @@
       saveStudent,
       getStudents,
       updateStudent,
-      deleteStudent
+      deleteStudent,
+      approveAdmission,
+      rejectAdmission,
+      resendStudentCredentials,
+      getActivityLogs,
+      logActivity
     } from './assets/js/firebase-core.js';
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -1017,6 +1100,7 @@
           if (target === 'admissions') renderAdmissionsList();
           if (target === 'students') renderStudentsList();
           if (target === 'messages') renderInboundMessages();
+          if (target === 'logs') renderActivityLogsList();
 
           // Close mobile drawer on toggle
           document.getElementById('dbSidebar').classList.remove('mobile-open');
@@ -1104,13 +1188,13 @@
       // ==========================================
       const renderAdmissionsList = async () => {
         const tbody = document.getElementById('admissionsMainTableBody');
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center" style="padding: 3rem; color: var(--text-muted);"><i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block;"></i> Filtering indices...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center" style="padding: 3rem; color: var(--text-muted);"><i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block;"></i> Sifting active registers...</td></tr>`;
 
         try {
           globalAdmissionsList = await getAdmissions();
           filterAndRenderAdmissions();
         } catch (e) {
-          tbody.innerHTML = `<tr><td colspan="7" class="text-center" style="color:red; padding:2rem;">Failed loading admissions. Error: ${e.message}</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="8" class="text-center" style="color:red; padding:2rem;">Failed loading admissions. Error: ${e.message}</td></tr>`;
         }
       };
 
@@ -1136,33 +1220,75 @@
         });
 
         if (filtered.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="7" class="text-center" style="padding:3rem; color:var(--text-muted);">No records associated with these search coordinates.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="8" class="text-center" style="padding:3rem; color:var(--text-muted);">No records associated with these search coordinates.</td></tr>`;
           return;
         }
 
-        tbody.innerHTML = filtered.map((item, idx) => `
-          <tr>
-            <td>${new Date(item.createdAt).toLocaleDateString()} @ ${new Date(item.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
-            <td style="font-family:monospace; font-weight:700; color:var(--primary); font-size:0.85rem;">HGS/${new Date(item.createdAt).getFullYear()}/${100 + idx}</td>
-            <td style="font-weight:800; color:var(--text-dark);">${escapeHTML(item.studentName)}</td>
-            <td><span class="badge">${escapeHTML(item.gradeApplying)}</span></td>
-            <td>${escapeHTML(item.parentName)}</td>
-            <td style="font-weight:600;"><a href="tel:${item.parentPhone}" style="color:var(--primary);"><i class="fa-solid fa-phone"></i> ${escapeHTML(item.parentPhone)}</a></td>
-            <td style="text-align:center;">
-              <div style="display:flex; gap:0.4rem; justify-content:center; flex-wrap:wrap;">
-                <button class="action-badge convert-cta-btn" data-id="${item.id}" style="background-color:#0284c7; color:#ffffff; font-weight:700;"><i class="fa-solid fa-user-check"></i> Activate Student</button>
-                <button class="action-badge badge-edit edit-cta-btn" data-id="${item.id}"><i class="fa-solid fa-pen-to-square"></i> Details/Edit</button>
-                <button class="action-badge badge-delete delete-cta-btn" data-id="${item.id}"><i class="fa-solid fa-trash-can"></i> Del</button>
-              </div>
-            </td>
-          </tr>
-        `).join('');
+        tbody.innerHTML = filtered.map((item, idx) => {
+          const status = item.status || "Pending";
+          let statusBadge = "";
+          let statusActions = "";
+
+          if (status === "Pending") {
+            statusBadge = `<span class="badge" style="background-color:#fef3c7; color:#d97706; font-weight:700;"><i class="fa-solid fa-hourglass-half"></i> Pending</span>`;
+            statusActions = `
+              <button class="action-badge approve-cta-btn" data-id="${item.id}" style="background-color:#16a34a; color:#ffffff; font-weight:700;"><i class="fa-solid fa-check"></i> Approve</button>
+              <button class="action-badge reject-cta-btn" data-id="${item.id}" style="background-color:#dc2626; color:#ffffff; font-weight:700;"><i class="fa-solid fa-ban"></i> Reject</button>
+            `;
+          } else if (status === "Approved") {
+            statusBadge = `<span class="badge" style="background-color:#dcfce7; color:#14532d; font-weight:700;"><i class="fa-solid fa-circle-check"></i> Approved</span>`;
+            statusActions = `
+              <button class="action-badge resend-cta-btn" data-id="${item.id}" style="background-color:#4f46e5; color:#ffffff; font-weight:700;"><i class="fa-solid fa-share-from-square"></i> Resend Creds</button>
+            `;
+          } else if (status === "Rejected") {
+            statusBadge = `<span class="badge" style="background-color:#fee2e2; color:#b91c1c; font-weight:700;" title="${escapeHTML(item.rejectionReason || 'No reason specified')}"><i class="fa-solid fa-circle-xmark"></i> Rejected</span>`;
+            statusActions = `
+              <span style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">Reason: ${escapeHTML(item.rejectionReason || 'unspecified')}</span>
+            `;
+          }
+
+          return `
+            <tr>
+              <td>${new Date(item.createdAt).toLocaleDateString()} @ ${new Date(item.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
+              <td style="font-family:monospace; font-weight:700; color:var(--primary); font-size:0.85rem;">HGS/${new Date(item.createdAt).getFullYear()}/${100 + idx}</td>
+              <td style="font-weight:800; color:var(--text-dark);">${escapeHTML(item.studentName)}</td>
+              <td><span class="badge">${escapeHTML(item.gradeApplying)}</span></td>
+              <td>${escapeHTML(item.parentName)}</td>
+              <td style="font-weight:600;">
+                <a href="tel:${item.parentPhone}" style="color:var(--primary);"><i class="fa-solid fa-phone"></i> ${escapeHTML(item.parentPhone)}</a>
+                ${item.parentEmail ? `<br><span style="font-size:0.75rem; color:var(--text-muted);"><i class="fa-solid fa-envelope"></i> ${escapeHTML(item.parentEmail)}</span>` : ''}
+              </td>
+              <td style="text-align:center;">${statusBadge}</td>
+              <td style="text-align:center;">
+                <div style="display:flex; gap:0.4rem; justify-content:center; flex-wrap:wrap; align-items:center;">
+                  ${statusActions}
+                  <button class="action-badge badge-edit edit-cta-btn" data-id="${item.id}"><i class="fa-solid fa-pen-to-square"></i> Details/Edit</button>
+                  <button class="action-badge badge-delete delete-cta-btn" data-id="${item.id}"><i class="fa-solid fa-trash-can"></i> Del</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
 
         // Link CTA actions
-        document.querySelectorAll('.convert-cta-btn').forEach(btn => {
+        document.querySelectorAll('.approve-cta-btn').forEach(btn => {
           btn.addEventListener('click', () => {
             const id = btn.getAttribute('data-id');
-            triggerConvertAdmissionToStudent(id);
+            triggerApproveAdmission(id);
+          });
+        });
+
+        document.querySelectorAll('.reject-cta-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-id');
+            triggerRejectAdmission(id);
+          });
+        });
+
+        document.querySelectorAll('.resend-cta-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-id');
+            triggerResendCredentials(id);
           });
         });
 
@@ -1180,6 +1306,149 @@
           });
         });
       };
+
+      // Operational workflow triggers
+      const triggerApproveAdmission = async (admissionId) => {
+        const item = globalAdmissionsList.find(r => r.id === admissionId);
+        if (!item) return;
+
+        if (confirm(`Are you absolutely sure you want to APPROVED "${item.studentName}"'s enrollment application?\nThis will automatically generate unique school credentials card, publish student profile and dispatch text alerts.`)) {
+          try {
+            const result = await approveAdmission(admissionId, session.fullName || "Registrar");
+            if (result.success) {
+              showCredentialsNotificationModal(result.notification, "Approved & Dispatched successfully");
+              renderAdmissionsList();
+            }
+          } catch (err) {
+            alert("Approve workflow aborted: " + err.message);
+          }
+        }
+      };
+
+      const triggerRejectAdmission = async (admissionId) => {
+        const item = globalAdmissionsList.find(r => r.id === admissionId);
+        if (!item) return;
+
+        const reason = prompt(`Specify the official rejection details to be sent and logged for pupil "${item.studentName}":`, "Does not meet standard curriculum requirements.");
+        if (reason === null) return; // user click cancel
+
+        try {
+          const result = await rejectAdmission(admissionId, reason.trim() || "Unspecified", session.fullName || "Registrar");
+          if (result.success) {
+            alert(`Admission application successfully rejected and logged to audited logs. Rejection dispatch issued to guardian hotline.`);
+            renderAdmissionsList();
+          }
+        } catch (err) {
+          alert("Aborted rejection operation: " + err.message);
+        }
+      };
+
+      const triggerResendCredentials = async (admissionId) => {
+        const item = globalAdmissionsList.find(r => r.id === admissionId);
+        if (!item) return;
+
+        try {
+          const studentsList = await getStudents();
+          const student = studentsList.find(s => s.studentName === item.studentName || s.parentPhone === item.parentPhone);
+          if (!student) {
+            throw new Error("No active student record matching this applicant details can be recovered from the student registers.");
+          }
+
+          const result = await resendStudentCredentials(student.id, session.fullName || "Registrar");
+          if (result.success) {
+            showCredentialsNotificationModal(result.notification, "Resent & Re-dispatched to Guardian");
+          }
+        } catch (err) {
+          alert("Resubmit error: " + err.message);
+        }
+      };
+
+      // Modal visual popup card showing precise dispatched text values
+      const credentialsModal = document.getElementById('credentialsModal');
+      const showCredentialsNotificationModal = (notification, statusLabel) => {
+        document.getElementById('credsTitle').innerHTML = `<i class="fa-solid fa-paper-plane"></i> Credentials Dispatched Alert (${statusLabel})`;
+        document.getElementById('dispStudentName').textContent = notification.studentName;
+        document.getElementById('dispAdmissionNumber').textContent = notification.admissionNumber;
+        document.getElementById('dispUsername').textContent = notification.username;
+        document.getElementById('dispPassword').textContent = notification.password;
+        document.getElementById('dispPortalUrl').textContent = notification.portalUrl;
+        document.getElementById('dispPortalUrl').href = notification.portalUrl;
+
+        // Custom high-fidelity Email body
+        const emailBody = `From: Admissions <admissions@hisgracehighschool.org>
+To: ${notification.guardianEmail || 'N/A'}
+Subject: Admission Approved - ${notification.studentName} (ID: ${notification.admissionNumber})
+
+Dear Guardian,
+
+We are delighted to inform you that the admission request for "${notification.studentName}" has been APPROVED by His Grace School Registry Council!
+
+A student ledger account Card has been provisioned. Please find the portal login credentials below:
+
+- Student Portal URL: ${notification.portalUrl}
+- Login Username: ${notification.username} (Admission Number)
+- Temporary Password: ${notification.password}
+
+Please log in to check the performance dashboard, termly report assessments, and teacher comments. Ensure you change your password on first login.
+
+Warm Regards,
+Registrar Office
+His Grace School`;
+
+        document.getElementById('dispEmailPayload').textContent = emailBody;
+
+        // Custom SMS content
+        const smsBody = `HGS ADMISSION SUCCESS! ${notification.studentName} is approved.
+Portal URL: ${notification.portalUrl}
+UID: ${notification.username}
+Password: ${notification.password}
+Log in to check term report cards.`;
+
+        document.getElementById('dispSmsPayload').textContent = smsBody;
+        credentialsModal.classList.add('active');
+      };
+
+      // Close handlers
+      document.getElementById('credsModalCloseBtn').addEventListener('click', () => {
+        credentialsModal.classList.remove('active');
+      });
+      document.getElementById('credsModalDoneBtn').addEventListener('click', () => {
+        credentialsModal.classList.remove('active');
+      });
+
+      // ==========================================
+      // SYSTEM ACTIVITY LOGS RENDER ENGINE
+      // ==========================================
+      const renderActivityLogsList = async () => {
+        const tbody = document.getElementById('logsTableBody');
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center" style="padding: 3rem; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin" style="font-size: 1.5rem; margin-bottom: 0.5rem; display: block;"></i> Retrieving audit logs...</td></tr>`;
+
+        try {
+          const logs = await getActivityLogs();
+          if (logs.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center" style="padding: 3rem; color: var(--text-muted);">No operational activities logged on the registers yet.</td></tr>`;
+            return;
+          }
+
+          tbody.innerHTML = logs.map(item => `
+            <tr>
+              <td style="font-size: 0.82rem; color: var(--text-muted); font-weight: 500;">
+                <i class="fa-regular fa-clock"></i> ${new Date(item.createdAt).toLocaleDateString()} @ ${new Date(item.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+              </td>
+              <td style="font-weight: 800; color: var(--primary); font-size: 0.85rem;">
+                <span class="badge" style="background-color: #f1f5f9; color: var(--text-dark);">${escapeHTML(item.action)}</span>
+              </td>
+              <td style="font-size: 0.88rem; line-height: 1.4; color: var(--text-dark); padding: 0.75rem 1rem;">${escapeHTML(item.details)}</td>
+              <td style="font-weight: 700; color: var(--secondary); font-size: 0.85rem;"><i class="fa-solid fa-user-shield"></i> ${escapeHTML(item.operator || 'System')}</td>
+            </tr>
+          `).join('');
+        } catch (e) {
+          tbody.innerHTML = `<tr><td colspan="4" class="text-center" style="color:red; padding:2rem;">Failed loading system logs. Error: ${e.message}</td></tr>`;
+        }
+      };
+
+      document.getElementById('refreshLogsBtn').addEventListener('click', renderActivityLogsList);
+
 
       // Realtime input filters bindings
       document.getElementById('filterSearch').addEventListener('input', filterAndRenderAdmissions);

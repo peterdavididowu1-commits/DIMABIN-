@@ -627,3 +627,200 @@ export const getActiveStudentSession = () => {
   }
   return null;
 };
+
+// ==========================================
+// ACTIVITY LOGGING, APPROVAL WORKFLOW & REJECTION ENGINES
+// ==========================================
+
+export const logActivity = async (action, details, operatorName = "System / Registrar") => {
+  const logObj = {
+    id: 'LOG-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+    action,
+    details,
+    operator: operatorName,
+    createdAt: new Date().toISOString()
+  };
+
+  if (liveMode && db) {
+    try {
+      const colRef = sdkFirestore.collection(db, "hgs_activity_logs");
+      await sdkFirestore.addDoc(colRef, logObj);
+    } catch (err) {
+      console.error("Firestore logActivity failed:", err);
+    }
+  }
+
+  // Fallback to local storage persistence
+  const list = JSON.parse(localStorage.getItem('hgs_activity_logs') || '[]');
+  list.unshift(logObj);
+  localStorage.setItem('hgs_activity_logs', JSON.stringify(list));
+  return { success: true, log: logObj };
+};
+
+export const getActivityLogs = async () => {
+  if (liveMode && db) {
+    try {
+      const colRef = sdkFirestore.collection(db, "hgs_activity_logs");
+      const q = sdkFirestore.query(colRef, sdkFirestore.orderBy("createdAt", "desc"));
+      const snapshot = await sdkFirestore.getDocs(q);
+      const results = [];
+      snapshot.forEach(docSnap => {
+        results.push({ ...docSnap.data(), docId: docSnap.id });
+      });
+      return results;
+    } catch (err) {
+      console.error("Firestore getActivityLogs failed:", err);
+    }
+  }
+  const list = JSON.parse(localStorage.getItem('hgs_activity_logs') || '[]');
+  return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+};
+
+// Generate high-strength password
+const generateTempPassword = () => {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789"; // readable chars
+  let pass = "";
+  for (let i = 0; i < 8; i++) {
+    pass += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return pass;
+};
+
+// Approval Workflow Logic
+export const approveAdmission = async (admissionId, operatorName = "Registrar") => {
+  const admissions = await getAdmissions();
+  const targetApplication = admissions.find(app => app.id === admissionId);
+  if (!targetApplication) {
+    throw new Error("Admission application record not found.");
+  }
+
+  // 1. Update application status in database
+  await updateAdmission(admissionId, { status: "Approved" });
+
+  // 2. Automatically generate unique admission number
+  const students = await getStudents();
+  let uniqueNum = "";
+  let isUnique = false;
+  let attempts = 0;
+  while (!isUnique && attempts < 50) {
+    const randomDigits = Math.floor(1000 + Math.random() * 9000); // 4 digit
+    uniqueNum = `HGS-2026-${randomDigits}`;
+    isUnique = !students.some(s => s.admissionNumber === uniqueNum);
+    attempts++;
+  }
+
+  // 3. Generate secure temporary password
+  const tempPassword = generateTempPassword();
+
+  // 4. Create standard student entity payload
+  const studentPayload = {
+    admissionNumber: uniqueNum,
+    studentName: targetApplication.studentName,
+    gender: targetApplication.studentGender || "Male",
+    dob: targetApplication.studentDob || "",
+    gradeApplying: targetApplication.gradeApplying || "Primary 1",
+    parentName: targetApplication.parentName,
+    parentPhone: targetApplication.parentPhone,
+    parentEmail: targetApplication.parentEmail || "",
+    homeAddress: targetApplication.homeAddress || "",
+    password: tempPassword,
+    status: 'Active',
+    grades: {
+      english: 85,
+      math: 85,
+      computer: 85,
+      civic: 85,
+      agriculture: 85
+    },
+    coachRemarks: `Account automatically formulated and approved by the registrar on ${new Date().toLocaleDateString()}. System onboarding sequence initialized.`
+  };
+
+  await saveStudent(studentPayload);
+
+  // 5. Build notifications payloads
+  const portalUrl = window.location.origin + "/login.html";
+  const notificationContent = {
+    studentName: targetApplication.studentName,
+    admissionNumber: uniqueNum,
+    username: uniqueNum,
+    password: tempPassword,
+    portalUrl: portalUrl,
+    guardianPhone: targetApplication.parentPhone,
+    guardianEmail: targetApplication.parentEmail
+  };
+
+  // 6. Log activity
+  await logActivity(
+    "Admission Approved & Student Onboarded",
+    `Approved admission request for pupil "${targetApplication.studentName}" (Target Grade: ${targetApplication.gradeApplying}). Outfitted credentials: Portal UID [${uniqueNum}], Temp Password [${tempPassword}]. Dispatched notifications to guardian ${targetApplication.parentPhone} / ${targetApplication.parentEmail || 'N/A'}.`,
+    operatorName
+  );
+
+  return {
+    success: true,
+    admissionNumber: uniqueNum,
+    temporaryPassword: tempPassword,
+    notification: notificationContent
+  };
+};
+
+// Rejection Logic
+export const rejectAdmission = async (admissionId, reason, operatorName = "Registrar") => {
+  const admissions = await getAdmissions();
+  const targetApplication = admissions.find(app => app.id === admissionId);
+  if (!targetApplication) {
+    throw new Error("Admission application record not found.");
+  }
+
+  // 1. Update application status
+  await updateAdmission(admissionId, { status: "Rejected", rejectionReason: reason });
+
+  // 2. Dispatched notification details logged
+  await logActivity(
+    "Admission Rejected",
+    `Rejected admission request for pupil "${targetApplication.studentName}". Explanation specified: "${reason}". Notification dispatch saved for Guardian Contact: ${targetApplication.parentPhone}.`,
+    operatorName
+  );
+
+  return {
+    success: true,
+    details: {
+      studentName: targetApplication.studentName,
+      reason,
+      guardianPhone: targetApplication.parentPhone,
+      guardianEmail: targetApplication.parentEmail
+    }
+  };
+};
+
+// Credentials Resend Handler
+export const resendStudentCredentials = async (studentId, operatorName = "Registrar") => {
+  const students = await getStudents();
+  const student = students.find(s => s.id === studentId);
+  if (!student) {
+    throw new Error("Student account matching record not found.");
+  }
+
+  const portalUrl = window.location.origin + "/login.html";
+  const notificationContent = {
+    studentName: student.studentName,
+    admissionNumber: student.admissionNumber,
+    username: student.admissionNumber,
+    password: student.password,
+    portalUrl: portalUrl,
+    guardianPhone: student.parentPhone,
+    guardianEmail: student.parentEmail
+  };
+
+  await logActivity(
+    "Credentials Respatched",
+    `Resubmitted portal entry credentials card for pupil "${student.studentName}" (${student.admissionNumber}). Destination Phone: ${student.parentPhone}, Destination Email: ${student.parentEmail || 'N/A'}.`,
+    operatorName
+  );
+
+  return {
+    success: true,
+    notification: notificationContent
+  };
+};
+

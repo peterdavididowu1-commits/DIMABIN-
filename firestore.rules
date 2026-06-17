@@ -38,5 +38,11 @@ service cloud.firestore {
       // Master registers restricted to administrative review
       allow read, update, delete: if isRegistrar();
     }
+
+    // 5. Audit Activity log audits
+    match /hgs_activity_logs/{logId} {
+      // Registrar can read/write logs
+      allow create, read, update, delete: if isRegistrar();
+    }
   }
 }
