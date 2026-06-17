@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home - His Grace Nursery and Primary School</title>
+  
+  <!-- Typography & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+  <!-- Header Navigation -->
+  <header>
+    <div class="container nav-bar">
+      <div class="logo-container">
+        <img src="assets/images/logo.jpg" alt="His Grace School Crest" class="logo-img">
+        <div class="logo-text">
+          <h1>His Grace School</h1>
+          <span>Agbugburu Village • Abeokuta</span>
+        </div>
+      </div>
+      
+      <!-- Desktop Navigation Menu -->
+      <ul class="nav-menu">
+        <li><a href="index.html" class="nav-link active">Home</a></li>
+        <li><a href="about.html" class="nav-link">About Us</a></li>
+        <li><a href="admissions.html" class="nav-link">Admissions</a></li>
+        <li><a href="academics.html" class="nav-link">Academics</a></li>
+        <li><a href="contact.html" class="nav-link">Contact Us</a></li>
+      </ul>
+      
+      <!-- Desktop Portal Button -->
+      <div class="nav-cta">
+        <a href="login.html" class="btn btn-outline"><i class="fa-solid fa-user-graduate"></i> Student Portal</a>
+      </div>
+
+      <!-- Mobile Menu Toggle Button -->
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle Navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile Navigation Menu Overlay -->
+  <div class="mobile-menu-overlay" id="mobileMenuOverlay">
+    <ul>
+      <li><a href="index.html" class="nav-link active">Home</a></li>
+      <li><a href="about.html" class="nav-link">About Us</a></li>
+      <li><a href="admissions.html" class="nav-link">Admissions</a></li>
+      <li><a href="academics.html" class="nav-link">Academics</a></li>
+      <li><a href="contact.html" class="nav-link">Contact Us</a></li>
+      <li><a href="login.html" class="nav-link"><i class="fa-solid fa-user-graduate"></i> Student Portal</a></li>
+    </ul>
+  </div>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container hero-wrap">
+      <div class="hero-content">
+        <span class="badge" style="background-color: var(--accent); color: var(--primary-hover); font-weight: 800; margin-bottom: 1.5rem;">Govt. Approved Academics</span>
+        <h2>Building Lives for <span class="highlight">Greatness</span> through Sound Godly Guidance</h2>
+        <p>Providing pristine educational standards, disciplined moral instructions, and a secure development care space for nursery, toddler care and primary grades in Abeokuta, Ogun State.</p>
+        <div class="d-flex" style="gap: 1.25rem; flex-wrap: wrap;">
+          <a href="admissions.html" class="btn btn-accent"><i class="fa-solid fa-file-signature"></i> Apply Online Now</a>
+          <a href="about.html" class="btn btn-outline" style="border-color: white; color: white;"><i class="fa-solid fa-circle-info"></i> Discover More</a>
+        </div>
+      </div>
+      <div class="hero-image-box">
+        <img src="assets/images/building.jpg" alt="His Grace School Main Building">
+      </div>
+    </div>
+  </section>
+
+  <!-- Key Statistics Bar -->
+  <section class="container" style="margin-bottom: 4rem;">
+    <div class="stats-bar">
+      <div class="grid-4 text-center">
+        <div class="stat-item">
+          <span class="stat-num" data-val="100">100%</span>
+          <span class="stat-label">Godly Standards</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num" data-val="450">450+</span>
+          <span class="stat-label">Pupil Enrolled</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num" data-val="25">25+</span>
+          <span class="stat-label">Specialist Instructors</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-num" data-val="15">18+</span>
+          <span class="stat-label">Smart Classrooms</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Welcome & Values Overview -->
+  <section class="py-3 container">
+    <div class="section-header text-center">
+      <span class="badge">Who We Are</span>
+      <h2>Welcome to His Grace Nursery & Primary School</h2>
+      <p>We are a highly disciplined institution focused on nurturing the intellectual, moral, spiritual, and physical potentials of every child. Our curriculum and atmosphere ensure children mould lives of greatness.</p>
+    </div>
+
+    <div class="values-grid">
+      <div class="value-card">
+        <div class="value-icon"><i class="fa-solid fa-book-open"></i></div>
+        <h3>Quality Education</h3>
+        <p>Combining national approved curricula with modern interactive resources, digital literacy basics, and expert childhood learning aids.</p>
+      </div>
+      <div class="value-card">
+        <div class="value-icon"><i class="fa-solid fa-cross"></i></div>
+        <h3>Christian & Moral Values</h3>
+        <p>Nurturing children with strict discipline, godly sound character, empathy, outstanding honesty, and societal stewardship pillars.</p>
+      </div>
+      <div class="value-card">
+        <div class="value-icon"><i class="fa-solid fa-medal"></i></div>
+        <h3>Beacons of Excellence</h3>
+        <p>Equipping every toddler and primary school pup with appropriate baseline confidence, leading self-expression, and leadership agility.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Campus Photo Gallery -->
+  <section class="py-5" style="background-color: var(--bg-white); border-top: 1.5px solid var(--border-color); border-bottom: 1.5px solid var(--border-color);">
+    <div class="container">
+      <div class="section-header text-center">
+        <span class="badge">Campus Scenes</span>
+        <h2>Explore Our Modern Learning Gallery</h2>
+        <p>Take a virtual snapshot visit inside our bright class environments, outdoor physical activity fields, and well-organized academic laboratories.</p>
+      </div>
+
+      <div class="gallery-grid">
+        <!-- Gallery Item 1 -->
+        <div class="gallery-item" data-title="Main Campus Assembly Exterior" data-img="assets/images/building.jpg" data-desc="His Grace School's central academic block. Outfitted with spacious administrative offices, reception halls, and safe pathways structured for rapid entry and evacuation control.">
+          <img src="assets/images/building.jpg" alt="Main Campus Assembly Exterior">
+          <div class="gallery-overlay">
+            <h4>Main Campus Assembly</h4>
+            <span>Click to Expand</span>
+          </div>
+        </div>
+        
+        <!-- Gallery Item 2 -->
+        <div class="gallery-item" data-title="Modern Library Classroom" data-img="assets/images/classroom.jpg" data-desc="Interactive reading session inside our colorful, bright modern library. Outfitted with wide collections of global academic material, friendly books, story models, and supportive teacher mentorship support.">
+          <img src="assets/images/classroom.jpg" alt="Interactive Reading Center">
+          <div class="gallery-overlay">
+            <h4>Modern Library Classroom</h4>
+            <span>Click to Expand</span>
+          </div>
+        </div>
+
+        <!-- Gallery Item 3 -->
+        <div class="gallery-item" data-title="Early Years Montessori Setup" data-img="assets/images/classroom.jpg" data-desc="Dedicated sensory play environments focusing on baseline cognitive growth, color shapes coordination, friendly interaction blocks, and toddler care systems.">
+          <img src="assets/images/classroom.jpg" alt="Montessori Sensory Room" style="filter: hue-rotate(45deg);">
+          <div class="gallery-overlay">
+            <h4>Early Years Montessori Room</h4>
+            <span>Click to Expand</span>
+          </div>
+        </div>
+
+        <!-- Gallery Item 4 -->
+        <div class="gallery-item" data-title="Interactive Computing Lab" data-img="assets/images/banner.jpg" data-desc="Smart laboratory rooms holding computing equipment where primary learners get secure hands-on coaching regarding computer literacy and safe tech navigation elements.">
+          <img src="assets/images/banner.jpg" alt="Interactive Computing Laboratory">
+          <div class="gallery-overlay">
+            <h4>Interactive Computing Lab</h4>
+            <span>Click to Expand</span>
+          </div>
+        </div>
+
+        <!-- Gallery Item 5 -->
+        <div class="gallery-item" data-title="Fine Arts & Pottery Room" data-img="assets/images/classroom.jpg" data-desc="Nurturing kids' imaginative and artistic potential utilizing colors, hand drawings, craft design molds, and safe pottery guidance sessions.">
+          <img src="assets/images/classroom.jpg" alt="Fine Arts & Drawings Room" style="filter: hue-rotate(-90deg);">
+          <div class="gallery-overlay">
+            <h4>Fine Arts & Pottery Room</h4>
+            <span>Click to Expand</span>
+          </div>
+        </div>
+
+        <!-- Gallery Item 6 -->
+        <div class="gallery-item" data-title="Outdoor Activity & Sports Yard" data-img="assets/images/building.jpg" data-desc="Our expansive playground zone where primary learners participate in physical athletic drills, team relays, football practices, and motor-skills development.">
+          <img src="assets/images/building.jpg" alt="Outdoor Recreation Yard" style="filter: brightness(0.9) contrast(1.15);">
+          <div class="gallery-overlay">
+            <h4>Outdoor Sports Field</h4>
+            <span>Click to Expand</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick CTA Admission Banner -->
+  <section class="py-5" style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: var(--bg-white);">
+    <div class="container text-center" style="max-width: 800px;">
+      <h2 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; letter-spacing: -0.02em;">Enroll Your Child For Greatness Today</h2>
+      <p style="font-size: 1.1rem; margin-bottom: 2rem; opacity: 0.9;">Secure online booking is available in simple, painless steps. Register now to experience customized nursery attention, interactive resources, and godly childhood development care.</p>
+      <div class="d-flex" style="gap: 1.25rem; justify-content: center; flex-wrap: wrap;">
+        <a href="admissions.html" class="btn btn-accent"><i class="fa-solid fa-file-invoice"></i> Interactive Admission Form</a>
+        <a href="contact.html" class="btn btn-outline" style="border-color: white; color: white;"><i class="fa-solid fa-phone"></i> Inquire via Helpline</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Lightbox Modal -->
+  <div class="lightbox" id="lightboxDialog">
+    <div class="lightbox-content">
+      <div class="lightbox-header">
+        <h3 id="lightboxTitle">Campus Gallery Detail</h3>
+        <button class="lightbox-close" id="lightboxClose" aria-label="Close dialog">&times;</button>
+      </div>
+      <div class="lightbox-body">
+        <div class="lightbox-img-wrap">
+          <img src="" alt="" id="lightboxImg">
+        </div>
+        <p id="lightboxDesc" style="font-size: 0.95rem; color: var(--text-dark); line-height: 1.6;"></p>
+        <div style="margin-top: 1.5rem; text-align: right;">
+          <a href="contact.html" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.5rem 1.25rem;"><i class="fa-solid fa-question"></i> Request Site Visit</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container footer-grid">
+      <div class="footer-col">
+        <div class="logo-container" style="margin-bottom: 1.25rem;">
+          <img src="assets/images/logo.jpg" alt="His Grace Crest" class="logo-img" style="border: 2px solid var(--accent);">
+          <h3 style="color: white; margin-bottom: 0;">His Grace School</h3>
+        </div>
+        <p>Moulding local learners into responsible, confident, and academically sound community leaders of tomorrow. Built on faith, academic standards, and godly grace.</p>
+        <div class="footer-socials">
+          <a href="#" class="social-icon" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
+          <a href="#" class="social-icon" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+          <a href="#" class="social-icon" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+          <a href="#" class="social-icon" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+        </div>
+      </div>
+      
+      <div class="footer-col">
+        <h4>Useful Links</h4>
+        <ul class="footer-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="admissions.html">Admissions</a></li>
+          <li><a href="academics.html">Academics</a></li>
+          <li><a href="contact.html">Contact Us</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Quick Portal</h4>
+        <ul class="footer-links">
+          <li><a href="login.html"><i class="fa-solid fa-lock" style="font-size: 0.85rem; margin-right: 0.25rem;"></i> Student Login</a></li>
+          <li><a href="login.html"><i class="fa-solid fa-shield" style="font-size: 0.85rem; margin-right: 0.25rem;"></i> Parent Access</a></li>
+          <li><a href="login.html"><i class="fa-solid fa-user-tie" style="font-size: 0.85rem; margin-right: 0.25rem;"></i> Staff Directory</a></li>
+          <li><a href="admissions.html"><i class="fa-solid fa-child" style="font-size: 0.85rem; margin-right: 0.25rem;"></i> Smart Registration</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Our Campus</h4>
+        <ul class="footer-contact">
+          <li>
+            <i class="fa-solid fa-location-dot"></i>
+            <span>Agbugburu Village, Abeokuta, Ogun State, Nigeria</span>
+          </li>
+          <li>
+            <i class="fa-solid fa-phone"></i>
+            <span>08137606078</span>
+          </li>
+          <li>
+            <i class="fa-solid fa-envelope"></i>
+            <span>hisgraceschool.name.ng@gmail.com</span>
+          </li>
+          <li>
+            <i class="fa-solid fa-clock"></i>
+            <span>Mon - Fri (7:45 AM - 4:00 PM)</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <div class="container d-flex justify-between align-center flex-column" style="gap: 1rem;">
+        <p>&copy; 2026 His Grace Nursery & Primary School. All rights reserved.</p>
+        <span class="badge" style="background-color: rgba(255, 255, 255, 0.1); color: var(--accent); font-weight: 700;">Motto: Moulding Lives for Greatness</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Main JavaScript File -->
+  <script src="assets/js/main.js"></script>
+</body>
+</html>

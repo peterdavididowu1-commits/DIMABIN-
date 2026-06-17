@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admissions - His Grace Nursery and Primary School</title>
+  
+  <!-- Typography & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+  <!-- Header Navigation -->
+  <header>
+    <div class="container nav-bar">
+      <div class="logo-container">
+        <img src="assets/images/logo.jpg" alt="His Grace School Crest" class="logo-img">
+        <div class="logo-text">
+          <h1>His Grace School</h1>
+          <span>Agbugburu Village • Abeokuta</span>
+        </div>
+      </div>
+      
+      <!-- Desktop Navigation Menu -->
+      <ul class="nav-menu">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="about.html" class="nav-link">About Us</a></li>
+        <li><a href="admissions.html" class="nav-link active">Admissions</a></li>
+        <li><a href="academics.html" class="nav-link">Academics</a></li>
+        <li><a href="contact.html" class="nav-link">Contact Us</a></li>
+      </ul>
+      
+      <!-- Desktop Portal Button -->
+      <div class="nav-cta">
+        <a href="login.html" class="btn btn-outline"><i class="fa-solid fa-user-graduate"></i> Student Portal</a>
+      </div>
+
+      <!-- Mobile Menu Toggle Button -->
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle Navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile Navigation Menu Overlay -->
+  <div class="mobile-menu-overlay" id="mobileMenuOverlay">
+    <ul>
+      <li><a href="index.html" class="nav-link">Home</a></li>
+      <li><a href="about.html" class="nav-link">About Us</a></li>
+      <li><a href="admissions.html" class="nav-link active">Admissions</a></li>
+      <li><a href="academics.html" class="nav-link">Academics</a></li>
+      <li><a href="contact.html" class="nav-link">Contact Us</a></li>
+      <li><a href="login.html" class="nav-link"><i class="fa-solid fa-user-graduate"></i> Student Portal</a></li>
+    </ul>
+  </div>
+
+  <!-- Breadcrumb/Inner Header -->
+  <section style="background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-hover) 100%); color: var(--bg-white); padding: 4rem 0; text-align: center;">
+    <div class="container">
+      <span class="badge" style="background-color: var(--accent); color: var(--primary-hover); font-weight: 800; margin-bottom: 0.5rem;">Join Our Family</span>
+      <h2 style="font-size: 2.5rem; font-weight: 800; letter-spacing: -0.02em;">Smart Admissions Portal</h2>
+      <p style="opacity: 0.9; margin-top: 0.5rem;">Simple, organized, and transparent enrollment steps for prospective parents wishing to join HGS.</p>
+    </div>
+  </section>
+
+  <!-- Split Entrance Guide and Form -->
+  <section class="py-5 container">
+    <div class="grid-2">
+      <!-- Steps Guidelines -->
+      <div>
+        <span class="badge" style="margin-bottom: 1rem;">Process Steps</span>
+        <h2 style="font-size: 2rem; color: var(--primary); margin-bottom: 1.5rem; font-weight: 800;">Admissions Guidelines</h2>
+        
+        <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-bottom: 2rem;">
+          <div class="d-flex" style="gap: 1rem; align-items: flex-start;">
+            <div style="width: 35px; height: 35px; border-radius: 50%; background-color: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0;">1</div>
+            <div>
+              <h4 style="font-size: 1.1rem; color: var(--primary); font-weight: 700; margin-bottom: 0.25rem;">Submit Online Registration</h4>
+              <p style="font-size: 0.95rem; color: var(--text-muted);">Fill the interactive Admission Form on this screen with accurate child and guardian details. Double-check email addresses and telephone numbers.</p>
+            </div>
+          </div>
+          
+          <div class="d-flex" style="gap: 1rem; align-items: flex-start;">
+            <div style="width: 35px; height: 35px; border-radius: 50%; background-color: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0;">2</div>
+            <div>
+              <h4 style="font-size: 1.1rem; color: var(--primary); font-weight: 700; margin-bottom: 0.25rem;">Administrative Follow-Up</h4>
+              <p style="font-size: 0.95rem; color: var(--text-muted);">Within 24 business hours, our Registrar office calls the parent to agree on a physical tour schedule, verify grade placement, and hand over the prospectus doc sheet.</p>
+            </div>
+          </div>
+
+          <div class="d-flex" style="gap: 1rem; align-items: flex-start;">
+            <div style="width: 35px; height: 35px; border-radius: 50%; background-color: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0;">3</div>
+            <div>
+              <h4 style="font-size: 1.1rem; color: var(--primary); font-weight: 700; margin-bottom: 0.25rem;">Diagnostic Assessment</h4>
+              <p style="font-size: 0.95rem; color: var(--text-muted);">The child takes a friendly, conversational academic assessment focusing on writing, language reasoning, and basic mathematics structures to secure proper level placements.</p>
+            </div>
+          </div>
+
+          <div class="d-flex" style="gap: 1rem; align-items: flex-start;">
+            <div style="width: 35px; height: 35px; border-radius: 50%; background-color: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0;">4</div>
+            <div>
+              <h4 style="font-size: 1.1rem; color: var(--primary); font-weight: 700; margin-bottom: 0.25rem;">Enrollment Confirmation</h4>
+              <p style="font-size: 0.95rem; color: var(--text-muted);">Upon review, the admission letter is generated. Secure bank payment of tuition and uniforms activates school supplies, textbooks, and the formal classroom roster listing.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="background-color: var(--primary-light); border-left: 5px solid var(--secondary);">
+          <h4 style="color: var(--primary); font-weight: 700; margin-bottom: 0.5rem;"><i class="fa-solid fa-child"></i> Age Range Placements</h4>
+          <p style="font-size: 0.9rem; color: var(--text-dark);">
+            - <strong>Creche / Toddler Care</strong>: 3 Months – 1.5 Years<br>
+            - <strong>Playgroup / Pre-Nursery</strong>: 1.5 Years – 3 Years<br>
+            - <strong>Nursery 1-2</strong>: 3 Years – 5 Years<br>
+            - <strong>Primary 1-6</strong>: 5 Years and Above
+          </p>
+        </div>
+      </div>
+
+      <!-- Action Enrollment Form -->
+      <div>
+        <div class="form-box">
+          <span class="badge" style="background-color: var(--accent); color: var(--primary-hover); margin-bottom: 1.5rem; font-weight:700;">Secure Registration Form</span>
+          
+          <!-- Submit Response Alert -->
+          <div class="alert alert-success" id="successAlert"></div>
+
+          <form id="admissionForm">
+            <h3 style="font-size: 1.25rem; color: var(--primary); font-weight: 800; margin-bottom: 1.5rem; border-bottom: 1.5px solid var(--border-color); padding-bottom: 0.5rem;">1. Pupil's Information</h3>
+            
+            <div class="form-group">
+              <label for="studentName">Student's Full Name *</label>
+              <input type="text" id="studentName" class="form-control" placeholder="Firstname Middlename Lastname" required>
+            </div>
+
+            <div class="grid-input-2">
+              <div class="form-group">
+                <label for="studentDob">Date of Birth *</label>
+                <input type="date" id="studentDob" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label for="studentGender">Gender *</label>
+                <select id="studentGender" class="form-control" required>
+                  <option value="">-- Choose Gender --</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="gradeApplying">Class Grade Applying For *</label>
+              <select id="gradeApplying" class="form-control" required>
+                <option value="">-- Choose Target Grade --</option>
+                <option value="Toddler Creche">Toddler Creche (3 Mo. - 1.5 Yr)</option>
+                <option value="Pre-Nursery">Pre-Nursery Playgroup (1.5 Yr - 3 Yr)</option>
+                <option value="Nursery 1">Nursery 1 (3 Yr - 4 Yr)</option>
+                <option value="Nursery 2">Nursery 2 (4 Yr - 5 Yr)</option>
+                <option value="Primary 1">Primary Grade 1</option>
+                <option value="Primary 2">Primary Grade 2</option>
+                <option value="Primary 3">Primary Grade 3</option>
+                <option value="Primary 4">Primary Grade 4</option>
+                <option value="Primary 5">Primary Grade 5</option>
+                <option value="Primary 6">Primary Grade 6 (Graduating Line)</option>
+              </select>
+            </div>
+
+            <h3 style="font-size: 1.25rem; color: var(--primary); font-weight: 800; margin-top: 2rem; margin-bottom: 1.5rem; border-bottom: 1.5px solid var(--border-color); padding-bottom: 0.5rem;">2. Guardian / Parent Details</h3>
+
+            <div class="form-group">
+              <label for="parentName">Parent / Guardian Full Name *</label>
+              <input type="text" id="parentName" class="form-control" placeholder="e.g. Pastor Kolawole Adebayo" required>
+            </div>
+
+            <div class="grid-input-2">
+              <div class="form-group">
+                <label for="parentPhone">Telephone Line *</label>
+                <input type="tel" id="parentPhone" class="form-control" placeholder="e.g. 08137606078" required>
+              </div>
+              <div class="form-group">
+                <label for="parentEmail">Email Address *</label>
+                <input type="email" id="parentEmail" class="form-control" placeholder="e.g. parent@example.com" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="homeAddress">Residential Home Address *</label>
+              <textarea id="homeAddress" class="form-control" rows="3" placeholder="Plot, Street name, Village or Estate zone, Abeokuta" required></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="medicalNote">Special Health or Educational Care Notes (Optional)</label>
+              <textarea id="medicalNote" class="form-control" rows="2" placeholder="Any dietary allergies or visual considerations we should proactively track..."></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;"><i class="fa-solid fa-paper-plane"></i> Submit Secure Application</button>
+            <p class="form-note text-center"><i class="fa-solid fa-lock"></i> Your academic booking info is safe with the HGS central admissions registry.</p>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container footer-grid">
+      <div class="footer-col">
+        <div class="logo-container" style="margin-bottom: 1.25rem;">
+          <img src="assets/images/logo.jpg" alt="His Grace Crest" class="logo-img" style="border: 2px solid var(--accent);">
+          <h3 style="color: white; margin-bottom: 0;">His Grace School</h3>
+        </div>
+        <p>Moulding local learners into responsible, confident, and academically sound community leaders of tomorrow. Built on faith, academic standards, and godly grace.</p>
+        <div class="footer-socials">
+          <a href="#" class="social-icon" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
+          <a href="#" class="social-icon" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+          <a href="#" class="social-icon" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+          <a href="#" class="social-icon" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+        </div>
+      </div>
+      
+      <div class="footer-col">
+        <h4>Useful Links</h4>
+        <ul class="footer-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="admissions.html">Admissions</a></li>
+          <li><a href="academics.html">Academics</a></li>
+          <li><a href="contact.html">Contact Us</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Quick Portal</h4>
+        <ul class="footer-links">
+          <li><a href="login.html"><i class="fa-solid fa-lock" style="font-size: 0.85rem; margin-right: 0.25rem;"></i> Student Login</a></li>
+          <li><a href="login.html"><i class="fa-solid fa-shield" style="font-size: 0.85rem; margin-right: 0.25rem;"></i> Parent Access</a></li>
+          <li><a href="login.html"><i class="fa-solid fa-user-tie" style="font-size: 0.85rem; margin-right: 0.25rem;"></i> Staff Directory</a></li>
+          <li><a href="admissions.html"><i class="fa-solid fa-child" style="font-size: 0.85rem; margin-right: 0.25rem;"></i> Smart Registration</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Our Campus</h4>
+        <ul class="footer-contact">
+          <li>
+            <i class="fa-solid fa-location-dot"></i>
+            <span>Agbugburu Village, Abeokuta, Ogun State, Nigeria</span>
+          </li>
+          <li>
+            <i class="fa-solid fa-phone"></i>
+            <span>08137606078</span>
+          </li>
+          <li>
+            <i class="fa-solid fa-envelope"></i>
+            <span>hisgraceschool.name.ng@gmail.com</span>
+          </li>
+          <li>
+            <i class="fa-solid fa-clock"></i>
+            <span>Mon - Fri (7:45 AM - 4:00 PM)</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <div class="container d-flex justify-between align-center flex-column" style="gap: 1rem;">
+        <p>&copy; 2026 His Grace Nursery & Primary School. All rights reserved.</p>
+        <span class="badge" style="background-color: rgba(255, 255, 255, 0.1); color: var(--accent); font-weight: 700;">Motto: Moulding Lives for Greatness</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Main JavaScript File -->
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
