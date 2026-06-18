@@ -1016,6 +1016,7 @@ His Grace Nursery & Primary School
       template_params: {
         subject: subject,
         recipient_email: recipientEmail,
+        to_email: recipientEmail, // Standard parameter compatibility
         email: recipientEmail, // Map guardianEmail to the variable named 'email'
         guardianEmail: recipientEmail,
         student_name: payload.studentName,
@@ -1029,7 +1030,13 @@ His Grace Nursery & Primary School
       }
     };
 
-    console.log("[EmailJS Payload Sent]", JSON.stringify(payloadBody, null, 2));
+    console.log("=== EMAILJS DIAGNOSTIC PRE-SEND LOG ===");
+    console.log(`- Service ID: ${config.emailjsServiceId}`);
+    console.log(`- Template ID: ${config.emailjsTemplateId}`);
+    console.log(`- Public Key: ${config.emailjsPublicKey}`);
+    console.log(`- Recipient Email: ${recipientEmail}`);
+    console.log("- Full Template Parameters:", JSON.stringify(payloadBody.template_params, null, 2));
+    console.log("========================================");
 
     const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
       method: "POST",
@@ -1041,12 +1048,18 @@ His Grace Nursery & Primary School
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`[EmailJS Dispatch Error] HTTP Status: ${response.status}. Error body: ${errorText}`);
+      console.error("=== EMAILJS DIAGNOSTIC DISPATCH ERROR ===");
+      console.error(`- HTTP Status: ${response.status}`);
+      console.error(`- Error Body: ${errorText}`);
+      console.error("=========================================");
       throw new Error(`EmailJS check failed: ${errorText} (Status: ${response.status})`);
     }
 
     const resText = await response.text();
-    console.log(`[EmailJS Response Received] HTTP Status: ${response.status}. Body: "${resText}"`);
+    console.log("=== EMAILJS DIAGNOSTIC POST-SEND SUCCESS LOG ===");
+    console.log(`- HTTP Status: ${response.status}`);
+    console.log(`- Response: "${resText}"`);
+    console.log("================================================");
 
     await logActivity(
       "Email Dispatched (EmailJS)",
@@ -1101,6 +1114,7 @@ export const sendRejectionNotification = async (recipientEmail, recipientPhone, 
       template_params: {
         subject: subject,
         recipient_email: recipientEmail,
+        to_email: recipientEmail, // Standard parameter compatibility
         email: recipientEmail, // Map guardianEmail to the template variable named 'email'
         guardianEmail: recipientEmail, 
         student_name: studentName,
@@ -1114,7 +1128,13 @@ export const sendRejectionNotification = async (recipientEmail, recipientPhone, 
       }
     };
 
-    console.log("[EmailJS Rejection Payload Sent]", JSON.stringify(payloadBody, null, 2));
+    console.log("=== EMAILJS DIAGNOSTIC PRE-SEND REJECTION LOG ===");
+    console.log(`- Service ID: ${config.emailjsServiceId}`);
+    console.log(`- Template ID: ${config.emailjsTemplateId}`);
+    console.log(`- Public Key: ${config.emailjsPublicKey}`);
+    console.log(`- Recipient Email: ${recipientEmail}`);
+    console.log("- Full Template Parameters:", JSON.stringify(payloadBody.template_params, null, 2));
+    console.log("==================================================");
 
     const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
       method: "POST",
@@ -1124,12 +1144,18 @@ export const sendRejectionNotification = async (recipientEmail, recipientPhone, 
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`[EmailJS Rejection Dispatch Error] HTTP Status: ${response.status}. Error body: ${errorText}`);
+      console.error("=== EMAILJS DIAGNOSTIC REJECTION DISPATCH ERROR ===");
+      console.error(`- HTTP Status: ${response.status}`);
+      console.error(`- Error Body: ${errorText}`);
+      console.error("====================================================");
       throw new Error(`EmailJS check failed: ${errorText} (Status: ${response.status})`);
     }
 
     const resText = await response.text();
-    console.log(`[EmailJS Rejection Response Received] HTTP Status: ${response.status}. Body: "${resText}"`);
+    console.log("=== EMAILJS DIAGNOSTIC POST-SEND REJECTION SUCCESS LOG ===");
+    console.log(`- HTTP Status: ${response.status}`);
+    console.log(`- Response: "${resText}"`);
+    console.log("==========================================================");
 
     await logActivity(
       "Email Rejection Dispatched (EmailJS)",
