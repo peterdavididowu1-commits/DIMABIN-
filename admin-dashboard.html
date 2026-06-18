@@ -2177,66 +2177,35 @@ Log in to check term report cards.`;
           sendDirectEmailJSTestBtn.disabled = true;
           sendDirectEmailJSTestBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending Direct Test...';
 
-          const payloadBody = {
-            service_id: serviceId,
-            template_id: templateId,
-            user_id: publicKey,
-            template_params: {
-              subject: "His Grace School Direct EmailJS Test",
-              message: "This is a direct EmailJS delivery test.",
-              recipient_email: recipient.trim(),
-              to_email: recipient.trim(),
-              email: recipient.trim(),
-              guardianEmail: recipient.trim(),
-              student_name: "Direct Test Recipient",
-              admission_number: "DIRECT-TEST-001",
+          // Call the single, unified global EmailJS function used inside the project
+          const result = await sendEmailNotification(
+            recipient.trim(),
+            "His Grace School Direct EmailJS Test",
+            {
+              studentName: "Direct Test Recipient",
+              admissionNumber: "DIRECT-TEST-001",
               username: "direct_test_user",
               password: "direct_test_password",
-              portal_url: "https://peterdavididowu1-commits.github.io/His-Grace-School-Agbugburu-/login.html",
-              date_time: new Date().toLocaleString()
-            }
-          };
-
-          console.log("=== EMAILJS DIRECT TEST PRE-SEND ===");
-          console.log(`- Service ID: ${serviceId}`);
-          console.log(`- Template ID: ${templateId}`);
-          console.log(`- Public Key: ${publicKey}`);
-          console.log(`- Recipient Email: ${recipient.trim()}`);
-          console.log("- Full Payload:", JSON.stringify(payloadBody, null, 2));
-          console.log("=====================================");
-
-          const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
+              guardianPhone: "N/A",
+              message: "This is a direct EmailJS delivery test."
             },
-            body: JSON.stringify(payloadBody)
-          });
-
-          const responseMessage = await response.text();
-
-          console.log("=== EMAILJS DIRECT TEST POST-SEND ===");
-          console.log(`- Response Status: ${response.status}`);
-          console.log(`- Response Message: "${responseMessage}"`);
-          console.log("======================================");
-
-          if (!response.ok) {
-            throw new Error(`EmailJS dispatch failed with HTTP ${response.status}: ${responseMessage}`);
-          }
+            {
+              emailjsServiceId: serviceId,
+              emailjsTemplateId: templateId,
+              emailjsPublicKey: publicKey
+            }
+          );
 
           emailAlertSuccess.style.display = 'block';
           emailAlertSuccess.innerHTML = `
             <div style="font-weight: bold; margin-bottom: 0.5rem;"><i class="fa-solid fa-circle-check"></i> Direct EmailJS Test Complete!</div>
             <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.85rem; list-style-type: disc;">
-              <li><strong>EmailJS Response Status:</strong> ${response.status}</li>
-              <li><strong>EmailJS Response Message:</strong> "${responseMessage}"</li>
-              <li><strong>Service ID Used:</strong> ${serviceId}</li>
-              <li><strong>Template ID Used:</strong> ${templateId}</li>
+              <li><strong>Email successfully delivered using Direct EmailJS function</strong></li>
               <li><strong>Recipient Email Used:</strong> ${recipient.trim()}</li>
             </ul>
           `;
 
-          alert(`EmailJS Direct Test Succeeded!\nStatus: ${response.status}\nMessage: ${responseMessage}\nRecipient: ${recipient.trim()}`);
+          alert("Email successfully delivered using Direct EmailJS function");
 
         } catch (err) {
           console.error("Direct EmailJS test failed:", err);

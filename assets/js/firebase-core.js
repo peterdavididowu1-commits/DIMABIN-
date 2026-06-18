@@ -1,99 +1,34 @@
-// Firebase & Local Storage Unified Core Service Module
+// Firebase Centralized Core Service Module (Pure Live Firestore Database Integration)
 import firebaseConfig from './firebase-config-env.js';
 
-// Detect if Live Firebase config has been entered
-const isFirebaseConfigured = 
-  firebaseConfig && 
-  firebaseConfig.apiKey && 
-  firebaseConfig.apiKey !== '' && 
-  !firebaseConfig.apiKey.includes('YOUR_API_KEY_HERE');
-
-let liveMode = false;
+let liveMode = true;
 let db = null;
 let auth = null;
 
 // Firebase SDK reference placeholders
 let sdkApps, sdkAuth, sdkFirestore;
 
-// Safe Dynamic Imports
 try {
-  if (isFirebaseConfigured) {
-    // Top-level imports for ES Modules
-    sdkApps = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
-    sdkAuth = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js");
-    sdkFirestore = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+  // Always import Firebase SDK from secure CDN
+  sdkApps = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
+  sdkAuth = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js");
+  sdkFirestore = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
 
-    const app = sdkApps.initializeApp(firebaseConfig);
-    db = sdkFirestore.getFirestore(app);
-    auth = sdkAuth.getAuth(app);
-    liveMode = true;
-    console.log("🌟 His Grace Core: Live Firebase Web Services Online!");
-  } else {
-    console.log("ℹ️ His Grace Core: Operating in standard offline repository mode.");
-  }
+  const app = sdkApps.initializeApp(firebaseConfig);
+  db = sdkFirestore.getFirestore(app);
+  auth = sdkAuth.getAuth(app);
+  console.log(`🌟 [Firebase Core] Loaded successfully! Connected to Firebase Project: "${firebaseConfig.projectId}"`);
 } catch (error) {
-  console.error("❌ His Grace Core: Failed to initialize web Firebase service.", error);
-  liveMode = false;
+  console.error("❌ [Firebase Core] Initialization Error:", error);
+  throw new Error("Critical Firebase initialization failure: " + error.message);
 }
-
-// Ensure database state in local storage
-const initLocalStorageDB = () => {
-  if (!localStorage.getItem('hgs_admissions')) {
-    localStorage.setItem('hgs_admissions', JSON.stringify([]));
-  }
-  if (!localStorage.getItem('hgs_messages')) {
-    localStorage.setItem('hgs_messages', JSON.stringify([]));
-  }
-  if (!localStorage.getItem('hgs_administrators')) {
-    localStorage.setItem('hgs_administrators', JSON.stringify([]));
-  }
-  if (!localStorage.getItem('hgs_students')) {
-    // Seed initial high-fidelity student record for dynamic out-of-the-box local exploration
-    localStorage.setItem('hgs_students', JSON.stringify([
-      {
-        id: 'STUD-DEFA-1234',
-        admissionNumber: 'HGS-2026-001',
-        studentName: 'Adebayo Daniel',
-        gender: 'Male',
-        dob: '2020-04-18',
-        gradeApplying: 'Primary 1',
-        parentName: 'Mr. Emmanuel Daniel',
-        parentPhone: '08137606078',
-        parentEmail: 'emmanuel.daniel@gmail.com',
-        homeAddress: 'Agbugburu Village, Abeokuta',
-        password: 'password123',
-        status: 'Active',
-        createdAt: new Date().toISOString(),
-        grades: {
-          english: 90,
-          math: 95,
-          computer: 88,
-          civic: 96,
-          agriculture: 82
-        },
-        coachRemarks: "Daniel continues to show remarkable godly growth, quantitative math logic, and deep obedience to our community guidelines. Approved for next phase!"
-      }
-    ]));
-  }
-  // Simulated Current Sessions
-  if (!localStorage.getItem('hgs_session')) {
-    localStorage.setItem('hgs_session', null);
-  }
-  if (!localStorage.getItem('hgs_student_session')) {
-    localStorage.setItem('hgs_student_session', null);
-  }
-};
-initLocalStorageDB();
-
-// ==========================================
-// UNIFIED MODE EXPORTS
-// ==========================================
-export const isLiveFirebase = () => liveMode;
 
 // Display Banner to User (Disabled to preserve clean production aesthetics)
 export const injectNotificationBanner = () => {
   // Banner disabled
 };
+
+export const isLiveFirebase = () => true;
 
 // ==========================================
 // ADMISSIONS MANAGEMENT
@@ -105,99 +40,93 @@ export const saveAdmission = async (admissionData) => {
     createdAt: new Date().toISOString()
   };
 
-  if (liveMode && db) {
-    try {
-      const colRef = sdkFirestore.collection(db, "hgs_admissions");
-      await sdkFirestore.addDoc(colRef, record);
-      return { success: true, id: record.id };
-    } catch (err) {
-      console.error("Firestore saveAdmission failed:", err);
-      throw err;
-    }
-  } else {
-    // Local storage fallback
-    const list = JSON.parse(localStorage.getItem('hgs_admissions') || '[]');
-    list.push(record);
-    localStorage.setItem('hgs_admissions', JSON.stringify(list));
-    return { success: true, id: record.id };
+  const projectId = firebaseConfig ? firebaseConfig.projectId : "Unknown";
+  console.log(`[Firebase Core] [saveAdmission] Attempting Firestore Write.`, {
+    projectId: projectId,
+    collection: "hgs_admissions",
+    recordId: record.id
+  });
+
+  try {
+    const colRef = sdkFirestore.collection(db, "hgs_admissions");
+    const docRef = await sdkFirestore.addDoc(colRef, record);
+    console.log(`[Firebase Core] [saveAdmission] Firestore Write SUCCESS!`, {
+      projectId: projectId,
+      collection: "hgs_admissions",
+      docId: docRef.id,
+      recordId: record.id
+    });
+    return { success: true, id: record.id, docId: docRef.id };
+  } catch (err) {
+    console.error(`[Firebase Core] [saveAdmission] Firestore Write FAILURE!`, {
+      projectId: projectId,
+      collection: "hgs_admissions",
+      error: err.message
+    });
+    throw err;
   }
 };
 
 export const getAdmissions = async () => {
-  if (liveMode && db) {
-    try {
-      const colRef = sdkFirestore.collection(db, "hgs_admissions");
-      const q = sdkFirestore.query(colRef, sdkFirestore.orderBy("createdAt", "desc"));
-      const snapshot = await sdkFirestore.getDocs(q);
-      const results = [];
-      snapshot.forEach(docSnap => {
-        results.push({ ...docSnap.data(), docId: docSnap.id });
-      });
-      return results;
-    } catch (err) {
-      console.error("Firestore getAdmissions failed:", err);
-      // fallback to offline reading on failure
-    }
+  const projectId = firebaseConfig ? firebaseConfig.projectId : "Unknown";
+  console.log(`[Firebase Core] [getAdmissions] Attempting Firestore Read.`, {
+    projectId: projectId,
+    collection: "hgs_admissions"
+  });
+
+  try {
+    const colRef = sdkFirestore.collection(db, "hgs_admissions");
+    const q = sdkFirestore.query(colRef, sdkFirestore.orderBy("createdAt", "desc"));
+    const snapshot = await sdkFirestore.getDocs(q);
+    const results = [];
+    snapshot.forEach(docSnap => {
+      results.push({ ...docSnap.data(), docId: docSnap.id });
+    });
+    console.log(`[Firebase Core] [getAdmissions] Firestore Read SUCCESS!`, {
+      projectId: projectId,
+      collection: "hgs_admissions",
+      count: results.length
+    });
+    return results;
+  } catch (err) {
+    console.error(`[Firebase Core] [getAdmissions] Firestore Read FAILURE!`, {
+      projectId: projectId,
+      collection: "hgs_admissions",
+      error: err.message
+    });
+    throw err;
   }
-  // Local storage fallback
-  const list = JSON.parse(localStorage.getItem('hgs_admissions') || '[]');
-  return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 };
 
 export const updateAdmission = async (id, updatedFields) => {
-  if (liveMode && db) {
-    try {
-      const colRef = sdkFirestore.collection(db, "hgs_admissions");
-      const q = sdkFirestore.query(colRef, sdkFirestore.where("id", "==", id));
-      const snapshot = await sdkFirestore.getDocs(q);
-      if (!snapshot.empty) {
-        const docId = snapshot.docs[0].id;
-        const docRef = sdkFirestore.doc(db, "hgs_admissions", docId);
-        await sdkFirestore.updateDoc(docRef, updatedFields);
-        return { success: true };
-      }
-    } catch (err) {
-      console.error("Firestore updateAdmission failed:", err);
-      throw err;
-    }
-  }
-
-  // Local storage fallback
-  const list = JSON.parse(localStorage.getItem('hgs_admissions') || '[]');
-  const idx = list.findIndex(item => item.id === id);
-  if (idx !== -1) {
-    list[idx] = { ...list[idx], ...updatedFields };
-    localStorage.setItem('hgs_admissions', JSON.stringify(list));
+  const colRef = sdkFirestore.collection(db, "hgs_admissions");
+  const q = sdkFirestore.query(colRef, sdkFirestore.where("id", "==", id));
+  const snapshot = await sdkFirestore.getDocs(q);
+  if (!snapshot.empty) {
+    const docId = snapshot.docs[0].id;
+    const docRef = sdkFirestore.doc(db, "hgs_admissions", docId);
+    await sdkFirestore.updateDoc(docRef, updatedFields);
     return { success: true };
   }
   throw new Error("Admission record not found");
 };
 
 export const deleteAdmission = async (id) => {
-  if (liveMode && db) {
-    try {
-      const colRef = sdkFirestore.collection(db, "hgs_admissions");
-      const q = sdkFirestore.query(colRef, sdkFirestore.where("id", "==", id));
-      const snapshot = await sdkFirestore.getDocs(q);
-      if (!snapshot.empty) {
-        const docId = snapshot.docs[0].id;
-        const docRef = sdkFirestore.doc(db, "hgs_admissions", docId);
-        await sdkFirestore.deleteDoc(docRef);
-        return { success: true };
-      }
-    } catch (err) {
-      console.error("Firestore deleteAdmission failed:", err);
-      throw err;
-    }
+  const colRef = sdkFirestore.collection(db, "hgs_admissions");
+  const q = sdkFirestore.query(colRef, sdkFirestore.where("id", "==", id));
+  const snapshot = await sdkFirestore.getDocs(q);
+  if (!snapshot.empty) {
+    const docId = snapshot.docs[0].id;
+    const docRef = sdkFirestore.doc(db, "hgs_admissions", docId);
+    await sdkFirestore.deleteDoc(docRef);
+    return { success: true };
   }
-
-  // Local Storage fallback
-  const list = JSON.parse(localStorage.getItem('hgs_admissions') || '[]');
-  const filtered = list.filter(item => item.id !== id);
-  localStorage.setItem('hgs_admissions', JSON.stringify(filtered));
-  return { success: true };
+  throw new Error("Admission record not found");
 };
 
+// ==========================================
+// CONTACT MESSAGES MANAGEMENT
+// ==========================================
 // ==========================================
 // CONTACT MESSAGES MANAGEMENT
 // ==========================================
@@ -208,40 +137,30 @@ export const saveContactMessage = async (messageData) => {
     createdAt: new Date().toISOString()
   };
 
-  if (liveMode && db) {
-    try {
-      const colRef = sdkFirestore.collection(db, "hgs_messages");
-      await sdkFirestore.addDoc(colRef, record);
-      return { success: true, id: record.id };
-    } catch (err) {
-      console.error("Firestore saveContactMessage failed:", err);
-      throw err;
-    }
-  } else {
-    const list = JSON.parse(localStorage.getItem('hgs_messages') || '[]');
-    list.push(record);
-    localStorage.setItem('hgs_messages', JSON.stringify(list));
+  try {
+    const colRef = sdkFirestore.collection(db, "hgs_messages");
+    await sdkFirestore.addDoc(colRef, record);
     return { success: true, id: record.id };
+  } catch (err) {
+    console.error("Firestore saveContactMessage failed:", err);
+    throw err;
   }
 };
 
 export const getContactMessages = async () => {
-  if (liveMode && db) {
-    try {
-      const colRef = sdkFirestore.collection(db, "hgs_messages");
-      const q = sdkFirestore.query(colRef, sdkFirestore.orderBy("createdAt", "desc"));
-      const snapshot = await sdkFirestore.getDocs(q);
-      const results = [];
-      snapshot.forEach(docSnap => {
-        results.push({ ...docSnap.data(), docId: docSnap.id });
-      });
-      return results;
-    } catch (err) {
-      console.error("Firestore getContactMessages failed:", err);
-    }
+  try {
+    const colRef = sdkFirestore.collection(db, "hgs_messages");
+    const q = sdkFirestore.query(colRef, sdkFirestore.orderBy("createdAt", "desc"));
+    const snapshot = await sdkFirestore.getDocs(q);
+    const results = [];
+    snapshot.forEach(docSnap => {
+      results.push({ ...docSnap.data(), docId: docSnap.id });
+    });
+    return results;
+  } catch (err) {
+    console.error("Firestore getContactMessages failed:", err);
+    throw err;
   }
-  const list = JSON.parse(localStorage.getItem('hgs_messages') || '[]');
-  return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 };
 
 // ==========================================
@@ -250,18 +169,14 @@ export const getContactMessages = async () => {
 
 // Check if any admin exists in the entire database (for dynamic First Setup page)
 export const checkAdminsExist = async () => {
-  if (liveMode && db) {
-    try {
-      const colRef = sdkFirestore.collection(db, "hgs_administrators");
-      const snapshot = await sdkFirestore.getDocs(colRef);
-      return !snapshot.empty;
-    } catch (err) {
-      console.error("Firestore checkAdminsExist failed:", err);
-    }
+  try {
+    const colRef = sdkFirestore.collection(db, "hgs_administrators");
+    const snapshot = await sdkFirestore.getDocs(colRef);
+    return !snapshot.empty;
+  } catch (err) {
+    console.error("Firestore checkAdminsExist failed:", err);
+    throw err;
   }
-  // Local storage fallback
-  const list = JSON.parse(localStorage.getItem('hgs_administrators') || '[]');
-  return list.length > 0;
 };
 
 // Create a new administrator account (Auth and Firestore list mapping)
@@ -273,39 +188,18 @@ export const createAdministrator = async (email, password, fullName) => {
     createdAt: new Date().toISOString()
   };
 
-  if (liveMode && auth && db) {
-    try {
-      // Create user inside Firebase Authentication
-      const result = await sdkAuth.createUserWithEmailAndPassword(auth, email, password);
-      const uid = result.user.uid;
-      
-      // Save metadata securely using Firestore (mapping uid to doc reference)
-      const docRef = sdkFirestore.doc(db, "hgs_administrators", uid);
-      await sdkFirestore.setDoc(docRef, { ...profile, uid });
-      return { success: true, uid };
-    } catch (err) {
-      console.error("Firebase createAdministrator failed:", err);
-      throw err;
-    }
-  } else {
-    // Local storage fallback
-    const list = JSON.parse(localStorage.getItem('hgs_administrators') || '[]');
+  try {
+    // Create user inside Firebase Authentication
+    const result = await sdkAuth.createUserWithEmailAndPassword(auth, email, password);
+    const uid = result.user.uid;
     
-    // Check if email already registered
-    const exists = list.some(admin => admin.email === profile.email);
-    if (exists) {
-      throw new Error("This administrator email address is already registered.");
-    }
-
-    const newAdmin = {
-      ...profile,
-      uid: 'ADM-ACC-' + Date.now(),
-      passwordHash: btoa(password) // simple mock base64 obfuscation for offline storage safety
-    };
-
-    list.push(newAdmin);
-    localStorage.setItem('hgs_administrators', JSON.stringify(list));
-    return { success: true, uid: newAdmin.uid };
+    // Save metadata securely using Firestore (mapping uid to doc reference)
+    const docRef = sdkFirestore.doc(db, "hgs_administrators", uid);
+    await sdkFirestore.setDoc(docRef, { ...profile, uid });
+    return { success: true, uid };
+  } catch (err) {
+    console.error("Firebase createAdministrator failed:", err);
+    throw err;
   }
 };
 
@@ -313,63 +207,41 @@ export const createAdministrator = async (email, password, fullName) => {
 export const loginAdministrator = async (email, password) => {
   const sanitizedEmail = email.toLowerCase().trim();
 
-  if (liveMode && auth) {
-    try {
-      const result = await sdkAuth.signInWithEmailAndPassword(auth, sanitizedEmail, password);
-      const uid = result.user.uid;
+  try {
+    const result = await sdkAuth.signInWithEmailAndPassword(auth, sanitizedEmail, password);
+    const uid = result.user.uid;
 
-      // Check if user has admin record in Firestore
-      const docRef = sdkFirestore.doc(db, "hgs_administrators", uid);
-      const docSnap = await sdkFirestore.getDoc(docRef);
-      
-      if (docSnap.exists()) {
-        const profile = docSnap.data();
-        localStorage.setItem('hgs_session', JSON.stringify({ uid, email: sanitizedEmail, fullName: profile.fullName || "Admin", role: profile.role || "Registrar" }));
-        return { success: true, profile };
-      } else {
-        // Logged in but no mapping? Create a placeholder metadata instantly
-        const profile = { fullName: "Admin Staff", email: sanitizedEmail, role: "Registrar", createdAt: new Date().toISOString(), uid };
-        await sdkFirestore.setDoc(docRef, profile);
-        localStorage.setItem('hgs_session', JSON.stringify(profile));
-        return { success: true, profile };
-      }
-    } catch (err) {
-      console.error("Firestore/Auth loginAdministrator failed:", err);
-      throw err;
-    }
-  } else {
-    // Local storage fallback
-    const list = JSON.parse(localStorage.getItem('hgs_administrators') || '[]');
+    // Check if user has admin record in Firestore
+    const docRef = sdkFirestore.doc(db, "hgs_administrators", uid);
+    const docSnap = await sdkFirestore.getDoc(docRef);
     
-    // Check credentials matching
-    const admin = list.find(item => item.email === sanitizedEmail && item.passwordHash === btoa(password));
-    if (admin) {
-      const sessionUser = { uid: admin.uid, email: admin.email, fullName: admin.fullName, role: admin.role || "Registrar" };
-      localStorage.setItem('hgs_session', JSON.stringify(sessionUser));
-      return { success: true, profile: admin };
+    if (docSnap.exists()) {
+      const profile = docSnap.data();
+      localStorage.setItem('hgs_session', JSON.stringify({ uid, email: sanitizedEmail, fullName: profile.fullName || "Admin", role: profile.role || "Registrar" }));
+      return { success: true, profile };
     } else {
-      // If there is absolutely NO admin registered yet,
-      // instruct them to register first.
-      if (list.length === 0) {
-        throw new Error("No administrators exist yet. Please register the first administrator account first using the Registration system.");
-      }
-      throw new Error("Invalid administrator access email or secure password.");
+      // Logged in but no mapping? Create a placeholder metadata instantly
+      const profile = { fullName: "Admin Staff", email: sanitizedEmail, role: "Registrar", createdAt: new Date().toISOString(), uid };
+      await sdkFirestore.setDoc(docRef, profile);
+      localStorage.setItem('hgs_session', JSON.stringify(profile));
+      return { success: true, profile };
     }
+  } catch (err) {
+    console.error("Firestore/Auth loginAdministrator failed:", err);
+    throw err;
   }
 };
 
 // Admin Secure Log-out
 export const logoutAdministrator = async () => {
   localStorage.setItem('hgs_session', 'null');
-  if (liveMode && auth) {
-    try {
-      await sdkAuth.signOut(auth);
-      return { success: true };
-    } catch (err) {
-      console.error("Firebase signOut failed:", err);
-    }
+  try {
+    await sdkAuth.signOut(auth);
+    return { success: true };
+  } catch (err) {
+    console.error("Firebase signOut failed:", err);
+    throw err;
   }
-  return { success: true };
 };
 
 // Check active login state
@@ -390,51 +262,28 @@ export const changeAdministratorPassword = async (newPassword) => {
   const session = getActiveAdminSession();
   if (!session) throw new Error("No authenticated session available");
 
-  if (liveMode && auth) {
-    try {
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        await sdkAuth.updatePassword(currentUser, newPassword);
-        return { success: true };
-      } else {
-        throw new Error("Session expired. Please log in again.");
-      }
-    } catch (err) {
-      console.error("Firebase updatePassword failed:", err);
-      throw err;
-    }
-  } else {
-    // Local storage fallback
-    const list = JSON.parse(localStorage.getItem('hgs_administrators') || '[]');
-    const idx = list.findIndex(item => item.uid === session.uid);
-    if (idx !== -1) {
-      list[idx].passwordHash = btoa(newPassword);
-      localStorage.setItem('hgs_administrators', JSON.stringify(list));
+  try {
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      await sdkAuth.updatePassword(currentUser, newPassword);
       return { success: true };
+    } else {
+      throw new Error("Session expired. Please log in again.");
     }
-    throw new Error("Admin session matching record not found in storage.");
+  } catch (err) {
+    console.error("Firebase updatePassword failed:", err);
+    throw err;
   }
 };
 
 // Forgot password reset helper
 export const resetAdministratorPasswordByEmail = async (email) => {
-  if (liveMode && auth) {
-    try {
-      await sdkAuth.sendPasswordResetEmail(auth, email);
-      return { success: true };
-    } catch (err) {
-      console.error("Firebase sendPasswordResetEmail failed:", err);
-      throw err;
-    }
-  } else {
-    // Simulate reset for local storage persistence
-    const list = JSON.parse(localStorage.getItem('hgs_administrators') || '[]');
-    const exists = list.some(item => item.email === email.toLowerCase().trim());
-    if (exists) {
-      return { success: true, simulated: true };
-    } else {
-      throw new Error("No administrator account associated with this email address.");
-    }
+  try {
+    await sdkAuth.sendPasswordResetEmail(auth, email);
+    return { success: true };
+  } catch (err) {
+    console.error("Firebase sendPasswordResetEmail failed:", err);
+    throw err;
   }
 };
 
@@ -470,113 +319,78 @@ export const saveStudent = async (studentData) => {
     createdAt: studentData.createdAt || new Date().toISOString()
   };
 
-  if (liveMode && db) {
-    try {
-      const colRef = sdkFirestore.collection(db, "hgs_students");
-      // Check if editing or creating
-      const q = sdkFirestore.query(colRef, sdkFirestore.where("id", "==", record.id));
-      const snapshot = await sdkFirestore.getDocs(q);
-      
-      if (!snapshot.empty) {
-        // Edit existing doc
-        const docId = snapshot.docs[0].id;
-        const docRef = sdkFirestore.doc(db, "hgs_students", docId);
-        await sdkFirestore.updateDoc(docRef, record);
-      } else {
-        // Create new doc
-        await sdkFirestore.addDoc(colRef, record);
-      }
-      return { success: true, id: record.id };
-    } catch (err) {
-      console.error("Firestore saveStudent failed:", err);
-      throw err;
-    }
-  } else {
-    // Local storage fallback
-    const list = JSON.parse(localStorage.getItem('hgs_students') || '[]');
-    const idx = list.findIndex(item => item.id === record.id);
-    if (idx !== -1) {
-      list[idx] = record;
+  try {
+    const colRef = sdkFirestore.collection(db, "hgs_students");
+    // Check if editing or creating
+    const q = sdkFirestore.query(colRef, sdkFirestore.where("id", "==", record.id));
+    const snapshot = await sdkFirestore.getDocs(q);
+    
+    if (!snapshot.empty) {
+      // Edit existing doc
+      const docId = snapshot.docs[0].id;
+      const docRef = sdkFirestore.doc(db, "hgs_students", docId);
+      await sdkFirestore.updateDoc(docRef, record);
     } else {
-      list.push(record);
+      // Create new doc
+      await sdkFirestore.addDoc(colRef, record);
     }
-    localStorage.setItem('hgs_students', JSON.stringify(list));
     return { success: true, id: record.id };
+  } catch (err) {
+    console.error("Firestore saveStudent failed:", err);
+    throw err;
   }
 };
 
 export const getStudents = async () => {
-  if (liveMode && db) {
-    try {
-      const colRef = sdkFirestore.collection(db, "hgs_students");
-      const q = sdkFirestore.query(colRef, sdkFirestore.orderBy("createdAt", "desc"));
-      const snapshot = await sdkFirestore.getDocs(q);
-      const results = [];
-      snapshot.forEach(docSnap => {
-        results.push({ ...docSnap.data(), docId: docSnap.id });
-      });
-      return results;
-    } catch (err) {
-      console.error("Firestore getStudents failed:", err);
-    }
+  try {
+    const colRef = sdkFirestore.collection(db, "hgs_students");
+    const q = sdkFirestore.query(colRef, sdkFirestore.orderBy("createdAt", "desc"));
+    const snapshot = await sdkFirestore.getDocs(q);
+    const results = [];
+    snapshot.forEach(docSnap => {
+      results.push({ ...docSnap.data(), docId: docSnap.id });
+    });
+    return results;
+  } catch (err) {
+    console.error("Firestore getStudents failed:", err);
+    throw err;
   }
-  // Local storage fallback
-  const list = JSON.parse(localStorage.getItem('hgs_students') || '[]');
-  return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 };
 
 export const updateStudent = async (id, updatedFields) => {
-  if (liveMode && db) {
-    try {
-      const colRef = sdkFirestore.collection(db, "hgs_students");
-      const q = sdkFirestore.query(colRef, sdkFirestore.where("id", "==", id));
-      const snapshot = await sdkFirestore.getDocs(q);
-      if (!snapshot.empty) {
-        const docId = snapshot.docs[0].id;
-        const docRef = sdkFirestore.doc(db, "hgs_students", docId);
-        await sdkFirestore.updateDoc(docRef, updatedFields);
-        return { success: true };
-      }
-    } catch (err) {
-      console.error("Firestore updateStudent failed:", err);
-      throw err;
+  try {
+    const colRef = sdkFirestore.collection(db, "hgs_students");
+    const q = sdkFirestore.query(colRef, sdkFirestore.where("id", "==", id));
+    const snapshot = await sdkFirestore.getDocs(q);
+    if (!snapshot.empty) {
+      const docId = snapshot.docs[0].id;
+      const docRef = sdkFirestore.doc(db, "hgs_students", docId);
+      await sdkFirestore.updateDoc(docRef, updatedFields);
+      return { success: true };
     }
-  }
-
-  // Local storage fallback
-  const list = JSON.parse(localStorage.getItem('hgs_students') || '[]');
-  const idx = list.findIndex(item => item.id === id);
-  if (idx !== -1) {
-    list[idx] = { ...list[idx], ...updatedFields };
-    localStorage.setItem('hgs_students', JSON.stringify(list));
-    return { success: true };
+  } catch (err) {
+    console.error("Firestore updateStudent failed:", err);
+    throw err;
   }
   throw new Error("Student account record not found");
 };
 
 export const deleteStudent = async (id) => {
-  if (liveMode && db) {
-    try {
-      const colRef = sdkFirestore.collection(db, "hgs_students");
-      const q = sdkFirestore.query(colRef, sdkFirestore.where("id", "==", id));
-      const snapshot = await sdkFirestore.getDocs(q);
-      if (!snapshot.empty) {
-        const docId = snapshot.docs[0].id;
-        const docRef = sdkFirestore.doc(db, "hgs_students", docId);
-        await sdkFirestore.deleteDoc(docRef);
-        return { success: true };
-      }
-    } catch (err) {
-      console.error("Firestore deleteStudent failed:", err);
-      throw err;
+  try {
+    const colRef = sdkFirestore.collection(db, "hgs_students");
+    const q = sdkFirestore.query(colRef, sdkFirestore.where("id", "==", id));
+    const snapshot = await sdkFirestore.getDocs(q);
+    if (!snapshot.empty) {
+      const docId = snapshot.docs[0].id;
+      const docRef = sdkFirestore.doc(db, "hgs_students", docId);
+      await sdkFirestore.deleteDoc(docRef);
+      return { success: true };
     }
+  } catch (err) {
+    console.error("Firestore deleteStudent failed:", err);
+    throw err;
   }
-
-  // Local Storage fallback
-  const list = JSON.parse(localStorage.getItem('hgs_students') || '[]');
-  const filtered = list.filter(item => item.id !== id);
-  localStorage.setItem('hgs_students', JSON.stringify(filtered));
-  return { success: true };
+  throw new Error("Student account record not found");
 };
 
 export const loginStudent = async (admissionNumber, password) => {
@@ -641,39 +455,30 @@ export const logActivity = async (action, details, operatorName = "System / Regi
     createdAt: new Date().toISOString()
   };
 
-  if (liveMode && db) {
-    try {
-      const colRef = sdkFirestore.collection(db, "hgs_activity_logs");
-      await sdkFirestore.addDoc(colRef, logObj);
-    } catch (err) {
-      console.error("Firestore logActivity failed:", err);
-    }
+  try {
+    const colRef = sdkFirestore.collection(db, "hgs_activity_logs");
+    await sdkFirestore.addDoc(colRef, logObj);
+    return { success: true, log: logObj };
+  } catch (err) {
+    console.error("Firestore logActivity failed:", err);
+    throw err;
   }
-
-  // Fallback to local storage persistence
-  const list = JSON.parse(localStorage.getItem('hgs_activity_logs') || '[]');
-  list.unshift(logObj);
-  localStorage.setItem('hgs_activity_logs', JSON.stringify(list));
-  return { success: true, log: logObj };
 };
 
 export const getActivityLogs = async () => {
-  if (liveMode && db) {
-    try {
-      const colRef = sdkFirestore.collection(db, "hgs_activity_logs");
-      const q = sdkFirestore.query(colRef, sdkFirestore.orderBy("createdAt", "desc"));
-      const snapshot = await sdkFirestore.getDocs(q);
-      const results = [];
-      snapshot.forEach(docSnap => {
-        results.push({ ...docSnap.data(), docId: docSnap.id });
-      });
-      return results;
-    } catch (err) {
-      console.error("Firestore getActivityLogs failed:", err);
-    }
+  try {
+    const colRef = sdkFirestore.collection(db, "hgs_activity_logs");
+    const q = sdkFirestore.query(colRef, sdkFirestore.orderBy("createdAt", "desc"));
+    const snapshot = await sdkFirestore.getDocs(q);
+    const results = [];
+    snapshot.forEach(docSnap => {
+      results.push({ ...docSnap.data(), docId: docSnap.id });
+    });
+    return results;
+  } catch (err) {
+    console.error("Firestore getActivityLogs failed:", err);
+    throw err;
   }
-  const list = JSON.parse(localStorage.getItem('hgs_activity_logs') || '[]');
-  return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 };
 
 // Generate high-strength password
@@ -967,21 +772,19 @@ export const getRecipientEmail = (obj) => {
   return { email: resolved, fieldName: fieldName };
 };
 
-export const sendEmailNotification = async (recipientEmail, subject, payload) => {
+export const sendEmailNotification = async (recipientEmail, subject, payload, configOverride = null) => {
   if (!recipientEmail || recipientEmail.trim() === "") {
     throw new Error("Aborted: Recipient address (guardianEmail) is empty. Dispatch canceled.");
   }
 
   const portalUrlFixed = "https://peterdavididowu1-commits.github.io/His-Grace-School-Agbugburu-/login.html";
 
-  // Log the recipient email address before sending
-  console.log(`[Notification Engine] [PRE-SEND VERIFICATION] Recipient email resolved: "${recipientEmail.trim()}". Outgoing Subject: "${subject}".`);
-
-  const config = await fetchGlobalEmailSettings();
+  const config = configOverride || await fetchGlobalEmailSettings();
   const dateStr = new Date().toLocaleDateString();
   const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  const textBody = `
+  // Fallback structure in case payload.message is empty or custom credentials text is needed
+  const textBody = payload.message || `
 Dear Guardian,
 
 We are delighted to inform you that the school registration request for "${payload.studentName}" has been APPROVED by His Grace Nursery & Primary School Registry Council on ${dateStr} @ ${timeStr}!
@@ -1001,42 +804,41 @@ His Grace Nursery & Primary School
 
   await logActivity(
     "Outbound Email Formulated",
-    `Compiled student credential notification card for pupil "${payload.studentName}". Target Email: ${recipientEmail}.`
+    `Compiled email dispatch card for "${payload.studentName}". Target Email: ${recipientEmail}.`
   );
-
-  console.log(`[Notification Provider Config] Current provider configured is "${config.provider || 'none'}". Note: Only EmailJS is active. Attempting direct delivery via EmailJS...`);
 
   if (!config.emailjsServiceId || !config.emailjsTemplateId || !config.emailjsPublicKey) {
     throw new Error("EmailJS service credentials are not configured in the security settings page. Please enter Service ID, Template ID, and Public Key first.");
   }
 
+  const payloadBody = {
+    service_id: config.emailjsServiceId,
+    template_id: config.emailjsTemplateId,
+    user_id: config.emailjsPublicKey,
+    template_params: {
+      subject: subject,
+      recipient_email: recipientEmail.trim(),
+      to_email: recipientEmail.trim(), // Standard parameter compatibility
+      email: recipientEmail.trim(), // Map guardianEmail to the variable named 'email'
+      guardianEmail: recipientEmail.trim(),
+      student_name: payload.studentName,
+      admission_number: payload.admissionNumber || "N/A",
+      username: payload.username || "N/A",
+      password: payload.password || "N/A",
+      portal_url: portalUrlFixed,
+      parent_phone: payload.guardianPhone || "N/A",
+      date_time: `${dateStr} ${timeStr}`,
+      message: textBody
+    }
+  };
+
+  // Log to console: recipient email, payload, and later response
+  console.log("=== EMAILJS DISPATCH INITIATION LOG ===");
+  console.log(`- Recipient Email: ${recipientEmail.trim()}`);
+  console.log("- Full Payload Parameters:", JSON.stringify(payloadBody, null, 2));
+  console.log("=======================================");
+
   try {
-    const payloadBody = {
-      service_id: config.emailjsServiceId,
-      template_id: config.emailjsTemplateId,
-      user_id: config.emailjsPublicKey,
-      template_params: {
-        subject: subject,
-        recipient_email: recipientEmail.trim(),
-        to_email: recipientEmail.trim(), // Standard parameter compatibility
-        email: recipientEmail.trim(), // Map guardianEmail to the variable named 'email'
-        guardianEmail: recipientEmail.trim(),
-        student_name: payload.studentName,
-        admission_number: payload.admissionNumber,
-        username: payload.username,
-        password: payload.password,
-        portal_url: portalUrlFixed,
-        parent_phone: payload.guardianPhone || "N/A",
-        date_time: `${dateStr} ${timeStr}`,
-        message: textBody
-      }
-    };
-
-    console.log("=== EMAILJS PRE-SEND DIAGNOSTIC ===");
-    console.log(`- Recipient Email: ${recipientEmail.trim()}`);
-    console.log("- Full Payload:", JSON.stringify(payloadBody, null, 2));
-    console.log("===================================");
-
     const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
       method: "POST",
       headers: {
@@ -1045,20 +847,16 @@ His Grace Nursery & Primary School
       body: JSON.stringify(payloadBody)
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("=== EMAILJS DISPATCH ERROR ===");
-      console.error(`- HTTP Status: ${response.status}`);
-      console.error(`- Error Body: ${errorText}`);
-      console.error("==============================");
-      throw new Error(`EmailJS check failed: ${errorText} (Status: ${response.status})`);
-    }
-
     const resText = await response.text();
-    console.log("=== EMAILJS POST-SEND SUCCESS ===");
-    console.log(`- Response Status: ${response.status}`);
-    console.log(`- EmailJS Response Message: "${resText}"`);
-    console.log("=================================");
+
+    console.log("=== EMAILJS DISPATCH RESPONSE LOG ===");
+    console.log(`- HTTP Response Status: ${response.status}`);
+    console.log(`- EmailJS Response Body: "${resText}"`);
+    console.log("=====================================");
+
+    if (!response.ok) {
+      throw new Error(`EmailJS check failed: ${resText} (Status: ${response.status})`);
+    }
 
     // Crucial user requirement: Display success message only after EmailJS confirms success
     alert("Email successfully delivered using Direct EmailJS function");
@@ -1084,8 +882,6 @@ export const sendSMSNotification = async (recipientPhone, payload) => {
 };
 
 export const sendRejectionNotification = async (recipientEmail, recipientPhone, studentName, reason) => {
-  const dateStr = new Date().toLocaleDateString();
-  const subject = `Admission Status Update - ${studentName}`;
   const messageContent = `Dear Guardian,\n\nWe regret to inform you that the registration request for "${studentName}" has been declined following review by His Grace High School admissions committee.\n\nExplanation details:\n"${reason}"\n\nIf you have supplementary records or wish to request reassessment, feel free to contact the desk.\n\nWarm Regards,\nRegistrar Office\nHis Grace High School`;
 
   if (!recipientEmail || recipientEmail.trim() === "") {
@@ -1093,93 +889,17 @@ export const sendRejectionNotification = async (recipientEmail, recipientPhone, 
     return { success: false, details: "Recipient email is empty." };
   }
 
-  console.log(`[Notification Engine] [PRE-SEND REJECTION VERIFICATION] Recipient: "${recipientEmail.trim()}"`);
-
-  await logActivity(
-    "Outbound Rejection Formulated",
-    `Compiled rejection report for applicant "${studentName}". Email: ${recipientEmail || 'N/A'}.`
-  );
-
-  const config = await fetchGlobalEmailSettings();
-
-  console.log(`[Notification Provider Config] Current provider configured is "${config.provider || 'none'}". Note: Only EmailJS is active. Attempting direct delivery via EmailJS...`);
-
-  if (!config.emailjsServiceId || !config.emailjsTemplateId || !config.emailjsPublicKey) {
-    throw new Error("EmailJS service credentials are not configured in the security settings page. Please enter Service ID, Template ID, and Public Key first.");
-  }
-
-  try {
-    const payloadBody = {
-      service_id: config.emailjsServiceId,
-      template_id: config.emailjsTemplateId,
-      user_id: config.emailjsPublicKey,
-      template_params: {
-        subject: subject,
-        recipient_email: recipientEmail,
-        to_email: recipientEmail, // Standard parameter compatibility
-        email: recipientEmail, // Map guardianEmail to the template variable named 'email'
-        guardianEmail: recipientEmail, 
-        student_name: studentName,
-        admission_number: "REJECTED",
-        username: "N/A",
-        password: "N/A",
-        portal_url: "https://peterdavididowu1-commits.github.io/His-Grace-School-Agbugburu-/login.html",
-        parent_phone: recipientPhone || "N/A",
-        date_time: dateStr,
-        message: messageContent
-      }
-    };
-
-    console.log("=== EMAILJS DIAGNOSTIC PRE-SEND REJECTION LOG ===");
-    console.log(`- Service ID: ${config.emailjsServiceId}`);
-    console.log(`- Template ID: ${config.emailjsTemplateId}`);
-    console.log(`- Public Key: ${config.emailjsPublicKey}`);
-    console.log(`- Recipient Email: ${recipientEmail}`);
-    console.log(`- Sender Email: ${config.fromEmail || "N/A"}`);
-    console.log(`- Subject: ${subject}`);
-    console.log("- Full Payload:", JSON.stringify(payloadBody, null, 2));
-    console.log("==================================================");
-
-    const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payloadBody)
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("=== EMAILJS DIAGNOSTIC REJECTION DISPATCH ERROR ===");
-      console.error(`- HTTP Status: ${response.status}`);
-      console.error(`- Error Body: ${errorText}`);
-      console.error(`- Service ID Tried: ${config.emailjsServiceId}`);
-      console.error(`- Template ID Tried: ${config.emailjsTemplateId}`);
-      console.error(`- Recipient Email Tried: ${recipientEmail}`);
-      console.error("====================================================");
-      throw new Error(`EmailJS check failed: ${errorText} (Status: ${response.status})`);
+  return await sendEmailNotification(
+    recipientEmail,
+    `Admission Status Update - ${studentName}`,
+    {
+      studentName: studentName,
+      admissionNumber: "REJECTED",
+      username: "N/A",
+      password: "N/A",
+      guardianPhone: recipientPhone || "N/A",
+      message: messageContent
     }
-
-    const resText = await response.text();
-    console.log("=== EMAILJS DIAGNOSTIC POST-SEND REJECTION SUCCESS LOG ===");
-    console.log(`- HTTP Status: ${response.status}`);
-    console.log(`- Response Message: "${resText}"`);
-    console.log(`- Service ID Used: ${config.emailjsServiceId}`);
-    console.log(`- Template ID Used: ${config.emailjsTemplateId}`);
-    console.log(`- Recipient Email: ${recipientEmail}`);
-    console.log("==========================================================");
-
-    await logActivity(
-      "Email Rejection Dispatched (EmailJS)",
-      `Dispatched rejection letter mail through EmailJS to ${recipientEmail} for pupil ${studentName}. Response: ${resText}`
-    );
-
-    return { success: true, provider: "EmailJS", details: `Delivered rejection. Response: ${resText}` };
-  } catch (err) {
-    console.error("Failed to mail rejection:", err);
-    await logActivity(
-      "Email Rejection Failed",
-      `Rejection dispatch failed via EmailJS: ${err.message}`
-    );
-    throw err;
-  }
+  );
 };
 
