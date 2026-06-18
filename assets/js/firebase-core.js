@@ -753,7 +753,7 @@ export const approveAdmission = async (admissionId, operatorName = "Registrar") 
     guardianEmail: recipientEmail
   };
 
-  // 6. Send live Email & SMS alerts automatically
+  // 6. Send live Email alert automatically (SMS is temporarily disabled)
   try {
     if (!recipientEmail) {
       console.warn("[Approval Notification] guardianEmail / recipient email is empty, skipping email dispatch.");
@@ -764,9 +764,7 @@ export const approveAdmission = async (admissionId, operatorName = "Registrar") 
         notificationContent
       );
     }
-    if (targetApplication.parentPhone) {
-      await sendSMSNotification(targetApplication.parentPhone, notificationContent);
-    }
+    console.log(`[SMS System] Outbound SMS for admission approval of "${targetApplication.studentName}" is skipped (SMS temporarily disabled).`);
   } catch (notifyErr) {
     console.error("Non-blocking notification delivery failure during approval workflow:", notifyErr);
   }
@@ -774,7 +772,7 @@ export const approveAdmission = async (admissionId, operatorName = "Registrar") 
   // 7. Log activity
   await logActivity(
     "Admission Approved & Student Onboarded",
-    `Approved admission request for pupil "${targetApplication.studentName}" (Target Grade: ${targetApplication.gradeApplying}). Outfitted credentials: Portal UID [${uniqueNum}], Temp Password [${tempPassword}]. Dispatched notifications to guardian ${targetApplication.parentPhone} / ${recipientEmail || 'N/A'}.`,
+    `Approved admission request for pupil "${targetApplication.studentName}" (Target Grade: ${targetApplication.gradeApplying}). Outfitted credentials: Portal UID [${uniqueNum}], Temp Password [${tempPassword}]. Dispatched notifications to guardian email ${recipientEmail || 'N/A'}.`,
     operatorName
   );
 
@@ -839,7 +837,7 @@ export const resendStudentCredentials = async (studentId, operatorName = "Regist
   const recipientEmail = emailInfo.email;
 
   // Prevent sending when guardianEmail is empty
-  if (!recipientEmail) {
+  if (!recipientEmail || recipientEmail.trim() === "") {
     throw new Error("The recipient's email address (guardianEmail) is empty. Unable to resend credentials via email. Please configure an email address first.");
   }
 
@@ -854,26 +852,25 @@ export const resendStudentCredentials = async (studentId, operatorName = "Regist
     guardianEmail: recipientEmail
   };
 
-  // Resend notifications on demand
-  await sendEmailNotification(
+  // Resend mail notification only (SMS is temporarily disabled)
+  const emailResult = await sendEmailNotification(
     recipientEmail,
     `Access Reminder: ${student.studentName} (${student.admissionNumber})`,
     notificationContent
   );
 
-  if (student.parentPhone) {
-    await sendSMSNotification(student.parentPhone, notificationContent);
-  }
+  console.log(`[SMS System] Skipping SMS dispatch during credentials resend for "${student.studentName}". Only email notifications are active.`);
 
   await logActivity(
     "Credentials Respatched",
-    `Resubmitted portal entry credentials card for pupil "${student.studentName}" (${student.admissionNumber}). Destination Phone: ${student.parentPhone}, Destination Email: ${recipientEmail || 'N/A'}.`,
+    `Resubmitted portal entry credentials card for pupil "${student.studentName}" (${student.admissionNumber}). Destination Email: ${recipientEmail || 'N/A'}. Details: ${emailResult.details}`,
     operatorName
   );
 
   return {
     success: true,
-    notification: notificationContent
+    notification: notificationContent,
+    deliveryStatus: emailResult
   };
 };
 
@@ -945,18 +942,29 @@ export const getRecipientEmail = (obj) => {
   }
   let resolved = "";
   let fieldName = "none";
-  if (obj.guardianEmail) {
-    resolved = obj.guardianEmail;
+
+  console.log(`[Email Resolver] Checking object attributes for email extraction. Object studentName: "${obj.studentName || 'N/A'}"`);
+  console.log(`[Email Resolver Check] guardianEmail: "${obj.guardianEmail || 'empty'}"`);
+  console.log(`[Email Resolver Check] parentEmail: "${obj.parentEmail || 'empty'}"`);
+  console.log(`[Email Resolver Check] email: "${obj.email || 'empty'}"`);
+
+  if (obj.guardianEmail && obj.guardianEmail.trim() !== "") {
+    resolved = obj.guardianEmail.trim();
     fieldName = "guardianEmail";
-  } else if (obj.parentEmail) {
-    resolved = obj.parentEmail;
+    console.log(`[Email Resolver Verification] Successfully verified: Recipient email address "${resolved}" was retrieved from the primary 'guardianEmail' field database-attribute.`);
+  } else if (obj.parentEmail && obj.parentEmail.trim() !== "") {
+    resolved = obj.parentEmail.trim();
     fieldName = "parentEmail";
-  } else if (obj.email) {
-    resolved = obj.email;
+    console.warn(`[Email Resolver Verification Warning] 'guardianEmail' is empty. Fell back to 'parentEmail' database-attribute to retrieve value: "${resolved}".`);
+  } else if (obj.email && obj.email.trim() !== "") {
+    resolved = obj.email.trim();
     fieldName = "email";
+    console.warn(`[Email Resolver Verification Warning] 'guardianEmail' and 'parentEmail' are empty. Fell back to 'email' field to retrieve value: "${resolved}".`);
+  } else {
+    console.error("[Email Resolver Verification Failure] No email address could be resolved for this record.");
   }
-  console.log(`[Email Resolver] Resolved recipient email value: "${resolved.trim()}" using field "${fieldName}"`);
-  return { email: resolved.trim(), fieldName: fieldName };
+
+  return { email: resolved, fieldName: fieldName };
 };
 
 export const sendEmailNotification = async (recipientEmail, subject, payload) => {
@@ -964,12 +972,13 @@ export const sendEmailNotification = async (recipientEmail, subject, payload) =>
     throw new Error("Aborted: Recipient address (guardianEmail) is empty. Dispatch canceled.");
   }
 
-  console.log(`[Notification Engine] Preparing outbound mail dispatch. Recipient: "${recipientEmail.trim()}"`);
+  // Log the recipient email address before sending
+  console.log(`[Notification Engine] [PRE-SEND VERIFICATION] Recipient email resolved: "${recipientEmail.trim()}". Outgoing Subject: "${subject}".`);
 
   const config = await fetchGlobalEmailSettings();
   const dateStr = new Date().toLocaleDateString();
   const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  
+
   const textBody = `
 Dear Guardian,
 
@@ -988,138 +997,75 @@ Registrar General
 His Grace Nursery & Primary School
   `.trim();
 
-  // Log to audit log first
   await logActivity(
     "Outbound Email Formulated",
-    `Compiled student credential notification card for pupil "${payload.studentName}". Target Email: ${recipientEmail || 'N/A'}.`
+    `Compiled student credential notification card for pupil "${payload.studentName}". Target Email: ${recipientEmail}.`
   );
 
-  if (config.provider === "EmailJS") {
-    if (!config.emailjsServiceId || !config.emailjsTemplateId || !config.emailjsPublicKey) {
-      throw new Error("EmailJS service parameters are not fully configured inside Security Setup. Fallback simulated mode used.");
-    }
-    
-    try {
-      console.log(`[EmailJS Dispatch] Sending request to service ID: ${config.emailjsServiceId}, template ID: ${config.emailjsTemplateId}, with recipient email: "${recipientEmail}" mapped to template variable "email".`);
-      const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          service_id: config.emailjsServiceId,
-          template_id: config.emailjsTemplateId,
-          user_id: config.emailjsPublicKey,
-          template_params: {
-            subject: subject,
-            recipient_email: recipientEmail,
-            email: recipientEmail, // Map guardianEmail to the variable named 'email'
-            guardianEmail: recipientEmail,
-            student_name: payload.studentName,
-            admission_number: payload.admissionNumber,
-            username: payload.username,
-            password: payload.password,
-            portal_url: payload.portalUrl,
-            parent_phone: payload.guardianPhone || "N/A",
-            date_time: `${dateStr} ${timeStr}`,
-            message: textBody
-          }
-        })
-      });
+  console.log(`[Notification Provider Config] Current provider configured is "${config.provider || 'none'}". Note: Only EmailJS is active. Attempting direct delivery via EmailJS...`);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`EmailJS check failed: ${errorText} (Status: ${response.status})`);
+  if (!config.emailjsServiceId || !config.emailjsTemplateId || !config.emailjsPublicKey) {
+    throw new Error("EmailJS service credentials are not configured in the security settings page. Please enter Service ID, Template ID, and Public Key first.");
+  }
+
+  try {
+    const payloadBody = {
+      service_id: config.emailjsServiceId,
+      template_id: config.emailjsTemplateId,
+      user_id: config.emailjsPublicKey,
+      template_params: {
+        subject: subject,
+        recipient_email: recipientEmail,
+        email: recipientEmail, // Map guardianEmail to the variable named 'email'
+        guardianEmail: recipientEmail,
+        student_name: payload.studentName,
+        admission_number: payload.admissionNumber,
+        username: payload.username,
+        password: payload.password,
+        portal_url: payload.portalUrl,
+        parent_phone: payload.guardianPhone || "N/A",
+        date_time: `${dateStr} ${timeStr}`,
+        message: textBody
       }
+    };
 
-      const resText = await response.text();
-      console.log(`[EmailJS Dispatch Verification] Response: "${resText}" (Status: ${response.status})`);
+    console.log("[EmailJS Payload Sent]", JSON.stringify(payloadBody, null, 2));
 
-      await logActivity(
-        "Email Dispatched (EmailJS)",
-        `Successfully transferred admission notification email to EmailJS relay for "${payload.studentName}" (${recipientEmail}).`
-      );
-      return { success: true, provider: "EmailJS", details: `Delivered via active EmailJS API. Response: ${resText}` };
-    } catch (err) {
-      console.error("EmailJS dispatch failed:", err);
-      await logActivity(
-        "Email Delivery Failed (Alert)",
-        `Outbound transport via EmailJS failed: ${err.message}. Safeguarding dispatch inside local audit log.`
-      );
-      throw err;
+    const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payloadBody)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[EmailJS Dispatch Error] HTTP Status: ${response.status}. Error body: ${errorText}`);
+      throw new Error(`EmailJS check failed: ${errorText} (Status: ${response.status})`);
     }
-  } else if (config.provider === "Resend") {
-    if (!config.apiKey) {
-      throw new Error("Resend API Key is missing from the configurations.");
-    }
-    try {
-      const response = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${config.apiKey}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          from: `Admissions <${config.fromEmail || "onboarding@resend.dev"}>`,
-          to: [recipientEmail],
-          subject: subject,
-          text: textBody,
-          html: `<div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px;">
-            <h2 style="color: #4f46e5;">Admission Approved!</h2>
-            <p>Dear Guardian,</p>
-            <p>We are delighted to inform you that the registration for <strong>${payload.studentName}</strong> has been <strong>APPROVED</strong>!</p>
-            <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 15px 0;">
-              <p style="margin: 4px 0;"><strong>Portal URL:</strong> <a href="${payload.portalUrl}">${payload.portalUrl}</a></p>
-              <p style="margin: 4px 0;"><strong>Username:</strong> ${payload.username}</p>
-              <p style="margin: 4px 0;"><strong>Password:</strong> ${payload.password}</p>
-            </div>
-            <p>Please change your password on first login. Warm regards!</p>
-          </div>`
-        })
-      });
 
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Resend connection failed: ${errText}`);
-      }
+    const resText = await response.text();
+    console.log(`[EmailJS Response Received] HTTP Status: ${response.status}. Body: "${resText}"`);
 
-      await logActivity(
-        "Email Dispatched (Resend)",
-        `Transferred admission notification to Resend CRM for "${payload.studentName}" (${recipientEmail}).`
-      );
-      return { success: true, provider: "Resend", details: "Delivered via Resend REST." };
-    } catch (err) {
-      console.error("Resend API transmission failed:", err);
-      await logActivity(
-        "Email Delivery Failed (Resend Alert)",
-        `Resend transmission failed: ${err.message}`
-      );
-      throw err;
-    }
-  } else {
-    // Virtual sandbox simulation
     await logActivity(
-      "Email Simulated (Sandbox Mode)",
-      `Generated virtual success notification card for pupil "${payload.studentName}". Sandbox delivery complete. (No active keys submitted yet). Subject: ${subject}. Dest: ${recipientEmail || 'N/A'}.`
+      "Email Dispatched (EmailJS)",
+      `Successfully transferred admission notification email to EmailJS relay for "${payload.studentName}" (${recipientEmail}). Response: ${resText}`
     );
-    return { success: true, provider: "Simulated", details: "Completed in virtual simulator, logging payload." };
+    return { success: true, provider: "EmailJS", details: `Delivered via active EmailJS API. Response: ${resText}` };
+  } catch (err) {
+    console.error("EmailJS dispatch failed:", err);
+    await logActivity(
+      "Email Delivery Failed (Alert)",
+      `Outbound transport via EmailJS failed: ${err.message}. Safeguarding dispatch inside local audit log.`
+    );
+    throw err;
   }
 };
 
 export const sendSMSNotification = async (recipientPhone, payload) => {
-  const smsBody = `HGS ADMISSION SUCCESS! ${payload.studentName} is approved.\nPortal: ${payload.portalUrl}\nUID: ${payload.username}\nPassword: ${payload.password}`;
-  
-  await logActivity(
-    "SMS Notification Formulated",
-    `Compiled outbound SMS block. Destination Telephone: ${recipientPhone}.\nText: "${smsBody}"`
-  );
-  
-  await logActivity(
-    "SMS Dispatched (Simulated Delivery)",
-    `SMS transmitted successfully through school cellular carrier channels to subscriber [${recipientPhone}].`
-  );
-  
-  return { success: true, details: "Sent via virtual carrier simulation code." };
+  console.log(`[SMS System] Outbound SMS for user ${payload.studentName} to ${recipientPhone} is temporarily disabled.`);
+  return { success: true, details: "SMS disabled temporarily." };
 };
 
 export const sendRejectionNotification = async (recipientEmail, recipientPhone, studentName, reason) => {
@@ -1127,65 +1073,77 @@ export const sendRejectionNotification = async (recipientEmail, recipientPhone, 
   const subject = `Admission Status Update - ${studentName}`;
   const messageContent = `Dear Guardian,\n\nWe regret to inform you that the registration request for "${studentName}" has been declined following review by His Grace High School admissions committee.\n\nExplanation details:\n"${reason}"\n\nIf you have supplementary records or wish to request reassessment, feel free to contact the desk.\n\nWarm Regards,\nRegistrar Office\nHis Grace High School`;
 
-  // Log in registry
+  if (!recipientEmail || recipientEmail.trim() === "") {
+    console.warn("[Rejection Notification] No recipientEmail provided. Skipping outbound dispatch.");
+    return { success: false, details: "Recipient email is empty." };
+  }
+
+  console.log(`[Notification Engine] [PRE-SEND REJECTION VERIFICATION] Recipient: "${recipientEmail.trim()}"`);
+
   await logActivity(
     "Outbound Rejection Formulated",
-    `Compiled rejection report for applicant "${studentName}". Email: ${recipientEmail || 'N/A'}. SMS Line: ${recipientPhone || 'N/A'}.`
+    `Compiled rejection report for applicant "${studentName}". Email: ${recipientEmail || 'N/A'}.`
   );
 
   const config = await fetchGlobalEmailSettings();
 
-  if (config.provider === "EmailJS" && recipientEmail) {
-    if (!config.emailjsServiceId || !config.emailjsTemplateId || !config.emailjsPublicKey) {
-      await logActivity(
-        "Email Rejection Alert Failed",
-        `Could not post EmailJS rejection mail for ${studentName} - missing configurations.`
-      );
-    } else {
-      try {
-        await fetch("https://api.emailjs.com/api/v1.0/email/send", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            service_id: config.emailjsServiceId,
-            template_id: config.emailjsTemplateId,
-            user_id: config.emailjsPublicKey,
-            template_params: {
-              subject: subject,
-              recipient_email: recipientEmail,
-              email: recipientEmail, // Map guardianEmail to the variable named 'email'
-              guardianEmail: recipientEmail, 
-              student_name: studentName,
-              admission_number: "REJECTED",
-              username: "N/A",
-              password: "N/A",
-              portal_url: window.location.origin,
-              parent_phone: recipientPhone || "N/A",
-              date_time: dateStr,
-              message: messageContent
-            }
-          })
-        });
-        await logActivity(
-          "Email Rejection Dispatched (EmailJS)",
-          `Dispatched rejection letter mail through EmailJS to ${recipientEmail} for pupil ${studentName}.`
-        );
-      } catch (err) {
-        console.error("Failed to mail rejection:", err);
-        await logActivity(
-          "Email Rejection Failed",
-          `Rejection dispatch failed via EmailJS: ${err.message}`
-        );
-      }
-    }
+  console.log(`[Notification Provider Config] Current provider configured is "${config.provider || 'none'}". Note: Only EmailJS is active. Attempting direct delivery via EmailJS...`);
+
+  if (!config.emailjsServiceId || !config.emailjsTemplateId || !config.emailjsPublicKey) {
+    throw new Error("EmailJS service credentials are not configured in the security settings page. Please enter Service ID, Template ID, and Public Key first.");
   }
 
-  // Log SMS rejection simulation
-  await logActivity(
-    "SMS Rejection Dispatched",
-    `SMS Alert transmitted to guardian phone [${recipientPhone}]: "HGS Admission status update: Request for ${studentName} was declined. Reason: ${reason}."`
-  );
+  try {
+    const payloadBody = {
+      service_id: config.emailjsServiceId,
+      template_id: config.emailjsTemplateId,
+      user_id: config.emailjsPublicKey,
+      template_params: {
+        subject: subject,
+        recipient_email: recipientEmail,
+        email: recipientEmail, // Map guardianEmail to the template variable named 'email'
+        guardianEmail: recipientEmail, 
+        student_name: studentName,
+        admission_number: "REJECTED",
+        username: "N/A",
+        password: "N/A",
+        portal_url: window.location.origin,
+        parent_phone: recipientPhone || "N/A",
+        date_time: dateStr,
+        message: messageContent
+      }
+    };
 
-  return { success: true };
+    console.log("[EmailJS Rejection Payload Sent]", JSON.stringify(payloadBody, null, 2));
+
+    const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payloadBody)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[EmailJS Rejection Dispatch Error] HTTP Status: ${response.status}. Error body: ${errorText}`);
+      throw new Error(`EmailJS check failed: ${errorText} (Status: ${response.status})`);
+    }
+
+    const resText = await response.text();
+    console.log(`[EmailJS Rejection Response Received] HTTP Status: ${response.status}. Body: "${resText}"`);
+
+    await logActivity(
+      "Email Rejection Dispatched (EmailJS)",
+      `Dispatched rejection letter mail through EmailJS to ${recipientEmail} for pupil ${studentName}. Response: ${resText}`
+    );
+
+    return { success: true, provider: "EmailJS", details: `Delivered rejection. Response: ${resText}` };
+  } catch (err) {
+    console.error("Failed to mail rejection:", err);
+    await logActivity(
+      "Email Rejection Failed",
+      `Rejection dispatch failed via EmailJS: ${err.message}`
+    );
+    throw err;
+  }
 };
 

@@ -1425,7 +1425,8 @@
 
           const result = await resendStudentCredentials(student.id, session.fullName || "Registrar");
           if (result.success) {
-            showCredentialsNotificationModal(result.notification, "Resent & Re-dispatched to Guardian");
+            showCredentialsNotificationModal(result.notification, "Credentials Redispatched Successfully");
+            alert(`Email sent successfully via EmailJS!\nRecipient: ${result.notification.guardianEmail}\nStatus: ${result.deliveryStatus.details}`);
           }
         } catch (err) {
           alert("Resubmit error: " + err.message);
