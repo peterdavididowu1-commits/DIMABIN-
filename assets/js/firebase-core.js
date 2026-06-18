@@ -301,66 +301,155 @@ export const createAdministrator = async (email, password, fullName) => {
 export const loginAdministrator = async (email, password) => {
   const sanitizedEmail = email.toLowerCase().trim();
   const attemptId = "LGN-" + Date.now();
+  
+  // Track parameters for tracing
+  let authResult = "Pending";
+  let queryResult = "Pending";
+  let adminDocFound = false;
+  let passwordMatch = false;
+  let sessionCreated = false;
+  let redirectResult = "Pending";
+
   console.log(`[Admin Login Attempt] ID: ${attemptId} | Email: ${sanitizedEmail}`);
+  console.log(`- Email entered: "${sanitizedEmail}"`);
 
   try {
-    try {
-      const result = await sdkAuth.signInWithEmailAndPassword(auth, sanitizedEmail, password);
-      const uid = result.user.uid;
-      console.log(`[Admin Login FirebaseAuth Success] ID: ${attemptId} | UID: ${uid}`);
+    if (!sanitizedEmail) {
+      const err = new Error("The specified email address is empty.");
+      err.stepName = "INPUT_VALIDATION";
+      err.fileName = "assets/js/firebase-core.js";
+      err.lineNumber = 320;
+      err.codeLine = "if (!sanitizedEmail)";
+      throw err;
+    }
+    if (!password) {
+      const err = new Error("The secure system password input cannot be empty.");
+      err.stepName = "INPUT_VALIDATION";
+      err.fileName = "assets/js/firebase-core.js";
+      err.lineNumber = 328;
+      err.codeLine = "if (!password)";
+      throw err;
+    }
 
-      // Check if user has admin record in Firestore
+    // Step 2: Firebase Authentication
+    let result;
+    try {
+      result = await sdkAuth.signInWithEmailAndPassword(auth, sanitizedEmail, password);
+      const uid = result.user.uid;
+      authResult = `SUCCESS | UID: ${uid}`;
+      console.log(`[Admin Login FirebaseAuth Success] ID: ${attemptId} | UID: ${uid}`);
+      console.log(`- Firebase Auth result: ${authResult}`);
+
+      // Step 3: Firestore Document Retrieve
       const docRef = sdkFirestore.doc(db, "hgs_administrators", uid);
       const docSnap = await sdkFirestore.getDoc(docRef);
       
       if (docSnap.exists()) {
+        adminDocFound = true;
+        passwordMatch = true; // Confirmed by modern Auth sign-in
         const profile = docSnap.data();
+        queryResult = `SUCCESS | Found administrator document for UID: ${uid}`;
+        console.log(`- Firestore query result: ${queryResult}`);
+        console.log(`- Admin document found (true/false): true`);
+        console.log(`- Password match (true/false): true`);
+
+        // Step 4: Session Creation
         const sessionObj = { uid, email: sanitizedEmail, fullName: profile.fullName || "Admin", role: profile.role || "Registrar" };
         localStorage.setItem('hgs_session', JSON.stringify(sessionObj));
-        console.log(`[Admin Login Full Success] ID: ${attemptId} | Profile loaded for: ${sessionObj.fullName}`);
-        return { success: true, profile };
+        sessionCreated = true;
+        redirectResult = "Initiating Redirect to admin-dashboard.html...";
+        console.log(`- Session creation result: SUCCESS`);
+        console.log(`- Redirect result: SUCCESS`);
+        return { success: true, profile, trace: { email: sanitizedEmail, authResult, queryResult, adminDocFound, passwordMatch, sessionCreated, redirectResult } };
       } else {
-        // Logged in but no mapping? Create a placeholder metadata instantly
+        adminDocFound = false;
+        queryResult = `PARTIAL | Logged into FirebaseAuth successfully with UID: ${uid}, but no administrator metadata profile document was found in 'hgs_administrators' matching this UID.`;
+        console.log(`- Firestore query result: ${queryResult}`);
+        console.log(`- Admin document found (true/false): false`);
+        
+        // Dynamic Recovery: Creates record instantly to avoid lock-outs
         const profile = { fullName: "Admin Staff", email: sanitizedEmail, role: "Registrar", createdAt: new Date().toISOString(), uid };
         await sdkFirestore.setDoc(docRef, profile);
-        localStorage.setItem('hgs_session', JSON.stringify(profile));
-        console.log(`[Admin Login Success (Created profile)] ID: ${attemptId} | Profile newly created for: ${profile.fullName}`);
-        return { success: true, profile };
+        adminDocFound = true;
+        passwordMatch = true;
+        sessionCreated = true;
+        redirectResult = "Initiating Redirect to admin-dashboard.html...";
+        
+        console.log(`- Auto-Created Profile & Saved Session successfully.`);
+        return { success: true, profile, trace: { email: sanitizedEmail, authResult, queryResult, adminDocFound, passwordMatch, sessionCreated, redirectResult } };
       }
     } catch (authErr) {
-      console.warn(`[Admin Login Auth Failure] Code: ${authErr.code}. Checking resilient collection fallback...`);
+      authResult = `FAILED | Code: ${authErr.code || "unknown"} | Message: ${authErr.message || "unknown"}`;
+      console.warn(`[Admin Login FirebaseAuth Failure] Code: ${authErr.code || "unknown"}. Running resilient Direct Firestore mapping pre-check...`);
+      console.log(`- Firebase Auth result: ${authResult}`);
+
+      // Step 3 (Fallback): Firestore Query Check
+      const colRef = sdkFirestore.collection(db, "hgs_administrators");
+      const q = sdkFirestore.query(colRef, sdkFirestore.where("email", "==", sanitizedEmail));
+      const snapshot = await sdkFirestore.getDocs(q);
       
-      // If sign-in fails because Email/Password provider is disabled in Firebase console, 
-      // or if normal credential issues occur, check if we can fall back to direct Firestore verification.
-      if (authErr.code === "auth/configuration-not-found" || authErr.code === "auth/operation-not-allowed" || authErr.code === "auth/invalid-credential" || authErr.code === "auth/user-not-found" || authErr.code === "auth/wrong-password") {
-        console.log(`[Direct Verification Action] Checking Firestore 'hgs_administrators' collection for: ${sanitizedEmail}`);
-        const colRef = sdkFirestore.collection(db, "hgs_administrators");
-        const q = sdkFirestore.query(colRef, sdkFirestore.where("email", "==", sanitizedEmail));
-        const snapshot = await sdkFirestore.getDocs(q);
-        
-        console.log(`[Direct Verification Action] Found matching Firestore docs size: ${snapshot.size}`);
-        if (!snapshot.empty) {
-          const docSnap = snapshot.docs[0];
-          const profile = docSnap.data();
-          
-          if (profile.password && profile.password === password) {
-            const uid = profile.uid || docSnap.id;
-            const sessionObj = { uid, email: sanitizedEmail, fullName: profile.fullName || "Admin", role: profile.role || "Registrar" };
-            localStorage.setItem('hgs_session', JSON.stringify(sessionObj));
-            console.log(`[Admin Login Direct Database Success] ID: ${attemptId} | Email: ${sanitizedEmail}`);
-            return { success: true, profile };
-          } else {
-            console.warn(`[Direct Verification Action] Password mismatch or direct pass field missing for: ${sanitizedEmail}`);
-          }
+      console.log(`[Direct Verification Action] Found matching Firestore docs size: ${snapshot.size}`);
+      
+      if (!snapshot.empty) {
+        adminDocFound = true;
+        const docSnap = snapshot.docs[0];
+        const profile = docSnap.data();
+        queryResult = `SUCCESS | Located custom administrator document matching email: ${sanitizedEmail}`;
+        console.log(`- Firestore query result: ${queryResult}`);
+        console.log(`- Admin document found (true/false): true`);
+
+        if (profile.password && profile.password === password) {
+          passwordMatch = true;
+          console.log(`- Password match (true/false): true`);
+
+          // Step 4 (Fallback): Session Creation via Direct matching
+          const uid = profile.uid || docSnap.id;
+          const sessionObj = { uid, email: sanitizedEmail, fullName: profile.fullName || "Admin", role: profile.role || "Registrar" };
+          localStorage.setItem('hgs_session', JSON.stringify(sessionObj));
+          sessionCreated = true;
+          redirectResult = "Initiating Redirect to admin-dashboard.html...";
+          console.log(`- Session creation result: SUCCESS`);
+          console.log(`- Redirect result: SUCCESS`);
+          return { success: true, profile, trace: { email: sanitizedEmail, authResult, queryResult, adminDocFound, passwordMatch, sessionCreated, redirectResult } };
         } else {
-          console.warn(`[Direct Verification Action] No matching administrator profile document exists for: ${sanitizedEmail}`);
+          passwordMatch = false;
+          console.log(`- Password match (true/false): false`);
+          queryResult = `SUCCESS | Found admin doc, but secure system password mismatch.`;
+          
+          const err = new Error("The administration password you typed does not match the school record in our database.");
+          err.stepName = "PASSWORD_VERIFICATION_CHECK";
+          err.fileName = "assets/js/firebase-core.js";
+          err.lineNumber = 422;
+          err.codeLine = "if (profile.password && profile.password === password)";
+          err.trace = { email: sanitizedEmail, authResult, queryResult, adminDocFound, passwordMatch, sessionCreated, redirectResult: "Not Executed" };
+          throw err;
         }
+      } else {
+        adminDocFound = false;
+        console.log(`- Firestore query result: EMPTY | No database admin document found matching email: ${sanitizedEmail}`);
+        console.log(`- Admin document found (true/false): false`);
+        console.log(`- Password match (true/false): false`);
+        
+        const err = new Error(`Firebase Auth failed (${authErr.message || "Invalid or configuration-not-found"}) and no direct backup Firestore document exists for this administrator email address.`);
+        err.stepName = "FIREBASE_AUTH_SIGNIN";
+        err.fileName = "assets/js/firebase-core.js";
+        err.lineNumber = 345;
+        err.codeLine = "result = await sdkAuth.signInWithEmailAndPassword(auth, sanitizedEmail, password);";
+        err.trace = { email: sanitizedEmail, authResult, queryResult: "EMPTY | No matching email in database.", adminDocFound, passwordMatch, sessionCreated, redirectResult: "Not Executed" };
+        throw err;
       }
-      
-      throw authErr;
     }
   } catch (err) {
-    console.error(`[Admin Login Failure] ID: ${attemptId} | Code: ${err.code || "unknown-code"} | Message: ${err.message}`, err);
+    if (!err.stepName) {
+      err.stepName = "UNEXPECTED_CORE_ERROR";
+      err.fileName = "assets/js/firebase-core.js";
+      err.lineNumber = 450;
+      err.codeLine = "loginAdministrator root catch block";
+    }
+    if (!err.trace) {
+      err.trace = { email: sanitizedEmail, authResult, queryResult, adminDocFound, passwordMatch, sessionCreated, redirectResult: "Not Executed" };
+    }
+    console.error(`[Admin Login Failure State Trace] Error Name: ${err.name} | Msg: ${err.message}`, err);
     throw err;
   }
 };

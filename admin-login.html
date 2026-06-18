@@ -296,6 +296,16 @@
           const res = await loginAdministrator(email, password);
 
           if (res.success) {
+            console.log("---------------- SUCCESSFUL LOGIN ATTEMPT TRACE ----------------");
+            console.log("- Email entered:", res.trace.email);
+            console.log("- Firebase Auth result:", res.trace.authResult);
+            console.log("- Firestore query result:", res.trace.queryResult);
+            console.log("- Admin document found (true/false):", res.trace.adminDocFound);
+            console.log("- Password match (true/false):", res.trace.passwordMatch);
+            console.log("- Session creation result: SUCCESS");
+            console.log("- Redirect result:", res.trace.redirectResult);
+            console.log("----------------------------------------------------------------");
+
             console.log(`[UI Admin Login Success] Redirecting... Welcome, ${res.profile.fullName}`);
             showAlert(successAlert, `Verification Success! Welcoming back, ${res.profile.fullName || "Administrator"}. Loading dashboard...`);
             setTimeout(() => {
@@ -303,9 +313,61 @@
             }, 1000);
           }
         } catch (err) {
-          console.error(`[UI Admin Login Error] Reason: ${err.message} | Code: ${err.code || "unknown-code"}`, err);
-          const detailedErrorMsg = `Authentication Unsuccessful: ${err.message || "Credential mapping failed."} (Firebase Code: ${err.code || "unknown-error-code"})`;
-          showAlert(errorAlert, detailedErrorMsg);
+          const trace = err.trace || {
+            email: email,
+            authResult: "Failed during step processing",
+            queryResult: "Blocked by exception",
+            adminDocFound: false,
+            passwordMatch: false,
+            sessionCreated: false,
+            redirectResult: "Not Executed"
+          };
+
+          console.log("---------------- FAILED LOGIN ATTEMPT TRACE ----------------");
+          console.log("- Email entered:", trace.email);
+          console.log("- Firebase Auth result:", trace.authResult);
+          console.log("- Firestore query result:", trace.queryResult);
+          console.log("- Admin document found (true/false):", trace.adminDocFound);
+          console.log("- Password match (true/false):", trace.passwordMatch);
+          console.log("- Session creation result:", trace.sessionCreated ? "SUCCESS" : "FAILED");
+          console.log("- Redirect result:", trace.redirectResult);
+          console.log("------------------------------------------------------------");
+
+          console.error(`[UI Admin Login Error] Reason: ${err.message}`, err);
+
+          // Render exact Step and Reason in HTML
+          const showTraceInfo = `
+            <div style="text-align: left; margin-bottom: 0.75rem;">
+              <span class="badge" style="background: #e11d48; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: bold; font-size: 0.75rem; letter-spacing: 0.05em; display: inline-block; margin-bottom: 0.5rem;">
+                LOGIN FAILURE STEP: ${err.stepName || "UNKNOWN_STEP"}
+              </span>
+              <p style="font-weight: bold; font-size: 0.95rem; margin: 0 0 0.5rem 0; color: #f43f5e; line-height: 1.4;">
+                ${err.message || "Credential mapping failed."}
+              </p>
+              
+              <div style="font-size: 0.8rem; background: rgba(0,0,0,0.15); padding: 0.5rem 0.75rem; border-radius: 6px; border-left: 4px solid #e11d48; font-family: 'Courier New', Courier, monospace; margin-top: 0.5rem; color: #fda4af; overflow-x: auto; white-space: pre-wrap;">
+<strong>FAILING CODE SNAPSHOT:</strong>
+File: ${err.fileName || "assets/js/firebase-core.js"}
+Line Number: ${err.lineNumber || "N/A"}
+Line Code: ${err.codeLine || "N/A"}
+              </div>
+
+              <div style="font-size: 0.8rem; background: rgba(255,255,255,0.06); padding: 0.75rem; border-radius: 6px; margin-top: 0.75rem; border: 1px solid rgba(255,255,255,0.1); color: #fff;">
+                <strong style="display: block; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 0.25rem; margin-bottom: 0.4rem; font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Trace Parameters Log:</strong>
+                • <strong>Email entered:</strong> "${trace.email || ""}"<br>
+                • <strong>Firebase Auth result:</strong> ${trace.authResult || "N/A"}<br>
+                • <strong>Firestore query result:</strong> ${trace.queryResult || "N/A"}<br>
+                • <strong>Admin document found (true/false):</strong> ${trace.adminDocFound}<br>
+                • <strong>Password match (true/false):</strong> ${trace.passwordMatch}<br>
+                • <strong>Session creation result:</strong> ${trace.sessionCreated ? "SUCCESS" : "FAILED"}<br>
+                • <strong>Redirect result:</strong> ${trace.redirectResult || "N/A"}
+              </div>
+            </div>
+          `;
+          errorAlert.innerHTML = showTraceInfo;
+          errorAlert.className = 'alert alert-danger';
+          errorAlert.style.display = 'block';
+          
           loginSubmitBtn.disabled = false;
           loginSubmitBtn.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Login To Dashboard';
         }
