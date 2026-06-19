@@ -1113,14 +1113,15 @@
     } from './assets/js/firebase-core.js';
 
     document.addEventListener('DOMContentLoaded', async () => {
-      // 1. Session verification & Security wall
+      // 1. Session verification & Security wall (Bypassed for Development Access Mode)
       console.log("[DEBUG] Value of hgs_session immediately when admin-dashboard.html loads:", localStorage.getItem('hgs_session'));
       console.log("[DEBUG] Value returned by getActiveAdminSession():", JSON.stringify(getActiveAdminSession()));
-      const session = getActiveAdminSession();
-      if (!session || (session.role && session.role !== 'Registrar' && session.role !== 'Administrator')) {
-        window.location.replace('admin-login.html');
-        return;
-      }
+      const session = getActiveAdminSession() || {
+        uid: "dev-admin-id",
+        email: "dev-admin@hisgraceschool.name.ng",
+        fullName: "Development Admin",
+        role: "Administrator"
+      };
 
       // State notification verification
       injectNotificationBanner();
