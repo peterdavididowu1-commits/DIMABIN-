@@ -257,11 +257,11 @@ document.addEventListener('DOMContentLoaded', () => {
         customPrompt.style.cssText = 'position:fixed; top:20px; right:20px; background:#1e3a8a; color:#fff; padding:1.25rem; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15); z-index:9999; font-size:0.95rem; font-family:sans-serif; max-width:350px; border-left:5px solid var(--accent);';
         customPrompt.innerHTML = `
           <div style="font-weight:bold; margin-bottom:0.5rem;"><i class="fa-solid fa-chalkboard-user"></i> Instructor Portal</div>
-          <span>Redirecting to the secure Administrative Center login dashboard...</span>
+          <span>Redirecting to the secure Administrative Center dashboard...</span>
         `;
         document.body.appendChild(customPrompt);
         setTimeout(() => {
-          window.location.href = 'admin-login.html';
+          window.location.href = 'admin-dashboard.html';
         }, 1200);
         return;
       }
