@@ -1109,7 +1109,10 @@
       logActivity,
       getEmailSettings,
       saveEmailSettings,
-      sendEmailNotification
+      sendEmailNotification,
+      getFirebaseInitError,
+      subscribeToAdmissions,
+      subscribeToContactMessages
     } from './assets/js/firebase-core.js';
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -1130,17 +1133,27 @@
       document.getElementById('activeAdminName').textContent = session.fullName || "Administrator";
 
       const liveTag = document.getElementById('liveTag');
+      const initError = getFirebaseInitError();
       if (liveTag) {
-        if (isLiveFirebase()) {
+        if (initError) {
+          liveTag.className = 'badge';
+          liveTag.style.backgroundColor = '#fee2e2';
+          liveTag.style.color = '#dc2626';
+          liveTag.style.border = '1px solid #fca5a5';
+          liveTag.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> Error: ${initError.message}`;
+          console.error("🔥 [Admin Dashboard] Firebase initialization failed on load:", initError);
+        } else if (isLiveFirebase()) {
           liveTag.className = 'badge';
           liveTag.style.backgroundColor = '#dcfce7';
           liveTag.style.color = 'var(--secondary)';
           liveTag.innerHTML = '<i class="fa-solid fa-cloud-bolt"></i> Live Firebase Connected';
+          console.log("🌟 [Admin Dashboard] Firebase connected and online.");
         } else {
           liveTag.className = 'badge';
           liveTag.style.backgroundColor = '#fef3c7';
           liveTag.style.color = '#b45309';
-          liveTag.innerHTML = '<i class="fa-solid fa-circle-nodes"></i> Offline File Storage';
+          liveTag.innerHTML = '<i class="fa-solid fa-circle-nodes"></i> Offline Mode';
+          console.warn("⚠️ [Admin Dashboard] Firebase offline or not ready.");
         }
       }
 
@@ -1198,23 +1211,22 @@
       // ==========================================
       // METRICS LOADERS
       // ==========================================
-      const loadOverviewData = async () => {
+      const updateStatsAndTables = () => {
         try {
-          const stats = await getAdministrativeStats();
-
-          // Counts display mapping
-          document.getElementById('statsTotalAdmissions').textContent = stats.totalAdmissionsCount;
-          document.getElementById('statsTotalMessages').textContent = stats.totalMessagesCount;
+          console.log(`[Admin Dashboard] [updateStatsAndTables] Rendering counts and tables from active Firestore subscription cache. Admissions: ${globalAdmissionsList.length}, Messages: ${globalMessagesList.length}`);
+          
+          document.getElementById('statsTotalAdmissions').textContent = globalAdmissionsList.length;
+          document.getElementById('statsTotalMessages').textContent = globalMessagesList.length;
 
           // Compute sub-sectors
           let primaryCount = 0;
           let nurseryCount = 0;
-          Object.keys(stats.classBreakdown).forEach(cls => {
-            const count = stats.classBreakdown[cls];
-            if (cls.toLowerCase().includes('primary')) {
-              primaryCount += count;
+          globalAdmissionsList.forEach(item => {
+            const cls = (item.gradeApplying || "").toLowerCase();
+            if (cls.includes('primary')) {
+              primaryCount++;
             } else {
-              nurseryCount += count;
+              nurseryCount++;
             }
           });
           document.getElementById('statsPrimaryClasses').textContent = primaryCount;
@@ -1222,12 +1234,13 @@
 
           // Render overview panels
           const recAdmissionsBody = document.getElementById('recentAdmissionsTable');
-          if (stats.recentAdmissions.length === 0) {
+          const recentAdmissions = globalAdmissionsList.slice(0, 5);
+          if (recentAdmissions.length === 0) {
             recAdmissionsBody.innerHTML = `<tr><td colspan="4" class="text-center" style="color: var(--text-muted); padding:1.5rem;">No registrations filed yet.</td></tr>`;
           } else {
-            recAdmissionsBody.innerHTML = stats.recentAdmissions.map(item => `
+            recAdmissionsBody.innerHTML = recentAdmissions.map(item => `
               <tr>
-                <td>${new Date(item.createdAt).toLocaleDateString()}</td>
+                <td>${item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'N/A'}</td>
                 <td style="font-weight:700;">${escapeHTML(item.studentName)}</td>
                 <td><span class="badge" style="font-size:0.75rem;">${escapeHTML(item.gradeApplying)}</span></td>
                 <td>${escapeHTML(item.parentName)}</td>
@@ -1237,14 +1250,15 @@
 
           // Feed list containers
           const recMessagesBox = document.getElementById('recentMessagesContainer');
-          if (stats.recentMessages.length === 0) {
+          const recentMessages = globalMessagesList.slice(0, 5);
+          if (recentMessages.length === 0) {
             recMessagesBox.innerHTML = `<div class="card" style="padding:1.25rem; text-align:center;"><p style="font-size:0.9rem; color:var(--text-muted);">No inbound comments.</p></div>`;
           } else {
-            recMessagesBox.innerHTML = stats.recentMessages.map(msg => `
+            recMessagesBox.innerHTML = recentMessages.map(msg => `
               <div class="card" style="padding: 1.25rem; background-color:#ffffff; box-shadow:var(--shadow-sm); border-left:4px solid var(--accent);">
                 <div class="d-flex justify-between" style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.5rem;">
                   <strong>${escapeHTML(msg.contactName)}</strong>
-                  <span>${new Date(msg.createdAt).toLocaleDateString()}</span>
+                  <span>${msg.createdAt ? new Date(msg.createdAt).toLocaleDateString() : 'N/A'}</span>
                 </div>
                 <h5 style="margin-bottom:0.25rem; font-size:0.95rem; color:var(--primary); font-weight:700;">${escapeHTML(msg.contactSubject)}</h5>
                 <p style="font-size:0.85rem; color:var(--text-dark); line-height:1.4; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">"${escapeHTML(msg.contactMessage)}"</p>
@@ -1252,8 +1266,12 @@
             `).join('');
           }
         } catch (err) {
-          console.error("Overview data mapping failure:", err);
+          console.error("❌ [Admin Dashboard] updateStatsAndTables failure:", err);
         }
+      };
+
+      const loadOverviewData = async () => {
+        updateStatsAndTables();
       };
 
       // ==========================================
@@ -2283,8 +2301,38 @@ Log in to check term report cards.`;
         );
       }
 
-      // Initial loading
-      loadOverviewData();
+      // Start Real-time synchronization
+      console.log("📡 [Admin Dashboard] Starting real-time Firestore database listener synchronization...");
+
+      // Listen for Admissions in Real-time
+      const unsubscribeAdmissions = subscribeToAdmissions((admissions) => {
+        console.log(`📈 [Admin Dashboard] [Admissions Observer] Real-time list updated. Count: ${admissions.length} records retrieved from hgs_admissions.`);
+        globalAdmissionsList = admissions;
+        
+        // Re-execute calculations and stats updates dynamically
+        updateStatsAndTables();
+      }, (err) => {
+        console.error("☠️ [Admin Dashboard] Real-time Admissions subscription failed:", err);
+        const liveTag = document.getElementById('liveTag');
+        if (liveTag) {
+          liveTag.className = 'badge';
+          liveTag.style.backgroundColor = '#fee2e2';
+          liveTag.style.color = '#dc2626';
+          liveTag.style.border = '1px solid #fca5a5';
+          liveTag.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> Query Error: ${err.message}`;
+        }
+      });
+
+      // Listen for Messages in Real-time
+      const unsubscribeMessages = subscribeToContactMessages((messages) => {
+        console.log(`✉️ [Admin Dashboard] [Messages Observer] Real-time inbox updated. Count: ${messages.length} messages loaded from hgs_messages.`);
+        globalMessagesList = messages;
+        
+        // Re-execute calculations and stats updates dynamically
+        updateStatsAndTables();
+      }, (err) => {
+        console.error("☠️ [Admin Dashboard] Real-time Messages subscription failed:", err);
+      });
     });
   </script>
 </body>

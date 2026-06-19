@@ -4,9 +4,12 @@ import firebaseConfig from './firebase-config-env.js';
 let liveMode = true;
 let db = null;
 let auth = null;
+let firebaseInitError = null;
 
 // Firebase SDK reference placeholders
 let sdkApps, sdkAuth, sdkFirestore;
+
+console.log("🚀 [Firebase Core] Executon started. Attempting Firebase SDK load...");
 
 try {
   // Always import Firebase SDK from secure CDN
@@ -20,8 +23,11 @@ try {
   console.log(`🌟 [Firebase Core] Loaded successfully! Connected to Firebase Project: "${firebaseConfig.projectId}"`);
 } catch (error) {
   console.error("❌ [Firebase Core] Initialization Error:", error);
-  throw new Error("Critical Firebase initialization failure: " + error.message);
+  firebaseInitError = error;
 }
+
+export const getFirebaseInitError = () => firebaseInitError;
+export const hasInitializedSuccessfully = () => db !== null && auth !== null;
 
 // Timeout helper to prevent infinite loading on invalid Firebase credentials or poor network connection
 const withTimeout = (promise, ms, operationName) => {
@@ -42,7 +48,9 @@ export const injectNotificationBanner = () => {
   // Banner disabled
 };
 
-export const isLiveFirebase = () => true;
+export const isLiveFirebase = () => {
+  return db !== null && auth !== null && firebaseInitError === null;
+};
 
 // ==========================================
 // ADMISSIONS MANAGEMENT
@@ -124,23 +132,40 @@ export const getAdmissions = async () => {
   });
 
   if (!db) {
+    if (getFirebaseInitError()) {
+      throw new Error("Firestore database is not initialized due to Core Error: " + getFirebaseInitError().message);
+    }
     throw new Error("Firestore database is not initialized.");
   }
 
   try {
     const colRef = sdkFirestore.collection(db, collectionName);
     const q = sdkFirestore.query(colRef, sdkFirestore.orderBy("createdAt", "desc"));
-    // Add a timeout window to ensure lists load or fail fast instead of hanging
-    const snapshot = await withTimeout(
-      sdkFirestore.getDocs(q),
-      8000,
-      "Admissions Query Read"
-    );
+    let snapshot;
+    try {
+      // Add a timeout window to ensure lists load or fail fast instead of hanging
+      snapshot = await withTimeout(
+        sdkFirestore.getDocs(q),
+        8000,
+        "Admissions Query Read"
+      );
+    } catch (orderErr) {
+      console.warn("[Firebase Core] [getAdmissions] Ordered query failed. Trying fallback unordered query:", orderErr);
+      snapshot = await withTimeout(
+        sdkFirestore.getDocs(colRef),
+        8000,
+        "Admissions Unordered Backup Query Read"
+      );
+    }
     
     const results = [];
     snapshot.forEach(docSnap => {
       results.push({ ...docSnap.data(), docId: docSnap.id });
     });
+    
+    // Sort client-side by date descending
+    results.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
     console.log(`[Firebase Core] [getAdmissions] Firestore Read SUCCESS!`, {
       projectId: projectId,
       collection: collectionName,
@@ -154,6 +179,102 @@ export const getAdmissions = async () => {
       error: err.message
     });
     throw err;
+  }
+};
+
+// Real-time auto-refresh implementation for Admissions
+export const subscribeToAdmissions = (callback, onError) => {
+  if (!db) {
+    const initErr = getFirebaseInitError() || new Error("Firestore database is not initialized.");
+    if (onError) onError(initErr);
+    return () => {};
+  }
+  const collectionName = "hgs_admissions";
+  const colRef = sdkFirestore.collection(db, collectionName);
+  const q = sdkFirestore.query(colRef, sdkFirestore.orderBy("createdAt", "desc"));
+  
+  console.log("[Firebase Core] [subscribeToAdmissions] Initiating client dashboard real-time observer...");
+  
+  try {
+    return sdkFirestore.onSnapshot(q, (snapshot) => {
+      const results = [];
+      snapshot.forEach(docSnap => {
+        results.push({ ...docSnap.data(), docId: docSnap.id });
+      });
+      results.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      console.log(`[Firebase Core] [subscribeToAdmissions] Real-time data update received successfully! Count: ${results.length}`);
+      callback(results);
+    }, (err) => {
+      console.warn("[Firebase Core] [subscribeToAdmissions] Ordered listener failed, using unordered fallback listener:", err);
+      try {
+        return sdkFirestore.onSnapshot(colRef, (snapshot) => {
+          const results = [];
+          snapshot.forEach(docSnap => {
+            results.push({ ...docSnap.data(), docId: docSnap.id });
+          });
+          results.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+          console.log(`[Firebase Core] [subscribeToAdmissions (Fallback)] Real-time data update received successfully! Count: ${results.length}`);
+          callback(results);
+        }, (fallbackErr) => {
+          console.error("[Firebase Core] [subscribeToAdmissions] Real-time fallback listener failed:", fallbackErr);
+          if (onError) onError(fallbackErr);
+        });
+      } catch (innerErr) {
+        if (onError) onError(innerErr);
+      }
+    });
+  } catch (err) {
+    console.error("[Firebase Core] [subscribeToAdmissions] Real-time setup exception:", err);
+    if (onError) onError(err);
+    return () => {};
+  }
+};
+
+// Real-time auto-refresh implementation for Contact Messages
+export const subscribeToContactMessages = (callback, onError) => {
+  if (!db) {
+    const initErr = getFirebaseInitError() || new Error("Firestore database is not initialized.");
+    if (onError) onError(initErr);
+    return () => {};
+  }
+  const collectionName = "hgs_messages";
+  const colRef = sdkFirestore.collection(db, collectionName);
+  const q = sdkFirestore.query(colRef, sdkFirestore.orderBy("createdAt", "desc"));
+  
+  console.log("[Firebase Core] [subscribeToContactMessages] Initiating client message real-time observer...");
+  
+  try {
+    return sdkFirestore.onSnapshot(q, (snapshot) => {
+      const results = [];
+      snapshot.forEach(docSnap => {
+        results.push({ ...docSnap.data(), docId: docSnap.id });
+      });
+      results.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      console.log(`[Firebase Core] [subscribeToContactMessages] Real-time message update received. Count: ${results.length}`);
+      callback(results);
+    }, (err) => {
+      console.warn("[Firebase Core] [subscribeToContactMessages] Ordered listener failed, using unordered fallback listener:", err);
+      try {
+        return sdkFirestore.onSnapshot(colRef, (snapshot) => {
+          const results = [];
+          snapshot.forEach(docSnap => {
+            results.push({ ...docSnap.data(), docId: docSnap.id });
+          });
+          results.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+          console.log(`[Firebase Core] [subscribeToContactMessages (Fallback)] Real-time messages list updated. Count: ${results.length}`);
+          callback(results);
+        }, (fallbackErr) => {
+          console.error("[Firebase Core] [subscribeToContactMessages] Fallback messaging listener failed:", fallbackErr);
+          if (onError) onError(fallbackErr);
+        });
+      } catch (innerErr) {
+        if (onError) onError(innerErr);
+      }
+    });
+  } catch (err) {
+    console.error("[Firebase Core] [subscribeToContactMessages] Real-time message setup exception:", err);
+    if (onError) onError(err);
+    return () => {};
   }
 };
 
@@ -231,14 +352,31 @@ export const saveContactMessage = async (messageData) => {
 };
 
 export const getContactMessages = async () => {
+  const collectionName = "hgs_messages";
+  if (!db) {
+    if (getFirebaseInitError()) {
+      throw new Error("Firestore database is not initialized due to Core Error: " + getFirebaseInitError().message);
+    }
+    throw new Error("Firestore database is not initialized.");
+  }
   try {
-    const colRef = sdkFirestore.collection(db, "hgs_messages");
+    const colRef = sdkFirestore.collection(db, collectionName);
     const q = sdkFirestore.query(colRef, sdkFirestore.orderBy("createdAt", "desc"));
-    const snapshot = await sdkFirestore.getDocs(q);
+    let snapshot;
+    try {
+      snapshot = await sdkFirestore.getDocs(q);
+    } catch (err) {
+      console.warn("Ordered hgs_messages query failed, searching unordered fallback:", err);
+      snapshot = await sdkFirestore.getDocs(colRef);
+    }
     const results = [];
     snapshot.forEach(docSnap => {
       results.push({ ...docSnap.data(), docId: docSnap.id });
     });
+    
+    // Sort client side
+    results.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    
     return results;
   } catch (err) {
     console.error("Firestore getContactMessages failed:", err);
