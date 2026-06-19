@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Integrity Audit Logs V2 - His Grace School</title>
+  
+  <!-- Typography & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    :root {
+      --sidebar-width: 260px;
+    }
+    body {
+      background-color: var(--bg-slate);
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    .db-container {
+      display: flex;
+      min-height: 100vh;
+    }
+    
+    /* Sidebar Navigation Layout */
+    .db-sidebar {
+      width: var(--sidebar-width);
+      background-color: var(--primary);
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 100;
+      transition: var(--transition);
+    }
+    .db-logo {
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .db-logo i {
+      font-size: 1.5rem;
+      color: var(--accent);
+    }
+    .db-logo h1 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0;
+    }
+    .db-logo span {
+      color: var(--accent);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      font-weight: 800;
+      display: block;
+    }
+    .db-user-info {
+      padding: 1.25rem 1.5rem;
+      background-color: var(--primary-hover);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .db-user-info span {
+      display: block;
+      font-size: 0.725rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .db-user-info h4 {
+      font-size: 0.875rem;
+      font-weight: 700;
+      margin-top: 0.25rem;
+      margin-bottom: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .db-menu {
+      list-style: none;
+      padding: 1rem 0;
+      margin: 0;
+      flex-grow: 1;
+    }
+    .db-menu-item a {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.9rem 1.5rem;
+      color: rgba(255, 255, 255, 0.8);
+      font-weight: 600;
+      font-size: 0.95rem;
+      border-left: 4px solid transparent;
+      transition: var(--transition);
+    }
+    .db-menu-item a:hover,
+    .db-menu-item.active a {
+      color: #ffffff;
+      background-color: rgba(255, 255, 255, 0.08);
+      border-left-color: var(--accent);
+    }
+    .db-sidebar-footer {
+      padding: 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .btn-logout {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.75rem;
+      background-color: rgb(239 68 68 / 0.1);
+      color: #fca5a5;
+      border: 1px solid rgb(239 68 68 / 0.2);
+      border-radius: var(--border-radius-sm);
+      font-weight: 700;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .btn-logout:hover {
+      background-color: rgb(239 68 68 / 0.2);
+      color: #ffffff;
+    }
+    
+    /* Main Content Area */
+    .db-main {
+      flex-grow: 1;
+      margin-left: var(--sidebar-width);
+      padding: 2.5rem;
+      transition: var(--transition);
+    }
+    .db-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #e2e8f0;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .db-header h2 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin: 0;
+    }
+    .db-header p {
+      margin: 0.25rem 0 0 0;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* Timelines logs layout */
+    .timeline {
+      position: relative;
+      padding: 1rem 0;
+      margin: 0 auto;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--border-color);
+      left: 31px;
+      border-radius: 2px;
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 1.5rem;
+      padding-left: 70px;
+    }
+    .timeline-badge {
+      position: absolute;
+      left: 15px;
+      top: 4px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 3px solid var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      z-index: 10;
+      font-size: 0.9rem;
+      transition: var(--transition);
+    }
+    .timeline-item.badge-blue .timeline-badge {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .timeline-item.badge-green .timeline-badge {
+      border-color: var(--secondary);
+      color: var(--secondary);
+    }
+    .timeline-item.badge-red .timeline-badge {
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+    .timeline-item.badge-orange .timeline-badge {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .timeline-card {
+      background: #ffffff;
+      padding: 1.25rem 1.75rem;
+      border-radius: var(--border-radius-md);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+    }
+    .timeline-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .timeline-action {
+      font-weight: 800;
+      font-size: 1.05rem;
+      color: var(--text-dark);
+      margin: 0;
+    }
+    .timeline-time {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+    .timeline-body {
+      font-size: 0.9rem;
+      color: var(--text-dark);
+      line-height: 1.5;
+    }
+    .timeline-operator {
+      margin-top: 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .loading-overlay {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 5rem 0;
+    }
+    .loading-spinner {
+      border: 4px solid var(--border-color);
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="db-container">
+    <!-- Left Sidebar -->
+    <div class="db-sidebar">
+      <div class="db-logo">
+        <i class="fa-solid fa-graduation-cap"></i>
+        <div>
+          <h1>His Grace School</h1>
+          <span>Admin Portal V2</span>
+        </div>
+      </div>
+      
+      <div class="db-user-info" id="adminUserCard">
+        <span>Active Operator</span>
+        <h4 id="userEmailPlaceholder">hisgraceschool.name.ng@gmail.com</h4>
+      </div>
+      
+      <ul class="db-menu">
+        <li class="db-menu-item">
+          <a href="admin-v2-dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+        </li>
+        <li class="db-menu-item">
+          <a href="admin-v2-admissions.html"><i class="fa-solid fa-user-graduate"></i> Admissions</a>
+        </li>
+        <li class="db-menu-item">
+          <a href="admin-v2-students.html"><i class="fa-solid fa-address-book"></i> Student Directory</a>
+        </li>
+        <li class="db-menu-item">
+          <a href="admin-v2-messages.html"><i class="fa-solid fa-envelope-open-text"></i> Enquiries Inbox</a>
+        </li>
+        <li class="db-menu-item active">
+          <a href="admin-v2-audit.html"><i class="fa-solid fa-clock-rotate-left"></i> Integrity Logs</a>
+        </li>
+      </ul>
+      
+      <div class="db-sidebar-footer">
+        <button id="btnLogout" class="btn-logout">
+          <i class="fa-solid fa-power-off"></i> Outflow Sign-out
+        </button>
+      </div>
+    </div>
+    
+    <!-- Main Content Area -->
+    <div class="db-main">
+      <div class="db-header">
+        <div>
+          <h2>System Operations Audits V2</h2>
+          <p>Read-only cryptographically sequenced operations timeline logs recording administrative transactions.</p>
+        </div>
+      </div>
+
+      <!-- Loading Panel -->
+      <div id="loaderPanel" class="loading-overlay">
+        <div class="loading-spinner"></div>
+      </div>
+
+      <!-- Audit Logs Timeline -->
+      <div id="timelineContainer" class="timeline" style="display: none;">
+        <!-- Rendered in dynamic JS -->
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { requireAuthentication, getAuditLogs, logoutAdministrator } from './assets/js/admin-v2.js';
+
+    async function initPage() {
+      const user = await requireAuthentication();
+      if (!user) return; // Hooked
+      document.getElementById('userEmailPlaceholder').textContent = user.email;
+
+      await loadAuditLogs();
+    }
+
+    async function loadAuditLogs() {
+      try {
+        document.getElementById('loaderPanel').style.display = 'flex';
+        document.getElementById('timelineContainer').style.display = 'none';
+
+        const logs = await getAuditLogs();
+        renderTimeline(logs);
+      } catch (err) {
+        console.error(err);
+        alert("Integrity Failure: Core operations database log stream was interrupted.");
+      }
+    }
+
+    function renderTimeline(logs) {
+      document.getElementById('loaderPanel').style.display = 'none';
+      const container = document.getElementById('timelineContainer');
+      container.style.display = 'block';
+
+      if (logs.length === 0) {
+        container.innerHTML = `
+          <div style="background:#ffffff; border:1px solid var(--border-color); border-radius: var(--border-radius-md); text-align: center; padding: 4.5rem; color: var(--text-muted);">
+            <i class="fa-solid fa-clipboard-list" style="font-size:3rem; color: var(--primary); margin-bottom:1rem; display:block;"></i>
+            <h3>No Operations Logged Yet</h3>
+            <p>Once login events, registrations and approvals are fired, they are auto secured here.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Reverse to chronological descending if not already done by DB query
+      const chronologicalDesc = [...logs].sort((a,b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+
+      container.innerHTML = chronologicalDesc.map((log) => {
+        const finalTime = log.timestamp ? new Date(log.timestamp).toLocaleString() : 'N/A';
+        const action = log.action || 'Unknown Event';
+        const details = log.details || 'No system details provided.';
+        const operator = log.operator || 'System / guest';
+
+        // Dynamic badge style and iconification based on event type
+        let styleClass = 'badge-blue';
+        let iconHTML = '<i class="fa-solid fa-circle-info"></i>';
+
+        if (action.includes('Login') || action.includes('Logout')) {
+          styleClass = 'badge-orange';
+          iconHTML = '<i class="fa-solid fa-key"></i>';
+        } else if (action.includes('Approved') || action.includes('Creation')) {
+          styleClass = 'badge-green';
+          iconHTML = '<i class="fa-solid fa-square-check"></i>';
+        } else if (action.includes('Rejected') || action.includes('Fail') || action.includes('Erase')) {
+          styleClass = 'badge-red';
+          iconHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+        } else if (action.includes('Email')) {
+          styleClass = 'badge-blue';
+          iconHTML = '<i class="fa-solid fa-paper-plane"></i>';
+        }
+
+        return `
+          <div class="timeline-item ${styleClass}">
+            <div class="timeline-badge">${iconHTML}</div>
+            <div class="timeline-card">
+              <div class="timeline-meta">
+                <h4 class="timeline-action">${escapeHTML(action)}</h4>
+                <span class="timeline-time">${finalTime}</span>
+              </div>
+              <div class="timeline-body">${escapeHTML(details)}</div>
+              <div class="timeline-operator">
+                <i class="fa-solid fa-user-shield"></i> Authorized User: ${escapeHTML(operator)}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function escapeHTML(str) {
+      if (!str) return '';
+      return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+      );
+    }
+
+    // Sig-out trigger
+    document.getElementById('btnLogout').onclick = async () => {
+      if (confirm("Disconnect and secure system administrator logged session?")) {
+        await logoutAdministrator();
+      }
+    };
+
+    // run load hook
+    initPage();
+  </script>
+</body>
+</html>

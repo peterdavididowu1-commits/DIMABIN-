@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin V2 Dashboard - His Grace School</title>
+  
+  <!-- Typography & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    :root {
+      --sidebar-width: 260px;
+    }
+    body {
+      background-color: var(--bg-slate);
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    .db-container {
+      display: flex;
+      min-height: 100vh;
+    }
+    
+    /* Sidebar Navigation Layout */
+    .db-sidebar {
+      width: var(--sidebar-width);
+      background-color: var(--primary);
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 100;
+      transition: var(--transition);
+    }
+    .db-logo {
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .db-logo i {
+      font-size: 1.5rem;
+      color: var(--accent);
+    }
+    .db-logo h1 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0;
+    }
+    .db-logo span {
+      color: var(--accent);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      font-weight: 800;
+      display: block;
+    }
+    .db-user-info {
+      padding: 1.25rem 1.5rem;
+      background-color: var(--primary-hover);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .db-user-info span {
+      display: block;
+      font-size: 0.725rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .db-user-info h4 {
+      font-size: 0.875rem;
+      font-weight: 700;
+      margin-top: 0.25rem;
+      margin-bottom: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .db-menu {
+      list-style: none;
+      padding: 1rem 0;
+      margin: 0;
+      flex-grow: 1;
+    }
+    .db-menu-item a {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.9rem 1.5rem;
+      color: rgba(255, 255, 255, 0.8);
+      font-weight: 600;
+      font-size: 0.95rem;
+      border-left: 4px solid transparent;
+      transition: var(--transition);
+    }
+    .db-menu-item a:hover,
+    .db-menu-item.active a {
+      color: #ffffff;
+      background-color: rgba(255, 255, 255, 0.08);
+      border-left-color: var(--accent);
+    }
+    .db-sidebar-footer {
+      padding: 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .btn-logout {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.75rem;
+      background-color: rgb(239 68 68 / 0.1);
+      color: #fca5a5;
+      border: 1px solid rgb(239 68 68 / 0.2);
+      border-radius: var(--border-radius-sm);
+      font-weight: 700;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .btn-logout:hover {
+      background-color: rgb(239 68 68 / 0.2);
+      color: #ffffff;
+    }
+    
+    /* Main Content Area */
+    .db-main {
+      flex-grow: 1;
+      margin-left: var(--sidebar-width);
+      padding: 2.5rem;
+      transition: var(--transition);
+    }
+    .db-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #e2e8f0;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .db-header h2 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin: 0;
+    }
+    .db-header p {
+      margin: 0.25rem 0 0 0;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    
+    /* Stats Layout */
+    .dashboard-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+    .stat-card {
+      background-color: #ffffff;
+      padding: 1.5rem;
+      border-radius: var(--border-radius-md);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid var(--border-color);
+      border-bottom: 4px solid var(--primary);
+    }
+    .stat-card.secondary-line {
+      border-bottom-color: var(--secondary);
+    }
+    .stat-card.accent-line {
+      border-bottom-color: var(--accent);
+    }
+    .stat-card.danger-line {
+      border-bottom-color: #ef4444;
+    }
+    .stat-card h5 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      margin-top: 0;
+    }
+    .stat-card .stat-val {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--text-dark);
+      line-height: 1;
+    }
+    .stat-card .stat-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-color: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .stat-card.secondary-line .stat-icon {
+      background-color: #dcfce7;
+      color: var(--secondary);
+    }
+    .stat-card.accent-line .stat-icon {
+      background-color: #fef3c7;
+      color: #b45309;
+    }
+    .stat-card.danger-line .stat-icon {
+      background-color: #fee2e2;
+      color: #b91c1c;
+    }
+
+    /* Column Layouts for lists */
+    .db-grid-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+    @media (max-width: 1024px) {
+      .db-grid-row {
+        grid-template-columns: 1fr;
+      }
+    }
+    .db-panel {
+      background-color: #ffffff;
+      border-radius: var(--border-radius-md);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 1.25rem 1.5rem;
+      background-color: #f8fafc;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .panel-header h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .panel-header .badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.75rem;
+      background-color: var(--primary-light);
+      color: var(--primary);
+      border-radius: 50px;
+      font-weight: 700;
+    }
+    .panel-body {
+      padding: 0;
+    }
+
+    /* List items in dashboards */
+    .dashboard-item {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: var(--transition);
+    }
+    .dashboard-item:last-child {
+      border-bottom: none;
+    }
+    .dashboard-item:hover {
+      background-color: #f8fafc;
+    }
+    .item-meta h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin: 0 0 0.25rem 0;
+    }
+    .item-meta p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin: 0;
+    }
+    .meta-details {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      margin-top: 0.25rem;
+      font-size: 0.8rem;
+    }
+    .badge-status {
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .status-pending { background-color: #fef3c7; color: #b45309; }
+    .status-approved { background-color: #dcfce7; color: #15803d; }
+    .status-rejected { background-color: #fee2e2; color: #b91c1c; }
+    
+    .loading-overlay {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 5rem 0;
+    }
+    .loading-spinner {
+      border: 4px solid var(--border-color);
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="db-container">
+    <!-- Left Sidebar -->
+    <div class="db-sidebar">
+      <div class="db-logo">
+        <i class="fa-solid fa-graduation-cap"></i>
+        <div>
+          <h1>His Grace School</h1>
+          <span>Admin Portal V2</span>
+        </div>
+      </div>
+      
+      <div class="db-user-info" id="adminUserCard">
+        <span>Active Operator</span>
+        <h4 id="userEmailPlaceholder">hisgraceschool.name.ng@gmail.com</h4>
+      </div>
+      
+      <ul class="db-menu">
+        <li class="db-menu-item active">
+          <a href="admin-v2-dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+        </li>
+        <li class="db-menu-item">
+          <a href="admin-v2-admissions.html"><i class="fa-solid fa-user-graduate"></i> Admissions</a>
+        </li>
+        <li class="db-menu-item">
+          <a href="admin-v2-students.html"><i class="fa-solid fa-address-book"></i> Student Directory</a>
+        </li>
+        <li class="db-menu-item">
+          <a href="admin-v2-messages.html"><i class="fa-solid fa-envelope-open-text"></i> Enquiries Inbox</a>
+        </li>
+        <li class="db-menu-item">
+          <a href="admin-v2-audit.html"><i class="fa-solid fa-clock-rotate-left"></i> Integrity Logs</a>
+        </li>
+      </ul>
+      
+      <div class="db-sidebar-footer">
+        <button id="btnLogout" class="btn-logout">
+          <i class="fa-solid fa-power-off"></i> Outflow Sign-out
+        </button>
+      </div>
+    </div>
+    
+    <!-- Main View Column -->
+    <div class="db-main">
+      <div class="db-header">
+        <div>
+          <h2>Executive Dashboard V2</h2>
+          <p>Real-time enrollment rates, message delivery channels and audit controls.</p>
+        </div>
+        <div id="liveClock" style="font-weight: 700; color: var(--primary);"></div>
+      </div>
+
+      <!-- Loading State Panel -->
+      <div id="dashboardLoader" class="loading-overlay">
+        <div class="loading-spinner"></div>
+      </div>
+
+      <!-- Actual Dashboard Stats/Panels -->
+      <div id="dashboardContent" style="display: none;">
+        
+        <!-- Metrics Cards Block -->
+        <div class="dashboard-stats-grid">
+          
+          <div class="stat-card">
+            <div>
+              <h5>Total Admissions</h5>
+              <div class="stat-val" id="statTotalAdmissions">0</div>
+            </div>
+            <div class="stat-icon"><i class="fa-solid fa-folder-open"></i></div>
+          </div>
+          
+          <div class="stat-card secondary-line">
+            <div>
+              <h5>Approved Student Profiles</h5>
+              <div class="stat-val" id="statApproved">0</div>
+            </div>
+            <div class="stat-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+          </div>
+          
+          <div class="stat-card accent-line">
+            <div>
+              <h5>Pending Registries</h5>
+              <div class="stat-val" id="statPending">0</div>
+            </div>
+            <div class="stat-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+          </div>
+          
+          <div class="stat-card danger-line">
+            <div>
+              <h5>Contact Inquiries</h5>
+              <div class="stat-val" id="statMessages">0</div>
+            </div>
+            <div class="stat-icon"><i class="fa-solid fa-message"></i></div>
+          </div>
+          
+        </div>
+
+        <div class="db-grid-row">
+          
+          <!-- Recent Admissions Subpanel -->
+          <div class="db-panel">
+            <div class="panel-header">
+              <h3><i class="fa-solid fa-user-plus"></i> Recent Enrollment Inflows</h3>
+              <span class="badge" id="admissionsBadge">0 New</span>
+            </div>
+            <div class="panel-body" id="recentAdmissionsContainer">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+          
+          <!-- Recent Messages Subpanel -->
+          <div class="db-panel">
+            <div class="panel-header">
+              <h3><i class="fa-solid fa-comment-dots"></i> Incoming Message Buffer</h3>
+              <span class="badge" id="messagesBadge">0 New</span>
+            </div>
+            <div class="panel-body" id="recentMessagesContainer">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+          
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module">
+    import { requireAuthentication, getDashboardStats, logoutAdministrator } from './assets/js/admin-v2.js';
+
+    // 1. Enforce Authentication Securely
+    let currentUser = null;
+
+    async function initPage() {
+      currentUser = await requireAuthentication();
+      if (!currentUser) return; // redirected
+
+      document.getElementById('userEmailPlaceholder').textContent = currentUser.email;
+
+      // 2. Fetch Dashboard Counters
+      try {
+        const statsObj = await getDashboardStats();
+        renderDashboard(statsObj);
+      } catch (err) {
+        console.error("Failed loading stats:", err);
+        alert("Integrity Check Error: Database sync interrupted.");
+      }
+    }
+
+    function renderDashboard(data) {
+      document.getElementById('dashboardLoader').style.display = 'none';
+      document.getElementById('dashboardContent').style.display = 'block';
+
+      // Assign counter texts
+      document.getElementById('statTotalAdmissions').textContent = data.stats.totalAdmissions;
+      document.getElementById('statApproved').textContent = data.stats.totalApproved;
+      document.getElementById('statPending').textContent = data.stats.totalPending;
+      document.getElementById('statMessages').textContent = data.stats.totalContactMessages;
+
+      document.getElementById('admissionsBadge').textContent = `${data.recentAdmissions.length} Displayed`;
+      document.getElementById('messagesBadge').textContent = `${data.recentMessages.length} Displayed`;
+
+      // Render recent admissions
+      const repAdm = document.getElementById('recentAdmissionsContainer');
+      if (data.recentAdmissions.length === 0) {
+        repAdm.innerHTML = '<div style="padding: 2.5rem; text-align: center; color: var(--text-muted);"><i class="fa-solid fa-ban" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i> No enrollment documents available currently.</div>';
+      } else {
+        repAdm.innerHTML = data.recentAdmissions.map(adm => {
+          const status = adm.status || 'Pending';
+          const badgeClass = status === 'Approved' ? 'status-approved' : (status === 'Rejected' ? 'status-rejected' : 'status-pending');
+          const finalDate = adm.createdAt ? new Date(adm.createdAt).toLocaleDateString() : 'N/A';
+          return `
+            <div class="dashboard-item">
+              <div class="item-meta">
+                <h4>${escapeHTML(adm.studentName || adm.fullName || 'Pupil Candidate')}</h4>
+                <p>Applying for: <strong>${escapeHTML(adm.classRequested || adm.gradeApplying || 'Primary 1')}</strong></p>
+                <div class="meta-details">
+                  <span>Parent: ${escapeHTML(adm.parentName || adm.guardianName || 'N/A')}</span>
+                  <span>| Received: ${finalDate}</span>
+                </div>
+              </div>
+              <span class="badge-status ${badgeClass}">${status}</span>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Render recent messages
+      const repMsg = document.getElementById('recentMessagesContainer');
+      if (data.recentMessages.length === 0) {
+        repMsg.innerHTML = '<div style="padding: 2.5rem; text-align: center; color: var(--text-muted);"><i class="fa-solid fa-ban" style="font-size:2rem; display:block; margin-bottom:0.5rem;"></i> Influx is clear. No messages received.</div>';
+      } else {
+        repMsg.innerHTML = data.recentMessages.map(msg => {
+          const status = msg.status || 'Received';
+          const badgeClass = status === 'Resolved' ? 'status-approved' : (status === 'Replied' ? 'status-approved' : 'status-pending');
+          const finalDate = msg.createdAt ? new Date(msg.createdAt).toLocaleDateString() : 'N/A';
+          return `
+            <div class="dashboard-item">
+              <div class="item-meta">
+                <h4>${escapeHTML(msg.fullName || msg.name || 'Anonymous Sender')}</h4>
+                <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px;">
+                  "${escapeHTML(msg.message || '')}"
+                </p>
+                <div class="meta-details">
+                  <span>Email: ${escapeHTML(msg.email || 'N/A')}</span>
+                  <span>| Received: ${finalDate}</span>
+                </div>
+              </div>
+              <span class="badge-status ${badgeClass}">${status}</span>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    function escapeHTML(str) {
+      if (!str) return '';
+      return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+      );
+    }
+
+    // Set interactive clock
+    setInterval(() => {
+      document.getElementById('liveClock').textContent = new Date().toLocaleString();
+    }, 1000);
+    document.getElementById('liveClock').textContent = new Date().toLocaleString();
+
+    // Attach Log out handler
+    document.getElementById('btnLogout').onclick = async () => {
+      if (confirm("Disconnect and secure Administration Operator credentials?")) {
+        await logoutAdministrator();
+      }
+    };
+
+    // Run Initialization
+    initPage();
+  </script>
+</body>
+</html>

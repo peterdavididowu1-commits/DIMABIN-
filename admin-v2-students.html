@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Directory V2 - His Grace School</title>
+  
+  <!-- Typography & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    :root {
+      --sidebar-width: 260px;
+    }
+    body {
+      background-color: var(--bg-slate);
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    .db-container {
+      display: flex;
+      min-height: 100vh;
+    }
+    
+    /* Sidebar Navigation Layout */
+    .db-sidebar {
+      width: var(--sidebar-width);
+      background-color: var(--primary);
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 100;
+      transition: var(--transition);
+    }
+    .db-logo {
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .db-logo i {
+      font-size: 1.5rem;
+      color: var(--accent);
+    }
+    .db-logo h1 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0;
+    }
+    .db-logo span {
+      color: var(--accent);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      font-weight: 800;
+      display: block;
+    }
+    .db-user-info {
+      padding: 1.25rem 1.5rem;
+      background-color: var(--primary-hover);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .db-user-info span {
+      display: block;
+      font-size: 0.725rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .db-user-info h4 {
+      font-size: 0.875rem;
+      font-weight: 700;
+      margin-top: 0.25rem;
+      margin-bottom: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .db-menu {
+      list-style: none;
+      padding: 1rem 0;
+      margin: 0;
+      flex-grow: 1;
+    }
+    .db-menu-item a {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.9rem 1.5rem;
+      color: rgba(255, 255, 255, 0.8);
+      font-weight: 600;
+      font-size: 0.95rem;
+      border-left: 4px solid transparent;
+      transition: var(--transition);
+    }
+    .db-menu-item a:hover,
+    .db-menu-item.active a {
+      color: #ffffff;
+      background-color: rgba(255, 255, 255, 0.08);
+      border-left-color: var(--accent);
+    }
+    .db-sidebar-footer {
+      padding: 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .btn-logout {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.75rem;
+      background-color: rgb(239 68 68 / 0.1);
+      color: #fca5a5;
+      border: 1px solid rgb(239 68 68 / 0.2);
+      border-radius: var(--border-radius-sm);
+      font-weight: 700;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .btn-logout:hover {
+      background-color: rgb(239 68 68 / 0.2);
+      color: #ffffff;
+    }
+    
+    /* Main Content Area */
+    .db-main {
+      flex-grow: 1;
+      margin-left: var(--sidebar-width);
+      padding: 2.5rem;
+      transition: var(--transition);
+    }
+    .db-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #e2e8f0;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .db-header h2 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin: 0;
+    }
+    .db-header p {
+      margin: 0.25rem 0 0 0;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* Search controls */
+    .controls-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .search-input-wrapper {
+      position: relative;
+      flex-grow: 1;
+      max-width: 400px;
+    }
+    .search-input-wrapper i {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+    }
+    .search-form-control {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 2.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-sm);
+      font-size: 0.9rem;
+      background-color: #ffffff;
+    }
+    .filter-wrapper {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    /* Student profiles grid */
+    .student-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+    .student-card {
+      background-color: #ffffff;
+      border-radius: var(--border-radius-md);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: var(--transition);
+    }
+    .student-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: rgba(30, 58, 138, 0.15);
+    }
+    .student-card-top {
+      padding: 1.5rem;
+      background-color: rgba(30, 58, 138, 0.02);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .student-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-color: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.25rem;
+      border: 2px solid var(--border-color);
+    }
+    .student-basic-info h4 {
+      margin: 0;
+      font-weight: 800;
+      color: var(--text-dark);
+      font-size: 1.05rem;
+    }
+    .student-basic-info p {
+      margin: 0.25rem 0 0 0;
+      font-size: 0.825rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .student-card-content {
+      padding: 1.5rem;
+      flex-grow: 1;
+    }
+    .student-field-row {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid #edf2f7;
+      padding: 0.5rem 0;
+      font-size: 0.85rem;
+    }
+    .student-field-row:last-child {
+      border-bottom: none;
+    }
+    .student-field-label {
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+    .student-field-val {
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    /* Modal overrides */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+    .modal-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-box {
+      background-color: #ffffff;
+      width: 100%;
+      max-width: 500px;
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      transform: translateY(20px);
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .modal-backdrop.open .modal-box {
+      transform: translateY(0);
+    }
+    
+    .loading-overlay {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 5rem 0;
+    }
+    .loading-spinner {
+      border: 4px solid var(--border-color);
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="db-container">
+    <!-- Left Sidebar -->
+    <div class="db-sidebar">
+      <div class="db-logo">
+        <i class="fa-solid fa-graduation-cap"></i>
+        <div>
+          <h1>His Grace School</h1>
+          <span>Admin Portal V2</span>
+        </div>
+      </div>
+      
+      <div class="db-user-info" id="adminUserCard">
+        <span>Active Operator</span>
+        <h4 id="userEmailPlaceholder">hisgraceschool.name.ng@gmail.com</h4>
+      </div>
+      
+      <ul class="db-menu">
+        <li class="db-menu-item">
+          <a href="admin-v2-dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+        </li>
+        <li class="db-menu-item">
+          <a href="admin-v2-admissions.html"><i class="fa-solid fa-user-graduate"></i> Admissions</a>
+        </li>
+        <li class="db-menu-item active">
+          <a href="admin-v2-students.html"><i class="fa-solid fa-address-book"></i> Student Directory</a>
+        </li>
+        <li class="db-menu-item">
+          <a href="admin-v2-messages.html"><i class="fa-solid fa-envelope-open-text"></i> Enquiries Inbox</a>
+        </li>
+        <li class="db-menu-item">
+          <a href="admin-v2-audit.html"><i class="fa-solid fa-clock-rotate-left"></i> Integrity Logs</a>
+        </li>
+      </ul>
+      
+      <div class="db-sidebar-footer">
+        <button id="btnLogout" class="btn-logout">
+          <i class="fa-solid fa-power-off"></i> Outflow Sign-out
+        </button>
+      </div>
+    </div>
+    
+    <!-- Main Content Area -->
+    <div class="db-main">
+      <div class="db-header">
+        <div>
+          <h2>Student Registration Profiles V2</h2>
+          <p>Inspect active pupil accounts, retrieve Admission numbers, secure login access cards.</p>
+        </div>
+      </div>
+
+      <!-- Controls Block -->
+      <div class="controls-bar">
+        <div class="search-input-wrapper">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="studentSearch" class="search-form-control" placeholder="Search by name, admission ID, or class grade...">
+        </div>
+      </div>
+
+      <!-- Loading Panel -->
+      <div id="loaderPanel" class="loading-overlay">
+        <div class="loading-spinner"></div>
+      </div>
+
+      <!-- Student Profiles Stack Grid -->
+      <div id="gridBoard" style="display: none;">
+        <div class="student-grid" id="studentsStackGrid">
+          <!-- Rendered in JS dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { requireAuthentication, getStudents, logoutAdministrator } from './assets/js/admin-v2.js';
+
+    let allStudents = [];
+
+    async function initPage() {
+      const user = await requireAuthentication();
+      if (!user) return; // Hooked
+      document.getElementById('userEmailPlaceholder').textContent = user.email;
+
+      await loadStudents();
+
+      document.getElementById('studentSearch').addEventListener('input', triggerSearch);
+    }
+
+    async function loadStudents() {
+      try {
+        document.getElementById('loaderPanel').style.display = 'flex';
+        document.getElementById('gridBoard').style.display = 'none';
+
+        allStudents = await getStudents();
+        renderStudents(allStudents);
+      } catch (err) {
+        console.error(err);
+        alert("Sync Failure: Unable to communicate with 'students' data channel.");
+      }
+    }
+
+    function renderStudents(list) {
+      document.getElementById('loaderPanel').style.display = 'none';
+      const container = document.getElementById('studentsStackGrid');
+      document.getElementById('gridBoard').style.display = 'block';
+
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div style="grid-column: 1 / -1; background:#ffffff; border:1px solid var(--border-color); border-radius: var(--border-radius-md); text-align: center; padding: 4.5rem; color: var(--text-muted);">
+            <i class="fa-solid fa-address-card" style="font-size:3rem; color: var(--primary); margin-bottom:1rem; display:block;"></i>
+            <h3>No student documents found</h3>
+            <p>Onboard applicants inside the admissions tab to formulate student directories here.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = list.map(item => {
+        // Safe mapping formats
+        const fullName = item.fullName || item.studentName || 'Pupil Candidate';
+        const classVal = item.class || item.gradeApplying || 'Primary 1';
+        const admNo = item.admissionNumber || 'N/A';
+        const entryPassword = item.password || '••••••••';
+        
+        // Parent details resolves
+        let pName = 'Unspecified';
+        let pPhone = 'N/A';
+        if (item.parentDetails) {
+          pName = item.parentDetails.parentName || pName;
+          pPhone = item.parentDetails.parentPhone || pPhone;
+        } else {
+          pName = item.parentName || pName;
+          pPhone = item.parentPhone || pPhone;
+        }
+
+        // Contact details resolves
+        let guardianEmail = 'N/A';
+        if (item.contactDetails) {
+          guardianEmail = item.contactDetails.guardianEmail || guardianEmail;
+        } else {
+          guardianEmail = item.guardianEmail || item.parentEmail || item.email || guardianEmail;
+        }
+
+        const initials = fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+        return `
+          <div class="student-card">
+            <div class="student-card-top">
+              <div class="student-avatar">${escapeHTML(initials)}</div>
+              <div class="student-basic-info">
+                <h4>${escapeHTML(fullName)}</h4>
+                <p>Admission No: <strong style="color:var(--primary);">${escapeHTML(admNo)}</strong></p>
+              </div>
+            </div>
+            <div class="student-card-content">
+              
+              <div class="student-field-row">
+                <span class="student-field-label">Current Grade / Class</span>
+                <span class="student-field-val">${escapeHTML(classVal)}</span>
+              </div>
+              
+              <div class="student-field-row">
+                <span class="student-field-label">Portal Password</span>
+                <span class="student-field-val" style="font-family:monospace; color:var(--secondary); font-weight:700;">${escapeHTML(entryPassword)}</span>
+              </div>
+
+              <div style="margin: 1rem 0 0.5rem 0; font-size: 0.75rem; text-transform: uppercase; font-weight: 800; color: var(--accent); letter-spacing: 0.05em;">Parent / Sponsor Contact Details</div>
+
+              <div class="student-field-row">
+                <span class="student-field-label">Sponsor Full Name</span>
+                <span class="student-field-val">${escapeHTML(pName)}</span>
+              </div>
+
+              <div class="student-field-row">
+                <span class="student-field-label">Mobile Contact</span>
+                <span class="student-field-val">${escapeHTML(pPhone)}</span>
+              </div>
+
+              <div class="student-field-row" style="border-bottom:none;">
+                <span class="student-field-label">Delivery Email</span>
+                <span class="student-field-val">${escapeHTML(guardianEmail)}</span>
+              </div>
+
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function triggerSearch() {
+      const searchVal = document.getElementById('studentSearch').value.toLowerCase().trim();
+
+      const filtered = allStudents.filter(item => {
+        const name = (item.fullName || item.studentName || '').toLowerCase();
+        const adm = (item.admissionNumber || '').toLowerCase();
+        const grade = (item.class || item.gradeApplying || '').toLowerCase();
+
+        return name.includes(searchVal) || adm.includes(searchVal) || grade.includes(searchVal);
+      });
+
+      renderStudents(filtered);
+    }
+
+    function escapeHTML(str) {
+      if (!str) return '';
+      return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+      );
+    }
+
+    // Force signout out
+    document.getElementById('btnLogout').onclick = async () => {
+      if (confirm("Disconnect and secure active admin profiles session?")) {
+        await logoutAdministrator();
+      }
+    };
+
+    // run init
+    initPage();
+  </script>
+</body>
+</html>
