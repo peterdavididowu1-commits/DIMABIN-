@@ -195,7 +195,7 @@
         <!-- ==========================================
              SECTION 1: NOTICEBOARD
              ========================================== -->
-        <section id="portal-feed" class="portal-section active">
+        <section id="noticeboardView" class="portal-section active">
           <h3 style="font-size: 1.25rem; color: var(--primary); margin-bottom: 1.25rem; font-weight: 800;"><i class="fa-solid fa-bullhorn" style="color: var(--accent);"></i> Central School Board Announcements</h3>
           
           <div style="display: flex; flex-direction: column; gap: 1.25rem;">
@@ -215,7 +215,7 @@
         <!-- ==========================================
              SECTION PROFILING: MY PROFILE
              ========================================== -->
-        <section id="portal-profile" class="portal-section">
+        <section id="profileView" class="portal-section">
           <h3 style="font-size: 1.25rem; color: var(--primary); margin-bottom: 1.25rem; font-weight: 800;"><i class="fa-solid fa-id-card" style="color: var(--accent);"></i> Verified Pupil Profile Details</h3>
           
           <div class="card" style="background-color: #ffffff; padding: 2rem; box-shadow: var(--shadow-sm); border: 1.5px solid var(--border-color);">
@@ -669,7 +669,7 @@
             <button class="btn btn-outline" onclick="location.reload()" style="margin-top: 1.25rem; font-size: 0.85rem;"><i class="fa-solid fa-arrows-rotate"></i> Retry Syncing Profile</button>
           </div>
         `;
-        const profileSec = document.getElementById('portal-profile');
+        const profileSec = document.getElementById('profileView');
         if (profileSec) {
           profileSec.innerHTML = errorHtml;
         }
@@ -728,9 +728,8 @@
       }
 
       // 7. Click Handlers & Navigation Toggles
-      async function openStudentProfile(e) {
-        if (e) e.preventDefault();
-        
+      async function loadStudentProfile() {
+        console.log("loadStudentProfile invoked");
         try {
           const freshSession = getActiveStudentSession();
           if (!freshSession) {
@@ -747,25 +746,49 @@
             showProfileError();
           }
         } catch (err) {
-          console.error("Error executing openStudentProfile:", err);
+          console.error("Error executing loadStudentProfile:", err);
           showProfileError();
         }
+      }
 
-        // Hide noticeboard, show Profile view
+      function openStudentProfile(e) {
+        console.log('Profile button clicked');
+        if (e) e.preventDefault();
+
+        // 1. Reset all sections
         const sections = document.querySelectorAll('.portal-section');
-        sections.forEach(sec => sec.classList.remove('active'));
+        sections.forEach(sec => {
+          sec.style.display = 'none';
+          sec.classList.remove('active');
+        });
 
-        const profileSec = document.getElementById('portal-profile');
-        if (profileSec) profileSec.classList.add('active');
+        // 2. Hide noticeboardView specifically
+        const noticeboardView = document.getElementById('noticeboardView');
+        if (noticeboardView) {
+          noticeboardView.style.display = 'none';
+        }
 
-        // Toggle active menu highlight
+        // 3. Show profileView specifically
+        const profileView = document.getElementById('profileView');
+        if (profileView) {
+          profileView.style.display = 'block';
+          profileView.classList.add('active');
+        }
+
+        // 4. Toggle active menu highlight
         const menuItems = document.querySelectorAll('.portal-menu-item');
         menuItems.forEach(mi => mi.classList.remove('active'));
         const profileBtn = document.getElementById('profileBtn');
         if (profileBtn) profileBtn.classList.add('active');
 
         closeMobileMenu();
+
+        loadStudentProfile();
       }
+
+      // Make openStudentProfile and loadStudentProfile globally inspectable/callable
+      window.openStudentProfile = openStudentProfile;
+      window.loadStudentProfile = loadStudentProfile;
 
       function closeMobileMenu() {
         const mobileMenu = document.getElementById('mobileMenuOverlay');
@@ -788,12 +811,19 @@
         feedBtnEl.addEventListener('click', (e) => {
           e.preventDefault();
 
-          // Navigation Toggles
+          // Reset all sections
           const sections = document.querySelectorAll('.portal-section');
-          sections.forEach(sec => sec.classList.remove('active'));
+          sections.forEach(sec => {
+            sec.style.display = 'none';
+            sec.classList.remove('active');
+          });
 
-          const feedSec = document.getElementById('portal-feed');
-          if (feedSec) feedSec.classList.add('active');
+          // Show noticeboardView
+          const noticeboardView = document.getElementById('noticeboardView');
+          if (noticeboardView) {
+            noticeboardView.style.display = 'block';
+            noticeboardView.classList.add('active');
+          }
 
           const menuItems = document.querySelectorAll('.portal-menu-item');
           menuItems.forEach(mi => mi.classList.remove('active'));
@@ -812,15 +842,30 @@
             e.preventDefault();
             const target = item.getAttribute('data-target');
 
+            // Reset all sections
+            const sections = document.querySelectorAll('.portal-section');
+            sections.forEach(sec => {
+              sec.style.display = 'none';
+              sec.classList.remove('active');
+            });
+
+            // Hide noticeboardView and profileView
+            const noticeboardView = document.getElementById('noticeboardView');
+            if (noticeboardView) noticeboardView.style.display = 'none';
+
+            const profileView = document.getElementById('profileView');
+            if (profileView) profileView.style.display = 'none';
+
             // Highlight menu
             menuItems.forEach(mi => mi.classList.remove('active'));
             item.classList.add('active');
 
             // Toggle viewport section
-            const sections = document.querySelectorAll('.portal-section');
-            sections.forEach(sec => sec.classList.remove('active'));
             const targetSec = document.getElementById(`portal-${target}`);
-            if (targetSec) targetSec.classList.add('active');
+            if (targetSec) {
+              targetSec.style.display = 'block';
+              targetSec.classList.add('active');
+            }
 
             closeMobileMenu();
           });
