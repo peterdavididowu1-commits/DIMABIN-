@@ -721,12 +721,23 @@
                    </div>
 
                    <!-- CBT Live Execution Diagnostics (Requirement 5) -->
-                    <div style="background-color: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 1.5rem; font-size: 0.8rem; color: #334155; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem;">
+                    <div style="background-color: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 1.5rem; font-size: 0.8rem; color: #334155; display: flex; flex-direction: column; gap: 0.5rem;">
                       <span><i class="fa-solid fa-bug" style="color: var(--secondary);"></i> <strong>Live Exam Diagnostics:</strong></span>
                       <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                         <span><strong>Exam ID:</strong> <code id="diagLiveExamId" style="background-color: #e2e8f0; padding: 0.1rem 0.3rem; border-radius: 3px; font-family: monospace;">-</code></span>
                         <span><strong>Linked Questions:</strong> <span id="diagLiveLinkedCount" style="font-weight: bold; color: var(--primary);">-</span></span>
                         <span><strong>Loaded Questions:</strong> <span id="diagLiveLoadedCount" style="font-weight: bold; color: #16a34a;">-</span></span>
+                       </div>
+                       <div id="diagActiveQuestionDetails" style="border-top: 1px dashed #cbd5e1; padding-top: 0.5rem; display: flex; flex-direction: column; gap: 0.25rem; font-family: monospace; font-size: 0.75rem; color: #475569; width: 100%;">
+                         <div><strong>Active Question ID:</strong> <span id="diagActiveQId">-</span></div>
+                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; width: 100%;">
+                           <div><strong>Opt A:</strong> <span id="diagActiveOptA" style="color: #0284c7;">-</span></div>
+                           <div><strong>Opt B:</strong> <span id="diagActiveOptB" style="color: #0284c7;">-</span></div>
+                           <div><strong>Opt C:</strong> <span id="diagActiveOptC" style="color: #0284c7;">-</span></div>
+                           <div><strong>Opt D:</strong> <span id="diagActiveOptD" style="color: #0284c7;">-</span></div>
+                         </div>
+                       </div>
+                       <div style="display: none;"
                       </div>
                     </div>
 
@@ -912,7 +923,10 @@
       getCbtExams,
       getCbtQuestionsForExam,
       saveCbtResult,
-      getCbtResultsForStudent
+      getCbtResultsForStudent,
+      saveCbtAnswers,
+      getCbtAnswersForStudentAndExam,
+      repairCbtRecords
     } from './assets/js/firebase-core.js';
 
     // HTML escape helper
@@ -1559,6 +1573,11 @@
       }
 
       try {
+        try {
+          await repairCbtRecords();
+        } catch (repErr) {
+          console.warn("Self-repair run error:", repErr);
+        }
         if (studentCbtLoading) studentCbtLoading.style.display = "block";
         if (studentCbtEmpty) studentCbtEmpty.style.display = "none";
         if (studentCbtExamsGrid) studentCbtExamsGrid.innerHTML = "";
@@ -1858,6 +1877,20 @@
       // Question Rendering Helper
       function renderActiveQuestion(index) {
         const q = questions[index];
+
+        // Update live question diagnostics (Requirement 5)
+        const diagActiveQId = document.getElementById("diagActiveQId");
+        const diagActiveOptA = document.getElementById("diagActiveOptA");
+        const diagActiveOptB = document.getElementById("diagActiveOptB");
+        const diagActiveOptC = document.getElementById("diagActiveOptC");
+        const diagActiveOptD = document.getElementById("diagActiveOptD");
+
+        if (diagActiveQId) diagActiveQId.textContent = q.id || "N/A";
+        if (diagActiveOptA) diagActiveOptA.textContent = q.options && q.options.A ? q.options.A : "Empty";
+        if (diagActiveOptB) diagActiveOptB.textContent = q.options && q.options.B ? q.options.B : "Empty";
+        if (diagActiveOptC) diagActiveOptC.textContent = q.options && q.options.C ? q.options.C : "Empty";
+        if (diagActiveOptD) diagActiveOptD.textContent = q.options && q.options.D ? q.options.D : "Empty";
+
         activeQuestionsPlayList.innerHTML = "";
 
         const card = document.createElement("div");

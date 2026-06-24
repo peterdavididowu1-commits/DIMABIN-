@@ -1692,6 +1692,32 @@ export const saveTeacherResult = async (payload) => {
 // CBT COMPUTER-BASED TEST SYSTEM HELPERS
 // ==========================================
 
+export const normalizeQuestion = (qData) => {
+  if (!qData) return qData;
+  if (!qData.options) {
+    qData.options = {
+      A: qData.optionA || "",
+      B: qData.optionB || "",
+      C: qData.optionC || "",
+      D: qData.optionD || ""
+    };
+  } else {
+    if (!qData.options.A) qData.options.A = qData.optionA || "";
+    if (!qData.options.B) qData.options.B = qData.optionB || "";
+    if (!qData.options.C) qData.options.C = qData.optionC || "";
+    if (!qData.options.D) qData.options.D = qData.optionD || "";
+  }
+  if (!qData.optionA) qData.optionA = qData.options.A;
+  if (!qData.optionB) qData.optionB = qData.options.B;
+  if (!qData.optionC) qData.optionC = qData.options.C;
+  if (!qData.optionD) qData.optionD = qData.options.D;
+  
+  if (!qData.questionText) qData.questionText = qData.text || qData.question || "";
+  if (!qData.correctAnswer) qData.correctAnswer = qData.correct || "A";
+  
+  return qData;
+};
+
 export const saveCbtExam = async (examPayload) => {
   if (!db) throw new Error("Firestore not initialized.");
   try {
@@ -1710,11 +1736,13 @@ export const saveCbtExam = async (examPayload) => {
         const qQuery = sdkFirestore.query(qColRef, sdkFirestore.where("examId", "==", docId));
         const qSnap = await sdkFirestore.getDocs(qQuery);
         qSnap.forEach(qDoc => {
-          questions.push(qDoc.data());
+          questions.push(normalizeQuestion(qDoc.data()));
         });
       } catch (err) {
         console.warn("Could not fetch associated questions during save:", err);
       }
+    } else {
+      questions = questions.map(q => normalizeQuestion(q));
     }
 
     const titleVal = examPayload.title || examPayload.examTitle || "";
@@ -1792,35 +1820,13 @@ export const getCbtExams = async () => {
           const qQuery = sdkFirestore.query(qColRef, sdkFirestore.where("examId", "==", data.id));
           const qSnap = await sdkFirestore.getDocs(qQuery);
           qSnap.forEach(qDoc => {
-            const qData = qDoc.data();
-            if (!qData.options) {
-              qData.options = {
-                A: qData.optionA || "",
-                B: qData.optionB || "",
-                C: qData.optionC || "",
-                D: qData.optionD || ""
-              };
-            }
-            questions.push(qData);
+            questions.push(normalizeQuestion(qDoc.data()));
           });
         } catch (err) {
           console.warn("Could not fetch associated questions:", err);
         }
       } else {
-        questions = questions.map(qData => {
-          if (!qData.options) {
-            return {
-              ...qData,
-              options: {
-                A: qData.optionA || "",
-                B: qData.optionB || "",
-                C: qData.optionC || "",
-                D: qData.optionD || ""
-              }
-            };
-          }
-          return qData;
-        });
+        questions = questions.map(qData => normalizeQuestion(qData));
       }
 
       const unifiedExam = {
@@ -1864,35 +1870,13 @@ export const getCbtExamsByClass = async (studentClass) => {
           const qQuery = sdkFirestore.query(qColRef, sdkFirestore.where("examId", "==", data.id));
           const qSnap = await sdkFirestore.getDocs(qQuery);
           qSnap.forEach(qDoc => {
-            const qData = qDoc.data();
-            if (!qData.options) {
-              qData.options = {
-                A: qData.optionA || "",
-                B: qData.optionB || "",
-                C: qData.optionC || "",
-                D: qData.optionD || ""
-              };
-            }
-            questions.push(qData);
+            questions.push(normalizeQuestion(qDoc.data()));
           });
         } catch (err) {
           console.warn("Could not fetch associated questions:", err);
         }
       } else {
-        questions = questions.map(qData => {
-          if (!qData.options) {
-            return {
-              ...qData,
-              options: {
-                A: qData.optionA || "",
-                B: qData.optionB || "",
-                C: qData.optionC || "",
-                D: qData.optionD || ""
-              }
-            };
-          }
-          return qData;
-        });
+        questions = questions.map(qData => normalizeQuestion(qData));
       }
 
       const unifiedExam = {
@@ -2016,16 +2000,7 @@ export const getCbtQuestionsForExam = async (examId) => {
     const snap = await sdkFirestore.getDocs(q1);
     const questions = [];
     snap.forEach(doc => {
-      const qData = doc.data();
-      if (!qData.options) {
-        qData.options = {
-          A: qData.optionA || "",
-          B: qData.optionB || "",
-          C: qData.optionC || "",
-          D: qData.optionD || ""
-        };
-      }
-      questions.push(qData);
+      questions.push(normalizeQuestion(doc.data()));
     });
     return questions;
   } catch (err) {
@@ -2155,6 +2130,100 @@ export const getAllCbtResults = async () => {
   } catch (err) {
     console.error("Error getting All CBT Results:", err);
     throw err;
+  }
+};
+
+export const repairCbtRecords = async () => {
+  if (!db) throw new Error("Firestore not initialized.");
+  try {
+    console.log("Starting full CBT records self-repair audit...");
+    
+    // 1. Repair CBT questions collection
+    const qColRef = sdkFirestore.collection(db, "cbt_questions");
+    const qSnap = await sdkFirestore.getDocs(qColRef);
+    const questionsMap = {}; // Keep a copy of repaired questions by ID
+    
+    for (const qDoc of qSnap.docs) {
+      const qData = qDoc.data();
+      let updated = false;
+      
+      if (!qData.options) {
+        qData.options = {};
+      }
+      
+      const optionAVal = qData.options.A || qData.optionA || "";
+      const optionBVal = qData.options.B || qData.optionB || "";
+      const optionCVal = qData.options.C || qData.optionC || "";
+      const optionDVal = qData.options.D || qData.optionD || "";
+      
+      if (qData.options.A !== optionAVal || !qData.options.A) { qData.options.A = optionAVal; updated = true; }
+      if (qData.options.B !== optionBVal || !qData.options.B) { qData.options.B = optionBVal; updated = true; }
+      if (qData.options.C !== optionCVal || !qData.options.C) { qData.options.C = optionCVal; updated = true; }
+      if (qData.options.D !== optionDVal || !qData.options.D) { qData.options.D = optionDVal; updated = true; }
+      
+      if (qData.optionA !== optionAVal) { qData.optionA = optionAVal; updated = true; }
+      if (qData.optionB !== optionBVal) { qData.optionB = optionBVal; updated = true; }
+      if (qData.optionC !== optionCVal) { qData.optionC = optionCVal; updated = true; }
+      if (qData.optionD !== optionDVal) { qData.optionD = optionDVal; updated = true; }
+      
+      if (updated) {
+        console.log(`Repairing CBT Question record: ${qDoc.id}`);
+        await sdkFirestore.setDoc(qDoc.ref, qData, { merge: true });
+      }
+      
+      questionsMap[qDoc.id] = qData;
+    }
+    
+    // 2. Repair CBT exams collection questions array
+    const eColRef = sdkFirestore.collection(db, "cbt_exams");
+    const eSnap = await sdkFirestore.getDocs(eColRef);
+    for (const eDoc of eSnap.docs) {
+      const eData = eDoc.data();
+      let updated = false;
+      
+      let questionsArr = eData.questions || [];
+      if (questionsArr.length > 0) {
+        const repairedQs = questionsArr.map(q => {
+          if (questionsMap[q.id]) {
+            return questionsMap[q.id];
+          }
+          
+          let qUpdated = false;
+          if (!q.options) {
+            q.options = {};
+          }
+          const opA = q.options.A || q.optionA || "";
+          const opB = q.options.B || q.optionB || "";
+          const opC = q.options.C || q.optionC || "";
+          const opD = q.options.D || q.optionD || "";
+          
+          if (q.options.A !== opA || !q.options.A) { q.options.A = opA; qUpdated = true; }
+          if (q.options.B !== opB || !q.options.B) { q.options.B = opB; qUpdated = true; }
+          if (q.options.C !== opC || !q.options.C) { q.options.C = opC; qUpdated = true; }
+          if (q.options.D !== opD || !q.options.D) { q.options.D = opD; qUpdated = true; }
+          
+          if (q.optionA !== opA) { q.optionA = opA; qUpdated = true; }
+          if (q.optionB !== opB) { q.optionB = opB; qUpdated = true; }
+          if (q.optionC !== opC) { q.optionC = opC; qUpdated = true; }
+          if (q.optionD !== opD) { q.optionD = opD; qUpdated = true; }
+          
+          if (qUpdated) {
+            updated = true;
+          }
+          return q;
+        });
+        
+        if (updated) {
+          console.log(`Repairing embedded questions in CBT Exam: ${eDoc.id}`);
+          await sdkFirestore.setDoc(eDoc.ref, { questions: repairedQs }, { merge: true });
+        }
+      }
+    }
+    console.log("CBT records self-repair audit completed successfully!");
+    return { success: true };
+  } catch (err) {
+    console.error("Failed to run CBT self-repair audit:", err);
+    return { success: false, error: err.message };
   }
 };
 
