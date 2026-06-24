@@ -649,6 +649,38 @@
                           <strong style="font-size: 1.4rem; color: var(--primary); margin-top: 0.25rem;" id="diagnosticMatchingExams">-</strong>
                         </div>
                       </div>
+
+                      <!-- Class Synchronization Audit Details (Requirement 1, 2, 3, 7) -->
+                      <div style="margin-top: 1rem; background-color: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 6px; padding: 1rem;">
+                        <div style="font-weight: 800; font-size: 0.85rem; color: var(--primary); text-transform: uppercase; margin-bottom: 0.75rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                          <i class="fa-solid fa-code-compare" style="color: var(--secondary);"></i> Class Normalization & Match Audit Details
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.825rem; line-height: 1.4;">
+                          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; background-color: #f1f5f9; padding: 0.5rem 0.75rem; border-radius: 4px; gap: 0.5rem;">
+                            <span><strong>Student Class Value (Profile):</strong> <span id="diagStudentClassVal" style="font-family: monospace; font-weight: bold;">-</span></span>
+                            <span><strong>Normalized Code:</strong> <code id="diagStudentClassNorm" style="background-color: var(--secondary); color: white; padding: 0.15rem 0.4rem; border-radius: 3px; font-weight: bold;">-</code></span>
+                          </div>
+                          
+                          <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left;">
+                              <thead>
+                                <tr style="border-bottom: 1.5px solid #cbd5e1; color: var(--text-muted);">
+                                  <th style="padding: 0.5rem 0.25rem;">Exam Title</th>
+                                  <th style="padding: 0.5rem 0.25rem;">CBT Target Class</th>
+                                  <th style="padding: 0.5rem 0.25rem;">Normalized CBT Class</th>
+                                  <th style="padding: 0.5rem 0.25rem; text-align: right;">Class Match Result</th>
+                                </tr>
+                              </thead>
+                              <tbody id="diagClassMatchRows">
+                                <tr>
+                                  <td colspan="4" style="text-align: center; padding: 1rem; color: var(--text-muted);">No exams loaded for evaluation yet.</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+
                       <div style="font-size: 0.775rem; color: #475569; margin-top: 0.85rem; display: flex; align-items: center; gap: 0.35rem; border-top: 1px solid #e2e8f0; padding-top: 0.65rem;">
                         <i class="fa-solid fa-circle-check" style="color: #16a34a;"></i> <span><strong>Audit Note:</strong> The active date/time-locking filter is temporarily bypassed. Any published CBT exams matching your class are displayed below with an active <strong>Start Exam</strong> button.</span>
                       </div>
@@ -1527,10 +1559,30 @@
 
         // Get all general published exams
         const allPublishedExams = await getCbtExams();
+        // Helper to standardize class names before comparison (Requirement 4 & 5)
+        const normalizeClassName = (className) => {
+          if (!className) return "";
+          let clean = className.toString().toUpperCase().trim();
+          // Remove dashes and underscores
+          clean = clean.replace(/[-_]/g, "");
+          // Expand/convert long names
+          clean = clean.replace(/JUNIOR\s*SECONDARY\s*SCHOOL/g, "JSS");
+          clean = clean.replace(/SENIOR\s*SECONDARY\s*SCHOOL/g, "SSS");
+          clean = clean.replace(/PRIMARY\s*SCHOOL/g, "PRIMARY");
+          clean = clean.replace(/NURSERY\s*SCHOOL/g, "NURSERY");
+          clean = clean.replace(/PRY/g, "PRIMARY");
+          // Remove all whitespace
+          clean = clean.replace(/\s+/g, "");
+          return clean;
+        };
+
+        const normStudentClass = normalizeClassName(studentClass);
 
         // Filter CBT exams matching student class category
         const matchClassExams = allPublishedExams.filter(ex => {
-          const classMatches = (ex.targetClass || ex.class || '').toLowerCase().trim() === (studentClass || '').toLowerCase().trim();
+          const rawExClass = ex.targetClass || ex.class || '';
+          const normExClass = normalizeClassName(rawExClass);
+          const classMatches = normExClass === normStudentClass;
           const isPublished = (ex.status === 'Published' || ex.published === true);
           return classMatches && isPublished;
         });
@@ -1545,6 +1597,45 @@
         if (diagPub) diagPub.textContent = allPublishedExams.filter(e => e.status === 'Published' || e.published).length;
         if (diagClass) diagClass.textContent = studentClass || "None";
         if (diagMatch) diagMatch.textContent = matchClassExams.length;
+
+        // Dynamic Audit details (Requirement 1, 2, 3, 7)
+        const diagStudentClassVal = document.getElementById("diagStudentClassVal");
+        const diagStudentClassNorm = document.getElementById("diagStudentClassNorm");
+        const diagClassMatchRows = document.getElementById("diagClassMatchRows");
+
+        if (diagStudentClassVal) diagStudentClassVal.textContent = studentClass ? `"${studentClass}"` : '"None"';
+        if (diagStudentClassNorm) diagStudentClassNorm.textContent = normStudentClass || "NONE";
+
+        if (diagClassMatchRows) {
+          diagClassMatchRows.innerHTML = "";
+          if (allPublishedExams.length === 0) {
+            diagClassMatchRows.innerHTML = `
+              <tr>
+                <td colspan="4" style="text-align: center; padding: 1rem; color: var(--text-muted);">No CBT exams found in database.</td>
+              </tr>
+            `;
+          } else {
+            allPublishedExams.forEach(ex => {
+              const rawExClass = ex.targetClass || ex.class || '';
+              const normExClass = normalizeClassName(rawExClass);
+              const isMatch = normExClass === normStudentClass;
+              
+              const matchBadge = isMatch 
+                ? `<span style="background-color: #d4edda; color: #155724; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: bold; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem;"><i class="fa-solid fa-circle-check" style="color: #16a34a;"></i> Match Success</span>`
+                : `<span style="background-color: #f8d7da; color: #721c24; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: bold; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem;"><i class="fa-solid fa-circle-xmark" style="color: #dc3545;"></i> Mismatch</span>`;
+
+              const rowHtml = `
+                <tr style="border-bottom: 1px solid #e2e8f0; color: var(--text-dark);">
+                  <td style="padding: 0.65rem 0.25rem; font-weight: bold;">${ex.title || ex.examTitle || 'Untitled Exam'}</td>
+                  <td style="padding: 0.65rem 0.25rem; font-family: monospace;">"${rawExClass}"</td>
+                  <td style="padding: 0.65rem 0.25rem;"><code style="background-color: #f1f5f9; padding: 0.15rem 0.4rem; border-radius: 3px; font-family: monospace; font-weight: bold; color: var(--primary);">${normExClass || 'NONE'}</code></td>
+                  <td style="padding: 0.65rem 0.25rem; text-align: right;">${matchBadge}</td>
+                </tr>
+              `;
+              diagClassMatchRows.insertAdjacentHTML('beforeend', rowHtml);
+            });
+          }
+        }
 
         if (studentCbtLoading) studentCbtLoading.style.display = "none";
 
