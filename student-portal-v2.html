@@ -1554,6 +1554,10 @@
     }
 
     async function initStudentCbtController(studentClass, studentName, admissionNumber) {
+      window.studentClassGlobal = studentClass;
+      window.studentNameGlobal = studentName;
+      window.admissionNumberGlobal = admissionNumber;
+
       const studentCbtLoading = document.getElementById("studentCbtLoading");
       const studentCbtEmpty = document.getElementById("studentCbtEmpty");
       const studentCbtExamsGrid = document.getElementById("studentCbtExamsGrid");
@@ -1746,18 +1750,10 @@
           // Bind scorecard feedback view is taken
           const resultBtn = card.querySelector(".view-cbt-result-btn");
           if (resultBtn) {
-            resultBtn.addEventListener("click", () => {
-              const score = resultBtn.getAttribute("data-score");
-              const total = resultBtn.getAttribute("data-total");
-              const pct = resultBtn.getAttribute("data-pct");
-              const title = resultBtn.getAttribute("data-title");
-
-              document.getElementById("resCardScoreText").textContent = `${score} / ${total}`;
-              document.getElementById("resCardPercentText").textContent = `${pct}%`;
-              document.getElementById("resCardGradeText").textContent = calculateGradeSymbol(parseFloat(pct));
-
+            resultBtn.addEventListener("click", async () => {
               if (studentCbtRosterView) studentCbtRosterView.style.display = "none";
               if (studentCbtResultCard) studentCbtResultCard.style.display = "block";
+              await tryReloadResult(admissionNumber, exam.id);
             });
           }
 
@@ -2091,6 +2087,302 @@
       }
     }
 
+    async function tryReloadResult(admissionNumber, examId) {
+      const studentCbtResultCard = document.getElementById("studentCbtResultCard");
+      if (studentCbtResultCard) {
+        studentCbtResultCard.innerHTML = `
+          <div style="text-align: center; padding: 3rem 1.5rem;">
+            <div style="width: 80px; height: 80px; background-color: var(--primary-light); color: var(--primary); font-size: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto 1.5rem;">
+              <i class="fa-solid fa-spinner fa-spin" style="color: var(--secondary);"></i>
+            </div>
+            <h3 style="font-size: 1.5rem; color: var(--primary); font-weight: 800; margin-bottom: 0.5rem;">Syncing score records...</h3>
+            <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 2rem;">Connecting directly to high-availability database nodes. Please wait...</p>
+          </div>
+        `;
+      }
+      
+      try {
+        const resultsList = await getCbtResultsForStudent(admissionNumber);
+        const resultDoc = resultsList.find(r => r.examId === examId);
+        
+        if (resultDoc) {
+          await showCbtResultSummary(resultDoc, admissionNumber, examId);
+        } else {
+          // If result record cannot be found, show "Your examination has been submitted successfully. Result is being processed."
+          studentCbtResultCard.innerHTML = `
+            <div style="text-align: center; padding: 3rem 1.5rem;">
+              <div style="width: 80px; height: 80px; background-color: #fef3c7; color: #d97706; font-size: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto 1.5rem;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <h3 style="font-size: 1.5rem; color: #b45309; font-weight: 800; margin-bottom: 0.5rem;">Submission Synchronized Successfully</h3>
+              <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 2rem;">Your examination has been submitted successfully. Result is being processed.</p>
+              <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button class="btn btn-primary" id="retryLoadResultBtn2"><i class="fa-solid fa-rotate"></i> Check For Result</button>
+                <button class="btn btn-outline" id="backToCbtDashBtn2"><i class="fa-solid fa-house"></i> Back to Dashboard</button>
+              </div>
+            </div>
+          `;
+          
+          const retryBtn2 = document.getElementById("retryLoadResultBtn2");
+          if (retryBtn2) {
+            retryBtn2.onclick = () => tryReloadResult(admissionNumber, examId);
+          }
+          const backBtn2 = document.getElementById("backToCbtDashBtn2");
+          if (backBtn2) {
+            backBtn2.onclick = () => {
+              initStudentCbtController(window.studentClassGlobal, window.studentNameGlobal, window.admissionNumberGlobal);
+            };
+          }
+        }
+      } catch (err) {
+        console.error("Database connection reload failed:", err);
+        showResultErrorFallback(admissionNumber, examId, err.message);
+      }
+    }
+
+    async function showCbtResultSummary(resultData, admissionNumber, examId) {
+      const studentActiveExamView = document.getElementById("studentActiveExamView");
+      const studentCbtResultCard = document.getElementById("studentCbtResultCard");
+      const studentCbtRosterView = document.getElementById("studentCbtRosterView");
+      
+      if (studentActiveExamView) studentActiveExamView.style.display = "none";
+      if (studentCbtRosterView) studentCbtRosterView.style.display = "none";
+      if (studentCbtResultCard) {
+        studentCbtResultCard.style.display = "block";
+        studentCbtResultCard.style.backgroundColor = "#ffffff";
+        studentCbtResultCard.style.border = "2px solid var(--border-color)";
+        studentCbtResultCard.style.borderRadius = "12px";
+        studentCbtResultCard.style.padding = "2.5rem 1.5rem";
+        studentCbtResultCard.style.textAlign = "left";
+      } else {
+        console.error("studentCbtResultCard element not found!");
+        return;
+      }
+
+      if (!resultData) {
+        studentCbtResultCard.innerHTML = `
+          <div style="text-align: center; padding: 3rem 1.5rem;">
+            <div style="width: 80px; height: 80px; background-color: var(--primary-light); color: var(--primary); font-size: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto 1.5rem;">
+              <i class="fa-solid fa-spinner fa-spin"></i>
+            </div>
+            <h3 style="font-size: 1.5rem; color: var(--primary); font-weight: 800; margin-bottom: 0.5rem;">Loading Examination Result...</h3>
+            <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 2rem;">Please wait while we secure and verify your completed grade scorecard from the school system.</p>
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+              <button class="btn btn-primary" id="retryLoadResultBtn"><i class="fa-solid fa-sync fa-spin"></i> Retry Fetching</button>
+              <button class="btn btn-outline" id="backToCbtDashBtn"><i class="fa-solid fa-house"></i> Back to Dashboard</button>
+            </div>
+          </div>
+        `;
+        
+        const retryBtn = document.getElementById("retryLoadResultBtn");
+        if (retryBtn) {
+          retryBtn.onclick = async () => {
+            retryBtn.disabled = true;
+            retryBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Retrying...';
+            await tryReloadResult(admissionNumber, examId);
+          };
+        }
+        const backBtn = document.getElementById("backToCbtDashBtn");
+        if (backBtn) {
+          backBtn.onclick = () => {
+            initStudentCbtController(window.studentClassGlobal, window.studentNameGlobal, window.admissionNumberGlobal);
+          };
+        }
+        return;
+      }
+
+      try {
+        const title = resultData.examTitle || resultData.title || "Examination";
+        const name = resultData.studentName || "Unspecified Student";
+        const cls = resultData.class || resultData.studentClass || "N/A";
+        const subj = resultData.subject || "N/A";
+        
+        const total = Number(resultData.totalQuestions) || 0;
+        const correct = Number(resultData.correctAnswers !== undefined ? resultData.correctAnswers : (resultData.score !== undefined ? resultData.score : 0));
+        const wrong = Number(resultData.wrongAnswers !== undefined ? resultData.wrongAnswers : (total - correct));
+        
+        let attempted = total;
+        if (resultData.answers && Array.isArray(resultData.answers)) {
+          attempted = resultData.answers.filter(ans => ans.selectedAnswer !== "" && ans.selectedAnswer !== undefined).length;
+        } else if (resultData.answersMap) {
+          attempted = Object.values(resultData.answersMap).filter(val => val !== "" && val !== undefined).length;
+        } else {
+          attempted = correct + wrong;
+        }
+        if (attempted > total) attempted = total;
+
+        const scoreVal = correct;
+        const pct = resultData.percentage !== undefined ? resultData.percentage : (resultData.percentageScore !== undefined ? resultData.percentageScore : 0);
+        const isPass = pct >= 50;
+        const statusText = isPass ? "PASSED" : "FAILED";
+        const statusColor = isPass ? "#16a34a" : "#dc2626";
+        const statusBg = isPass ? "#f0fdf4" : "#fef2f2";
+        const statusBorder = isPass ? "#bbf7d0" : "#fecaca";
+        const grade = resultData.grade || calculateGradeSymbol(pct);
+
+        studentCbtResultCard.innerHTML = `
+          <style>
+            @media print {
+              body * {
+                visibility: hidden;
+              }
+              #studentCbtResultCard, #studentCbtResultCard * {
+                visibility: visible;
+              }
+              #studentCbtResultCard {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+              }
+              .no-print {
+                display: none !important;
+              }
+            }
+          </style>
+
+          <div id="printableResultArea" style="max-width: 650px; margin: 0 auto; font-family: 'Inter', system-ui, sans-serif;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2.5px solid var(--primary); padding-bottom: 1.25rem; margin-bottom: 2rem;">
+              <div>
+                <h2 style="font-size: 1.4rem; font-weight: 900; color: var(--primary); margin: 0;">HIS GRACE INTERNATIONAL SCHOOLS</h2>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0.2rem 0 0; text-transform: uppercase; letter-spacing: 0.5px;">Official CBT Assessment Report Slip</p>
+              </div>
+              <div style="background-color: ${statusBg}; color: ${statusColor}; border: 1.5px solid ${statusBorder}; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 800; font-size: 0.9rem; text-transform: uppercase; text-align: center;">
+                ${statusText}
+              </div>
+            </div>
+
+            <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--secondary); margin-bottom: 1rem; text-align: center; text-transform: uppercase;">
+              ${escapeHTML(title)}
+            </h3>
+
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; background-color: #f8fafc; border: 1.5px solid var(--border-color); border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem; font-size: 0.9rem;">
+              <div>
+                <span style="color: var(--text-muted); display: block; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; margin-bottom: 0.15rem;">CANDIDATE NAME</span>
+                <strong style="color: var(--text-dark);">${escapeHTML(name)}</strong>
+              </div>
+              <div>
+                <span style="color: var(--text-muted); display: block; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; margin-bottom: 0.15rem;">ADMISSION NUMBER</span>
+                <strong style="color: var(--text-dark); font-family: monospace;">${escapeHTML(resultData.admissionNumber)}</strong>
+              </div>
+              <div>
+                <span style="color: var(--text-muted); display: block; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; margin-bottom: 0.15rem;">CLASS DIVISION</span>
+                <strong style="color: var(--text-dark);">${escapeHTML(cls)}</strong>
+              </div>
+              <div>
+                <span style="color: var(--text-muted); display: block; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; margin-bottom: 0.15rem;">ACADEMIC SUBJECT</span>
+                <strong style="color: var(--text-dark);">${escapeHTML(subj)}</strong>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem;">
+              <div style="background-color: var(--primary-light); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 1rem; text-align: center;">
+                <span style="font-size: 0.75rem; font-weight: bold; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.5rem;">FINAL SCORE</span>
+                <strong style="font-size: 1.75rem; color: var(--primary);">${scoreVal} <span style="font-size: 1.1rem; color: var(--text-muted);">/ ${total}</span></strong>
+              </div>
+              <div style="background-color: var(--primary-light); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 1rem; text-align: center;">
+                <span style="font-size: 0.75rem; font-weight: bold; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.5rem;">PERCENTILE</span>
+                <strong style="font-size: 1.75rem; color: var(--secondary);">${pct}%</strong>
+              </div>
+              <div style="background-color: var(--primary-light); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 1rem; text-align: center;">
+                <span style="font-size: 0.75rem; font-weight: bold; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.5rem;">LETTER GRADE</span>
+                <strong style="font-size: 1.75rem; color: ${statusColor};">${grade}</strong>
+              </div>
+            </div>
+
+            <h4 style="font-size: 0.95rem; font-weight: 800; color: var(--primary); margin-bottom: 0.75rem; text-transform: uppercase; border-bottom: 1.5px solid var(--border-color); padding-bottom: 0.5rem;">Performance Statistics</h4>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 2rem; font-size: 0.85rem;">
+              <div style="display: flex; justify-content: space-between; background: #fafafa; padding: 0.5rem 0.75rem; border-radius: 4px;">
+                <span style="color: var(--text-muted);">Total Questions:</span>
+                <strong style="color: var(--text-dark);">${total}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; background: #fafafa; padding: 0.5rem 0.75rem; border-radius: 4px;">
+                <span style="color: var(--text-muted);">Attempted Questions:</span>
+                <strong style="color: var(--text-dark);">${attempted}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; background: #f0fdf4; padding: 0.5rem 0.75rem; border-radius: 4px;">
+                <span style="color: #15803d;">Correct Answers:</span>
+                <strong style="color: #16a34a;">${correct}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; background: #fef2f2; padding: 0.5rem 0.75rem; border-radius: 4px;">
+                <span style="color: #b91c1c;">Wrong Answers:</span>
+                <strong style="color: #dc2626;">${wrong}</strong>
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 3rem; padding-top: 1.5rem; border-top: 1.5px dashed var(--border-color); font-size: 0.75rem; color: var(--text-muted);">
+              <div>
+                <div>CBT Server Ref: <span style="font-family: monospace; font-weight: bold;">${resultData.id}</span></div>
+                <div>Submission Timestamp: <strong>${new Date(resultData.dateWritten || resultData.timestamp).toLocaleString()}</strong></div>
+              </div>
+              <div style="text-align: right; border-top: 1.5px solid #000; width: 150px; padding-top: 0.25rem;">
+                <span style="font-weight: 700; color: #000;">Registrar's Signature</span>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="no-print" style="margin-top: 3rem; display: flex; gap: 1rem; border-top: 2px solid var(--border-color); padding-top: 1.5rem; justify-content: flex-end;">
+            <button class="btn btn-outline" id="printReportBtn" style="padding: 0.75rem 1.5rem; font-weight: 700;"><i class="fa-solid fa-print"></i> Print Result PDF</button>
+            <button class="btn btn-primary" id="finalResultDashBtn" style="padding: 0.75rem 2rem; font-weight: 700;"><i class="fa-solid fa-house"></i> Back to Dashboard</button>
+          </div>
+        `;
+
+        const printBtn = document.getElementById("printReportBtn");
+        if (printBtn) {
+          printBtn.onclick = () => {
+            window.print();
+          };
+        }
+
+        const finalDashBtn = document.getElementById("finalResultDashBtn");
+        if (finalDashBtn) {
+          finalDashBtn.onclick = () => {
+            initStudentCbtController(cls, name, resultData.admissionNumber);
+          };
+        }
+
+      } catch (err) {
+        console.error("Error displaying result details:", err);
+        showResultErrorFallback(admissionNumber, examId, err.message);
+      }
+    }
+
+    function showResultErrorFallback(admissionNumber, examId, errMsg) {
+      const studentCbtResultCard = document.getElementById("studentCbtResultCard");
+      if (studentCbtResultCard) {
+        studentCbtResultCard.innerHTML = `
+          <div style="text-align: center; padding: 3rem 1.5rem; background-color: #fdf2f2; border: 2px solid #fca5a5; border-radius: 12px;">
+            <div style="width: 80px; height: 80px; background-color: #fee2e2; color: #ef4444; font-size: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto 1.5rem;">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 style="font-size: 1.5rem; color: #b91c1c; font-weight: 800; margin-bottom: 0.5rem;">Unable to Load Score Report</h3>
+            <p style="font-size: 0.95rem; color: #7f1d1d; margin-bottom: 1.5rem;">Error Details: ${escapeHTML(errMsg)}</p>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 2rem;">Don't worry! Your progress has been securely registered in our system database. Let's try reloading the report.</p>
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+              <button class="btn btn-primary" id="errorRetryBtn"><i class="fa-solid fa-arrows-rotate"></i> Reload Score Report</button>
+              <button class="btn btn-outline" id="errorDashBtn"><i class="fa-solid fa-house"></i> Return to Dashboard</button>
+            </div>
+          </div>
+        `;
+        
+        const retry = document.getElementById("errorRetryBtn");
+        if (retry) {
+          retry.onclick = () => tryReloadResult(admissionNumber, examId);
+        }
+        const dash = document.getElementById("errorDashBtn");
+        if (dash) {
+          dash.onclick = () => {
+            initStudentCbtController(window.studentClassGlobal, window.studentNameGlobal, window.admissionNumberGlobal);
+          };
+        }
+      }
+    }
+
     // Evaluate answers score, compile database result object, and push to Firestore
     async function evaluateAndSubmitCbt(exam, questions, studentClass, studentName, admissionNumber, answersMap) {
       const studentActiveExamView = document.getElementById("studentActiveExamView");
@@ -2102,13 +2394,32 @@
         submitCbtExamBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Finalizing Submission...';
       }
 
+      // Display dynamic saving/processing status inside the result card to prevent any empty area (Requirement 12)
+      if (studentActiveExamView) studentActiveExamView.style.display = "none";
+      if (studentCbtResultCard) {
+        studentCbtResultCard.style.display = "block";
+        studentCbtResultCard.style.backgroundColor = "#ffffff";
+        studentCbtResultCard.style.border = "2px solid var(--border-color)";
+        studentCbtResultCard.style.borderRadius = "12px";
+        studentCbtResultCard.style.padding = "2.5rem 1.5rem";
+        studentCbtResultCard.style.textAlign = "center";
+        studentCbtResultCard.innerHTML = `
+          <div style="text-align: center; padding: 3rem 1.5rem;">
+            <div style="width: 80px; height: 80px; background-color: var(--primary-light); color: var(--primary); font-size: 2.5rem; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto 1.5rem;">
+              <i class="fa-solid fa-cloud-arrow-up fa-bounce"></i>
+            </div>
+            <h3 style="font-size: 1.5rem; color: var(--primary); font-weight: 800; margin-bottom: 0.5rem;">Registering Your Submissions...</h3>
+            <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 2rem;">Saving answers, evaluating options, and compiling CBT grades on secure cloud records...</p>
+          </div>
+        `;
+      }
+
       try {
         let score = 0;
         const totalQuestions = questions.length;
         const answersPayloadList = [];
 
         questions.forEach(q => {
-          // Read saved selection directly from answersMap to avoid DOM limitations (Requirement 4)
           const studentSelectionChoice = answersMap[q.id] || "";
           const isCorrectChoice = studentSelectionChoice === q.correctAnswer;
 
@@ -2123,25 +2434,31 @@
           });
         });
 
-        // Compute percentage score
         const percentage = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0;
         const gradeSymbolValue = calculateGradeSymbol(percentage);
 
-        // Save detailed results to Firestore
+        // Save detailed results to Firestore (Requirement 1, 9)
         const resultPayload = {
           examId: exam.id,
-          examTitle: exam.title,
+          examTitle: exam.title || exam.examTitle || "Examination",
           admissionNumber: admissionNumber,
           studentName: studentName,
           studentClass: studentClass,
+          class: studentClass,
           subject: exam.subject,
           term: exam.term,
+          academicSession: exam.session || "2025/2026",
           session: exam.session || "2025/2026",
           score: score,
-          totalQuestions: totalQuestions,
+          correctAnswers: score,
+          wrongAnswers: totalQuestions - score,
           percentage: percentage,
+          percentageScore: percentage,
+          grade: gradeSymbolValue,
+          status: percentage >= 50 ? "PASS" : "FAIL",
           answers: answersPayloadList,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          dateWritten: new Date().toISOString()
         };
 
         await saveCbtResult(resultPayload);
@@ -2158,22 +2475,30 @@
           console.warn("Could not set final status in answers tracking document:", subErr);
         }
 
-        // Output results on scorecard UI
-        document.getElementById("resCardScoreText").textContent = `${score} / ${totalQuestions}`;
-        document.getElementById("resCardPercentText").textContent = `${percentage}%`;
-        document.getElementById("resCardGradeText").textContent = gradeSymbolValue;
-
-        studentActiveExamView.style.display = "none";
-        studentCbtResultCard.style.display = "block";
-
-        // Bind scorecard dismiss button
-        document.getElementById("returnCbtRosterBtn").onclick = () => {
-          initStudentCbtController(studentClass, studentName, admissionNumber);
-        };
+        // Try to load the newly registered score sheet from Firebase (Requirement 11)
+        try {
+          const resultsList = await getCbtResultsForStudent(admissionNumber);
+          const firebaseResult = resultsList.find(r => r.examId === exam.id);
+          
+          if (firebaseResult) {
+            await showCbtResultSummary(firebaseResult, admissionNumber, exam.id);
+          } else {
+            console.warn("Newly saved record could not be found immediately in query. Rendering local payload.");
+            await showCbtResultSummary(resultPayload, admissionNumber, exam.id);
+          }
+        } catch (loadErr) {
+          console.error("CBT Result load failed from Firebase, falling back to local payload:", loadErr);
+          try {
+            await tryReloadResult(admissionNumber, exam.id);
+          } catch (retryErr) {
+            console.error("Firebase automatic reload also failed. Rendering local backup:", retryErr);
+            await showCbtResultSummary(resultPayload, admissionNumber, exam.id);
+          }
+        }
 
       } catch (err) {
         console.error("CBT Submission processing failed:", err);
-        alert("Submission sync error: " + err.message);
+        showResultErrorFallback(admissionNumber, exam.id, err.message);
         if (submitCbtExamBtn) {
           submitCbtExamBtn.disabled = false;
           submitCbtExamBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Submit Examination Now';

@@ -2048,35 +2048,100 @@ export const getCbtAnswersForStudentAndExam = async (admissionNumber, examId) =>
   }
 };
 
+export const normalizeCbtResult = (rData) => {
+  if (!rData) return rData;
+  
+  // Total questions
+  const totalQuestions = Number(rData.totalQuestions) || 0;
+  
+  // Correct answers
+  let correctAnswers = 0;
+  if (rData.correctAnswers !== undefined) {
+    correctAnswers = Number(rData.correctAnswers);
+  } else if (rData.score !== undefined) {
+    correctAnswers = Number(rData.score);
+  }
+  
+  // Wrong answers
+  let wrongAnswers = 0;
+  if (rData.wrongAnswers !== undefined) {
+    wrongAnswers = Number(rData.wrongAnswers);
+  } else {
+    wrongAnswers = totalQuestions - correctAnswers;
+    if (wrongAnswers < 0) wrongAnswers = 0;
+  }
+  
+  // Percentage
+  let percentageScore = 0;
+  if (rData.percentageScore !== undefined) {
+    percentageScore = Number(rData.percentageScore);
+  } else if (rData.percentage !== undefined) {
+    percentageScore = Number(rData.percentage);
+  } else if (totalQuestions > 0) {
+    percentageScore = Math.round((correctAnswers / totalQuestions) * 100);
+  }
+  
+  // Class
+  const studentClass = rData.class || rData.studentClass || "";
+  
+  // Session
+  const academicSession = rData.academicSession || rData.session || "2025/2026";
+  
+  // Grade
+  let grade = rData.grade || "";
+  if (!grade) {
+    if (percentageScore >= 80) grade = "A";
+    else if (percentageScore >= 70) grade = "B";
+    else if (percentageScore >= 60) grade = "C";
+    else if (percentageScore >= 50) grade = "D";
+    else if (percentageScore >= 40) grade = "E";
+    else grade = "F";
+  }
+  
+  // Status
+  let status = rData.status || "";
+  if (!status) {
+    status = percentageScore >= 50 ? "PASS" : "FAIL";
+  }
+  
+  // Date written
+  const dateWritten = rData.dateWritten || rData.timestamp || new Date().toISOString();
+  
+  // Update/set all properties on the object for maximum redundancy/compatibility
+  rData.totalQuestions = totalQuestions;
+  rData.correctAnswers = correctAnswers;
+  rData.score = correctAnswers;
+  rData.wrongAnswers = wrongAnswers;
+  rData.percentageScore = percentageScore;
+  rData.percentage = percentageScore;
+  rData.class = studentClass;
+  rData.studentClass = studentClass;
+  rData.academicSession = academicSession;
+  rData.session = academicSession;
+  rData.grade = grade;
+  rData.status = status;
+  rData.dateWritten = dateWritten;
+  rData.timestamp = dateWritten;
+  
+  return rData;
+};
+
 export const saveCbtResult = async (resultPayload) => {
   if (!db) throw new Error("Firestore not initialized.");
   try {
     const docId = `${resultPayload.admissionNumber.toUpperCase().trim()}_${resultPayload.examId}`;
     const docRef = sdkFirestore.doc(db, "cbt_results", docId);
     
-    const record = {
-      id: docId,
-      studentName: resultPayload.studentName || "Unspecified student",
-      admissionNumber: resultPayload.admissionNumber.toUpperCase().trim(),
-      class: resultPayload.class || "",
-      examId: resultPayload.examId,
-      examTitle: resultPayload.examTitle || "",
-      subject: resultPayload.subject || "",
-      academicSession: resultPayload.academicSession || "2025/2026",
-      term: resultPayload.term || "First Term",
-      totalQuestions: Number(resultPayload.totalQuestions) || 0,
-      correctAnswers: Number(resultPayload.correctAnswers) || 0,
-      wrongAnswers: Number(resultPayload.wrongAnswers) || 0,
-      percentageScore: Number(resultPayload.percentageScore) || 0,
-      grade: resultPayload.grade || "F",
-      status: resultPayload.status || "FAIL", // PASS or FAIL
-      dateWritten: resultPayload.dateWritten || new Date().toISOString(),
-      insertedIntoResults: resultPayload.insertedIntoResults !== undefined ? resultPayload.insertedIntoResults : false,
-      updatedAt: new Date().toISOString()
+    const rawRecord = {
+      ...resultPayload,
+      id: docId
     };
     
+    const record = normalizeCbtResult(rawRecord);
+    record.updatedAt = new Date().toISOString();
+    
     await sdkFirestore.setDoc(docRef, record, { merge: true });
-    return { success: true, docId };
+    return { success: true, docId, record };
   } catch (err) {
     console.error("Error saving CBT Result:", err);
     throw err;
@@ -2091,7 +2156,7 @@ export const getCbtResultsForStudent = async (admissionNumber) => {
     const snap = await sdkFirestore.getDocs(q1);
     const results = [];
     snap.forEach(doc => {
-      results.push(doc.data());
+      results.push(normalizeCbtResult(doc.data()));
     });
     return results;
   } catch (err) {
@@ -2108,7 +2173,7 @@ export const getCbtResultsForExam = async (examId) => {
     const snap = await sdkFirestore.getDocs(q1);
     const results = [];
     snap.forEach(doc => {
-      results.push(doc.data());
+      results.push(normalizeCbtResult(doc.data()));
     });
     return results;
   } catch (err) {
@@ -2124,7 +2189,7 @@ export const getAllCbtResults = async () => {
     const snap = await sdkFirestore.getDocs(colRef);
     const results = [];
     snap.forEach(doc => {
-      results.push(doc.data());
+      results.push(normalizeCbtResult(doc.data()));
     });
     return results;
   } catch (err) {
