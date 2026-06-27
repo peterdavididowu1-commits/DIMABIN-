@@ -11,6 +11,533 @@
   <!-- FontAwesome Icons & Stylesheets -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="../assets/css/style.css">
+  
+  <style>
+    /* Lecturer Portal Overrides and Specific Styles */
+    :root {
+      --primary: #1F3B82; /* Deep Royal Blue */
+      --primary-light: #3058BF;
+      --primary-dark: #122452;
+      --primary-rgb: 31, 59, 130;
+      
+      --accent: #F4B000; /* Gold */
+      --accent-hover: #DDA000;
+      --accent-light: #FFFBF0;
+      --accent-rgb: 244, 176, 0;
+      
+      --bg-white: #FFFFFF;
+      --bg-slate: #F5F7FA; /* Requested Background */
+      --border-color: #E2E8F0;
+      --success: #28A745; /* Positive Buttons */
+      --success-hover: #218838;
+    }
+
+    body {
+      background-color: var(--bg-slate);
+      font-family: 'Poppins', sans-serif;
+    }
+
+    /* Portal Hero background theme overlay */
+    .portal-hero {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      padding: 8rem 0 6rem 0;
+      text-align: center;
+      color: var(--bg-white);
+    }
+
+    .portal-hero h2 {
+      font-family: 'Poppins', var(--font-display);
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: var(--bg-white);
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.5px;
+    }
+
+    .portal-hero .hero-motto {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 0.75rem;
+    }
+
+    .portal-hero .hero-subtitle {
+      font-size: 1.15rem;
+      color: rgba(255, 255, 255, 0.85);
+      font-weight: 400;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Portal Two-column Layout */
+    .portal-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 3rem;
+      align-items: start;
+    }
+
+    @media (max-width: 991px) {
+      .portal-grid {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+      }
+    }
+
+    /* Secure Login Card */
+    .login-card {
+      background-color: var(--bg-white);
+      border-radius: var(--border-radius-lg);
+      padding: 3.5rem 3rem;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .login-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: rgba(31, 59, 130, 0.2);
+    }
+
+    @media (max-width: 576px) {
+      .login-card {
+        padding: 2.5rem 1.5rem;
+      }
+    }
+
+    .login-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background-color: var(--accent);
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .login-shield-icon {
+      font-size: 2.8rem;
+      color: var(--primary);
+      margin-bottom: 1rem;
+      background-color: rgba(31, 59, 130, 0.05);
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem auto;
+      border: 2px solid var(--border-color);
+      transition: var(--transition);
+    }
+
+    .login-card:hover .login-shield-icon {
+      transform: scale(1.05);
+      background-color: var(--primary);
+      color: var(--accent);
+      border-color: var(--primary);
+    }
+
+    .login-header h3 {
+      font-family: 'Poppins', var(--font-display);
+      color: var(--primary);
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .login-header p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* Input icons spacing */
+    .input-with-icon {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 1.25rem;
+      color: var(--text-muted);
+      font-size: 1rem;
+      pointer-events: none;
+      transition: var(--transition);
+    }
+
+    .input-with-icon .form-control {
+      padding-left: 3rem;
+      background-color: rgba(245, 247, 250, 0.8);
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--border-radius-md);
+      width: 100%;
+      padding-top: 1rem;
+      padding-bottom: 1rem;
+      transition: var(--transition);
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .input-with-icon .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      background-color: var(--bg-white);
+      box-shadow: 0 0 0 3px rgba(31, 59, 130, 0.15);
+    }
+
+    .input-with-icon .form-control:focus + .input-icon {
+      color: var(--primary);
+    }
+
+    .btn-toggle-password {
+      position: absolute;
+      right: 1.25rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 1rem;
+      padding: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+
+    .btn-toggle-password:hover {
+      color: var(--primary);
+    }
+
+    /* Remember me and Forgot password spacing */
+    .login-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      font-size: 0.9rem;
+    }
+
+    .remember-me {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      user-select: none;
+      font-weight: 500;
+      color: var(--text-dark);
+    }
+
+    .remember-me input {
+      accent-color: var(--primary);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .forgot-password-link {
+      color: var(--primary);
+      font-weight: 600;
+      transition: var(--transition);
+      text-decoration: none;
+    }
+
+    .forgot-password-link:hover {
+      color: var(--accent-hover);
+      text-decoration: underline;
+    }
+
+    .login-btn {
+      width: 100%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      padding: 1rem 2rem;
+      font-size: 1.05rem;
+      border-radius: var(--border-radius-md);
+      background-color: var(--primary);
+      color: var(--bg-white);
+      font-weight: 700;
+      transition: var(--transition);
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .login-btn:hover {
+      background-color: var(--primary-light);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Security Notice Styles */
+    .security-notice-card {
+      background-color: var(--accent-light);
+      border: 1px solid rgba(244, 176, 0, 0.25);
+      border-radius: var(--border-radius-lg);
+      padding: 2rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .security-title {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: #9E7200;
+      margin-bottom: 0.75rem;
+    }
+
+    .security-title i {
+      font-size: 1.4rem;
+    }
+
+    .security-title h4 {
+      font-family: 'Poppins', var(--font-display);
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: 0.5px;
+      margin-bottom: 0;
+    }
+
+    .security-notice-card p {
+      font-size: 0.9rem;
+      color: #6E5309;
+      line-height: 1.6;
+      margin-bottom: 0;
+    }
+
+    /* Support Desk Card */
+    .portal-support-card {
+      background-color: var(--bg-white);
+      border-radius: var(--border-radius-lg);
+      padding: 2.5rem;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+    }
+
+    .portal-support-card:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .support-title {
+      color: var(--primary);
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .support-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+
+    .support-contacts {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px dashed var(--border-color);
+    }
+
+    .support-contact-item {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .support-contact-item i {
+      font-size: 1.15rem;
+      color: var(--accent-hover);
+      margin-top: 0.2rem;
+      background-color: var(--bg-slate);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border: 1px solid var(--border-color);
+    }
+
+    .support-numbers {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+    }
+
+    .support-numbers a, .support-email {
+      font-size: 0.95rem;
+      color: var(--primary);
+      font-weight: 600;
+      transition: var(--transition);
+      display: inline-block;
+      text-decoration: none;
+    }
+
+    .support-numbers a:hover, .support-email:hover {
+      color: var(--accent-hover);
+      transform: translateX(3px);
+    }
+
+    .support-note {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-style: italic;
+      line-height: 1.5;
+      margin-bottom: 0;
+    }
+
+    /* Features Section */
+    .features-section {
+      background-color: var(--bg-white);
+      padding: 5rem 0;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .section-header {
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto 3.5rem auto;
+    }
+
+    .section-header h3 {
+      font-family: 'Poppins', var(--font-display);
+      color: var(--primary);
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.5px;
+    }
+
+    .section-header p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2rem;
+    }
+
+    @media (max-width: 1199px) {
+      .features-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 991px) {
+      .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 576px) {
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .feature-card {
+      background-color: var(--bg-slate);
+      border-radius: var(--border-radius-lg);
+      padding: 2.25rem 1.75rem;
+      border: 1px solid var(--border-color);
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-md);
+      background-color: var(--bg-white);
+      border-color: rgba(31, 59, 130, 0.2);
+    }
+
+    .feature-card-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: var(--border-radius-md);
+      background-color: var(--bg-white);
+      border: 1px solid var(--border-color);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 1.5rem;
+      transition: var(--transition);
+    }
+
+    .feature-card:hover .feature-card-icon {
+      background-color: var(--primary);
+      color: var(--accent);
+      border-color: var(--primary);
+    }
+
+    .feature-card h4 {
+      font-size: 1.15rem;
+      color: var(--primary);
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .feature-card p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 0;
+    }
+
+    .badge-card-soon {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      font-size: 0.65rem;
+      background-color: rgba(31, 59, 130, 0.08);
+      color: var(--primary);
+      padding: 0.15rem 0.5rem;
+      border-radius: 50px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Alert / Feedback card styling */
+    .form-alert {
+      padding: 1rem 1.25rem;
+      border-radius: var(--border-radius-md);
+      margin-bottom: 1.5rem;
+      display: none;
+      align-items: flex-start;
+      gap: 0.75rem;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      border: 1px solid;
+    }
+
+    .form-alert.info {
+      background-color: #EBF5FF;
+      color: #1E429F;
+      border-color: #C3DDFD;
+    }
+  </style>
 </head>
 <body>
 
@@ -38,7 +565,7 @@
             <a href="#" class="nav-link dropdown-toggle active">Portal <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem;"></i></a>
             <ul class="dropdown-menu">
               <li><a href="student-portal.html" class="dropdown-item">Student Portal</a></li>
-              <li><a href="lecturer-portal.html" class="dropdown-item active coming-soon">Lecturer Portal <span class="badge-soon">Soon</span></a></li>
+              <li><a href="lecturer-portal.html" class="dropdown-item active">Lecturer Portal</a></li>
               <li><a href="admin-portal.html" class="dropdown-item coming-soon">Admin Portal <span class="badge-soon">Soon</span></a></li>
             </ul>
           </li>
@@ -71,7 +598,7 @@
         <a href="#" class="nav-link mobile-dropdown-toggle active">Portal <i class="fa-solid fa-chevron-down" style="font-size: 0.8rem; margin-left: 4px;"></i></a>
         <ul class="mobile-submenu" style="list-style: none; padding-left: 1.5rem; margin-top: 0.5rem; display: none; flex-direction: column; gap: 0.75rem;">
           <li><a href="student-portal.html" class="nav-link" style="font-size: 0.9rem; opacity: 0.9;">Student Portal</a></li>
-          <li><a href="lecturer-portal.html" class="nav-link active coming-soon" style="font-size: 0.9rem; opacity: 0.9;">Lecturer Portal <span class="badge-soon" style="margin-left: 0.5rem;">Soon</span></a></li>
+          <li><a href="lecturer-portal.html" class="nav-link active" style="font-size: 0.9rem; opacity: 0.9;">Lecturer Portal</a></li>
           <li><a href="admin-portal.html" class="nav-link coming-soon" style="font-size: 0.9rem; opacity: 0.9;">Admin Portal <span class="badge-soon" style="margin-left: 0.5rem;">Soon</span></a></li>
         </ul>
       </li>
@@ -80,18 +607,200 @@
     </ul>
   </div>
 
-  <!-- Main Placeholder Content -->
-  <section class="placeholder-section">
-    <div class="container text-center">
-      <div class="placeholder-card">
-        <span class="placeholder-badge">Lecturer Portal</span>
-        <h2>Manage Grades, Classes & Theological Modules</h2>
-        <p>
-          The DIMABIN Lecturer Portal is prepared as a gateway structure. Future modules will provide administrative tools for our theological facilitators, class schedule builders, grade submission forms, discussion board moderation blocks, and student assessment monitors.
-        </p>
-        <div style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;">
-          <a href="../index.html" class="btn btn-primary"><i class="fa-solid fa-house"></i> Return Home</a>
-          <a href="contact.html" class="btn btn-outline-primary"><i class="fa-solid fa-paper-plane"></i> Contact Academic Office</a>
+  <!-- Hero Section -->
+  <section class="portal-hero">
+    <div class="container">
+      <div class="hero-motto">Secure Faculty Access</div>
+      <h2>Lecturer Portal</h2>
+      <div class="hero-subtitle">Secure access for lecturers to manage teaching and academic activities.</div>
+    </div>
+  </section>
+
+  <!-- Two-Column Portal Layout -->
+  <section class="py-5" style="background-color: var(--bg-slate);">
+    <div class="container">
+      <div class="portal-grid">
+        
+        <!-- Left Column: Login & Security Notice -->
+        <div class="portal-main">
+          
+          <!-- Lecturer Login Card -->
+          <div class="login-card">
+            <div class="login-header">
+              <div class="login-shield-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
+              <h3>Lecturer Sign In</h3>
+              <p>Enter your staff credentials to access your academic dashboard</p>
+            </div>
+
+            <!-- UI-Only Informative Alert Box -->
+            <div class="form-alert info" id="loginFeedback">
+              <i class="fa-solid fa-circle-info" style="margin-top: 0.15rem;"></i>
+              <span>
+                <strong>System Information:</strong> The dynamic Lecturer Dashboard is currently in the UI design phase. Database authentication checks are paused during this platform layout staging.
+              </span>
+            </div>
+
+            <form id="lecturerLoginForm" onsubmit="event.preventDefault(); showLoginInfo();">
+              <!-- Staff ID Field -->
+              <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="staffId" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: block;">Staff ID Number</label>
+                <div class="input-with-icon">
+                  <i class="fa-solid fa-id-card-clip input-icon"></i>
+                  <input type="text" id="staffId" class="form-control" placeholder="e.g. DIMABIN/FAC/2026/04" required>
+                </div>
+              </div>
+
+              <!-- Password Field -->
+              <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="password" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: block;">Password</label>
+                <div class="input-with-icon">
+                  <i class="fa-solid fa-key input-icon"></i>
+                  <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+                  <button type="button" class="btn-toggle-password" id="togglePasswordBtn" onclick="togglePasswordVisibility()" aria-label="Toggle Password Visibility">
+                    <i class="fa-solid fa-eye" id="passwordEyeIcon"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Remember & Forgot Options -->
+              <div class="login-actions">
+                <label class="remember-me">
+                  <input type="checkbox" id="rememberMe">
+                  <span>Remember Me</span>
+                </label>
+                <a href="#" onclick="alert('Password reset instructions will be coordinated by the IT office. Please contact technical support below to authorize a temporary code reset.'); return false;" class="forgot-password-link">Forgot Password?</a>
+              </div>
+
+              <!-- Login CTA Button -->
+              <button type="submit" class="btn btn-primary login-btn">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i> Login to Portal
+              </button>
+            </form>
+          </div>
+
+          <!-- Security Notice -->
+          <div class="security-notice-card">
+            <div class="security-title">
+              <i class="fa-solid fa-shield-halved"></i>
+              <h4>Security Notice</h4>
+            </div>
+            <p>
+              This portal utilizes industry-standard SSL protection parameters. To preserve institutional confidentiality, never disclose your staff ID or security credentials to any unauthorized person. Always log out completely when terminating sessions on shared devices.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Right Column: Support Section -->
+        <div class="portal-sidebar">
+          
+          <!-- Support Desk Coordinates -->
+          <div class="portal-support-card">
+            <h4 class="font-display support-title">Portal Help Desk</h4>
+            <p class="support-subtitle">Experiencing sign-in errors, or misplaced your default faculty credentials? Contact academic officers:</p>
+
+            <div class="support-contacts">
+              <!-- support phones -->
+              <div class="support-contact-item">
+                <i class="fa-solid fa-phone"></i>
+                <div class="support-numbers">
+                  <a href="tel:08038194611">0803 819 4611</a>
+                  <a href="tel:08138194611">0813 819 4611</a>
+                  <a href="tel:08062186974">0806 218 6974</a>
+                  <a href="tel:08037282082">0803 728 2082</a>
+                </div>
+              </div>
+
+              <!-- support email -->
+              <div class="support-contact-item">
+                <i class="fa-solid fa-envelope"></i>
+                <a href="mailto:olalekan16650@gmail.com" class="support-email">olalekan16650@gmail.com</a>
+              </div>
+            </div>
+
+            <p class="support-note">
+              <i class="fa-solid fa-circle-info" style="margin-right: 0.25rem;"></i>
+              Please specify your Staff Name and Department when requesting credential recoveries.
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Future Features Section -->
+  <section class="features-section">
+    <div class="container">
+      <div class="section-header">
+        <h3>Lecturer Features</h3>
+        <p>Facilitators can look forward to these advanced tools currently in development for managing student rosters and academic catalogs.</p>
+      </div>
+
+      <div class="features-grid">
+        <!-- Card 1 -->
+        <div class="feature-card">
+          <span class="badge-card-soon">Coming Soon</span>
+          <div class="feature-card-icon"><i class="fa-solid fa-file-arrow-up"></i></div>
+          <h4>Upload Lecture Notes</h4>
+          <p>Distribute syllabus readings, lecture slides, study outlines, and bibliography sheets directly to student workspaces.</p>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="feature-card">
+          <span class="badge-card-soon">Coming Soon</span>
+          <div class="feature-card-icon"><i class="fa-solid fa-book-bookmark"></i></div>
+          <h4>Manage Courses</h4>
+          <p>Formulate theological modules, set grading rubrics, update curricula details, and write study guides.</p>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="feature-card">
+          <span class="badge-card-soon">Coming Soon</span>
+          <div class="feature-card-icon"><i class="fa-solid fa-square-poll-vertical"></i></div>
+          <h4>Upload Results</h4>
+          <p>Input end-of-semester exam marks, compile cumulative assessment grades, and export final performance tables.</p>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="feature-card">
+          <span class="badge-card-soon">Coming Soon</span>
+          <div class="feature-card-icon"><i class="fa-solid fa-list-check"></i></div>
+          <h4>View Assigned Courses</h4>
+          <p>Access the catalog of theological lectures and study tracks allocated to your portfolio for the academic term.</p>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="feature-card">
+          <span class="badge-card-soon">Coming Soon</span>
+          <div class="feature-card-icon"><i class="fa-solid fa-clipboard-user"></i></div>
+          <h4>Student Attendance</h4>
+          <p>Register student classroom attendances, theological conference roll calls, and chapel participation sheets.</p>
+        </div>
+
+        <!-- Card 6 -->
+        <div class="feature-card">
+          <span class="badge-card-soon">Coming Soon</span>
+          <div class="feature-card-icon"><i class="fa-solid fa-calendar-days"></i></div>
+          <h4>Teaching Timetable</h4>
+          <p>Review weekly lectures, spiritual meetings, exam invigilation lists, and special chapel schedules.</p>
+        </div>
+
+        <!-- Card 7 -->
+        <div class="feature-card">
+          <span class="badge-card-soon">Coming Soon</span>
+          <div class="feature-card-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
+          <h4>Internal Messages</h4>
+          <p>Send direct institutional messages to colleagues, administrative registrars, and student groups.</p>
+        </div>
+
+        <!-- Card 8 -->
+        <div class="feature-card">
+          <span class="badge-card-soon">Coming Soon</span>
+          <div class="feature-card-icon"><i class="fa-solid fa-calendar-check"></i></div>
+          <h4>Academic Calendar</h4>
+          <p>Keep track of important academic windows, admission milestones, examinations, and term holidays.</p>
         </div>
       </div>
     </div>
@@ -172,5 +881,27 @@
 
   <!-- Scripts -->
   <script src="../assets/js/main.js"></script>
+  <script>
+    function togglePasswordVisibility() {
+      const passwordInput = document.getElementById('password');
+      const eyeIcon = document.getElementById('passwordEyeIcon');
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        eyeIcon.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        passwordInput.type = 'password';
+        eyeIcon.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    }
+
+    function showLoginInfo() {
+      const alertBox = document.getElementById('loginFeedback');
+      if (alertBox) {
+        alertBox.style.display = 'flex';
+        // Scroll to alert
+        alertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  </script>
 </body>
 </html>
