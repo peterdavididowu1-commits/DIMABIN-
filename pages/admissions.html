@@ -11,6 +11,101 @@
   <!-- FontAwesome Icons & Stylesheets -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="../assets/css/style.css">
+
+  <style>
+    /* Additional Page Polish for Admissions */
+    .admissions-hero {
+      background: linear-gradient(rgba(11, 25, 44, 0.88), rgba(11, 25, 44, 0.94)), url('../assets/images/classroom.jpg') center/cover no-repeat;
+      padding: 8rem 0 6rem 0;
+      text-align: center;
+      color: var(--bg-white);
+    }
+    
+    /* Timeline styling */
+    .timeline-wrapper {
+      position: relative;
+      margin-top: 3rem;
+    }
+    .timeline-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 2rem;
+      position: relative;
+    }
+    @media (min-width: 1200px) {
+      .timeline-steps::before {
+        content: '';
+        position: absolute;
+        top: 50px;
+        left: 10%;
+        right: 10%;
+        height: 4px;
+        background-color: var(--border-color);
+        z-index: 1;
+      }
+    }
+    .step-card {
+      background-color: var(--bg-white);
+      padding: 2.5rem 1.5rem;
+      border-radius: var(--border-radius-lg);
+      border: 1px solid var(--border-color);
+      text-align: center;
+      position: relative;
+      z-index: 2;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .step-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-md);
+    }
+    .step-num {
+      background: linear-gradient(135deg, var(--primary) 0%, #1a304d 100%);
+      color: var(--bg-white);
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin: 0 auto 1.5rem auto;
+      border: 4px solid var(--bg-slate);
+      box-shadow: 0 0 0 4px var(--primary);
+    }
+    .accent-step .step-num {
+      background: linear-gradient(135deg, var(--accent) 0%, #e6c200 100%);
+      color: var(--primary-dark);
+      box-shadow: 0 0 0 4px var(--accent);
+    }
+    .step-card h3 {
+      font-size: 1.15rem;
+      color: var(--primary);
+      margin-bottom: 0.75rem;
+      font-weight: 700;
+    }
+    .step-card p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 0;
+    }
+
+    /* Program details styles */
+    .program-badge {
+      background-color: rgba(212, 175, 55, 0.12);
+      color: #b39200;
+      padding: 0.5rem 1.25rem;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: inline-block;
+      margin-bottom: 1rem;
+    }
+  </style>
 </head>
 <body>
 
@@ -66,18 +161,327 @@
     </ul>
   </div>
 
-  <!-- Main Placeholder Content -->
-  <section class="placeholder-section">
-    <div class="container text-center">
-      <div class="placeholder-card">
-        <span class="placeholder-badge">Admissions Hub</span>
-        <h2>Enroll in Our Theological Programmes</h2>
-        <p>
-          We are preparing our robust online admission application form, program-specific tuition structures, credit transfer policies, and enrollment checklists for future terms. Direct online registrations will be linked with our secure student database during the next development version.
+  <!-- Hero Section -->
+  <section class="admissions-hero">
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-motto">Enrollment Open</div>
+        <h2>Admissions</h2>
+        <div class="hero-subtitle">Begin Your Journey in Biblical Knowledge and Ministry</div>
+        <p class="hero-description" style="max-width: 700px; margin: 1.5rem auto 2rem auto;">
+          Prepare yourself for the highest calling. Answer the divine mandate with deep spiritual discipline, sound biblical theology, and a scandal-free character.
         </p>
-        <div style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;">
-          <a href="../index.html" class="btn btn-primary"><i class="fa-solid fa-house"></i> Return Home</a>
-          <a href="contact.html" class="btn btn-outline-primary"><i class="fa-solid fa-paper-plane"></i> Ask About Admissions</a>
+        <div style="margin-top: 2rem;">
+          <a href="#welcome" class="btn btn-accent btn-lg"><i class="fa-solid fa-graduation-cap"></i> Apply Now</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Welcome Section -->
+  <section id="welcome" class="py-5" style="background-color: var(--bg-white);">
+    <div class="container">
+      <div class="welcome-grid">
+        <div class="welcome-text">
+          <span class="section-label">Your Next Chapter</span>
+          <h3 class="font-display">Welcome to Divine Mandate Bible Institute</h3>
+          <p>
+            Welcome to the <strong>Divine Mandate Bible Institute (DIMABIN)</strong> Admissions portal. We are thrilled that you are considering embarking on this life-transforming spiritual and academic journey.
+          </p>
+          <p>
+            Our institute is deeply committed to biblical excellence, spiritual growth, and hands-on ministry development. Whether you are called to full-time pulpit ministry, community outreach, theological research, or marketplace chaplaincy, our training is designed to build a standard of faith that is both intellectually robust and morally unassailable.
+          </p>
+          <p>
+            We encourage prospective students from all Christian backgrounds to become part of an institution where divine truth is pursued with absolute scholarship, and the fear of God is cultivated as the foundation of successful service.
+          </p>
+        </div>
+        
+        <div class="placeholder-graphic-or-quote" style="background-color: var(--bg-slate); border-radius: var(--border-radius-lg); padding: 3rem; border: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: center; box-shadow: var(--shadow-sm);">
+          <div style="text-align: center; margin-bottom: 1.5rem;">
+            <i class="fa-solid fa-envelope-open-text" style="font-size: 3rem; color: var(--accent);"></i>
+          </div>
+          <h4 class="font-display text-center" style="color: var(--primary); margin-bottom: 1rem; font-size: 1.25rem;">Admissions Office</h4>
+          <p style="font-size: 0.95rem; color: var(--text-muted); text-align: center; margin-bottom: 1.5rem;">
+            Have inquiries about enrollment? Our helpful officers will help guide you through program options.
+          </p>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <a href="contact.html" class="btn btn-primary text-center" style="width: 100%;"><i class="fa-solid fa-circle-question"></i> Contact Admissions Office</a>
+            <a href="#requirements" class="btn btn-outline-primary text-center" style="width: 100%;"><i class="fa-solid fa-list-check"></i> Check Requirements</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Programme Offered -->
+  <section class="py-5" style="background-color: var(--bg-slate);">
+    <div class="container">
+      <div class="text-center section-title-box">
+        <span class="section-label">Academic Foundations</span>
+        <h2 class="section-title">Programmes Offered</h2>
+        <p class="section-subtitle">Exemplary theological curriculums designed for effective ministry, leadership, and professional excellence.</p>
+      </div>
+
+      <!-- Prominent Diploma in Theology -->
+      <div style="text-align: center; margin-bottom: 3rem;">
+        <span class="program-badge">Flagship Program</span>
+        <h3 class="font-display" style="color: var(--primary); font-size: 2rem; margin-bottom: 1rem;">Diploma in Theology (Dip.Th.)</h3>
+        <p style="max-width: 750px; margin: 0 auto; color: var(--text-muted); line-height: 1.7;">
+          A rigorous 2-year ministerial program that combines systematic study of the Bible, sound hermeneutical practices, church leadership skills, and practical missions training. Here are the core courses offered under this curriculum:
+        </p>
+      </div>
+
+      <div class="grid-3">
+        <!-- Course 1 -->
+        <div class="why-card" style="background-color: var(--bg-white); border-top: 4px solid var(--primary); padding: 2.5rem 2rem;">
+          <div style="font-size: 2.2rem; color: var(--primary); margin-bottom: 1.25rem;"><i class="fa-solid fa-book-bible"></i></div>
+          <h3 style="font-size: 1.2rem; margin-bottom: 0.75rem; color: var(--primary); font-weight: bold;">Systematic Theology</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 0;">
+            A deep-dive exploration of central Christian doctrines, covering Christology, Soteriology, Pneumatology, Ecclesiology, and Bibliology under precise reformed parameters.
+          </p>
+        </div>
+
+        <!-- Course 2 -->
+        <div class="why-card" style="background-color: var(--bg-white); border-top: 4px solid var(--primary); padding: 2.5rem 2rem;">
+          <div style="font-size: 2.2rem; color: var(--primary); margin-bottom: 1.25rem;"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+          <h3 style="font-size: 1.2rem; margin-bottom: 0.75rem; color: var(--primary); font-weight: bold;">Biblical Hermeneutics</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 0;">
+            The art and science of biblical interpretation. Learn to accurately read, parse, and apply Scriptural texts within their historical, grammatical, and literary contexts.
+          </p>
+        </div>
+
+        <!-- Course 3 -->
+        <div class="why-card" style="background-color: var(--bg-white); border-top: 4px solid var(--primary); padding: 2.5rem 2rem;">
+          <div style="font-size: 2.2rem; color: var(--primary); margin-bottom: 1.25rem;"><i class="fa-solid fa-bullhorn"></i></div>
+          <h3 style="font-size: 1.2rem; margin-bottom: 0.75rem; color: var(--primary); font-weight: bold;">Homiletics & Sermon Prep</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 0;">
+            Developing effective pulpit communication skills. Students study the design, crafting, and dynamic presentation of expository and topical sermons.
+          </p>
+        </div>
+
+        <!-- Course 4 -->
+        <div class="why-card" style="background-color: var(--bg-white); border-top: 4px solid var(--primary); padding: 2.5rem 2rem;">
+          <div style="font-size: 2.2rem; color: var(--primary); margin-bottom: 1.25rem;"><i class="fa-solid fa-landmark-dome"></i></div>
+          <h3 style="font-size: 1.2rem; margin-bottom: 0.75rem; color: var(--primary); font-weight: bold;">Church History</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 0;">
+            Tracing the expansion of the Christian church from the early Apostles, through the medieval era, the Protestant Reformation, down to modern Pentecostal movements.
+          </p>
+        </div>
+
+        <!-- Course 5 -->
+        <div class="why-card" style="background-color: var(--bg-white); border-top: 4px solid var(--primary); padding: 2.5rem 2rem;">
+          <div style="font-size: 2.2rem; color: var(--primary); margin-bottom: 1.25rem;"><i class="fa-solid fa-users-viewfinder"></i></div>
+          <h3 style="font-size: 1.2rem; margin-bottom: 0.75rem; color: var(--primary); font-weight: bold;">Evangelism & Missions</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 0;">
+            Strategic methods for global church planting, cross-cultural evangelism, local community engagement, and practical application of the Great Commission.
+          </p>
+        </div>
+
+        <!-- Course 6 -->
+        <div class="why-card" style="background-color: var(--bg-white); border-top: 4px solid var(--primary); padding: 2.5rem 2rem;">
+          <div style="font-size: 2.2rem; color: var(--primary); margin-bottom: 1.25rem;"><i class="fa-solid fa-comments"></i></div>
+          <h3 style="font-size: 1.2rem; margin-bottom: 0.75rem; color: var(--primary); font-weight: bold;">Pastoral Care & Counseling</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 0;">
+            Equipping leaders with scriptural solutions for family support, youth direction, grief counseling, moral guidance, and mental wellness administration.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Admission Requirements -->
+  <section id="requirements" class="py-5" style="background-color: var(--bg-white);">
+    <div class="container">
+      <div class="welcome-grid" style="align-items: flex-start;">
+        <div class="welcome-text">
+          <span class="section-label">Enrollment Standards</span>
+          <h2 class="font-display" style="color: var(--primary); margin-bottom: 1.5rem;">Admission Requirements</h2>
+          <p>
+            DIMABIN maintains standard academic and spiritual criteria to ensure all admitted candidates align with our theological rigor and ethical mandates.
+          </p>
+          
+          <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Req 1 -->
+            <div style="display: flex; gap: 1rem; align-items: flex-start;">
+              <div style="background-color: rgba(11, 25, 44, 0.1); color: var(--primary); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: bold;"><i class="fa-solid fa-graduation-cap"></i></div>
+              <div>
+                <h4 style="margin-bottom: 0.25rem; font-weight: bold; color: var(--primary);">Academic Qualifications</h4>
+                <p style="margin-bottom: 0; font-size: 0.95rem; color: var(--text-muted);">
+                  Minimum of Secondary School Certificate (WAEC/NECO/GCE) or its professional equivalent with credit passes in English and relevant arts/social sciences.
+                </p>
+              </div>
+            </div>
+
+            <!-- Req 2 -->
+            <div style="display: flex; gap: 1rem; align-items: flex-start;">
+              <div style="background-color: rgba(11, 25, 44, 0.1); color: var(--primary); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: bold;"><i class="fa-solid fa-church"></i></div>
+              <div>
+                <h4 style="margin-bottom: 0.25rem; font-weight: bold; color: var(--primary);">Spiritual Recommendation</h4>
+                <p style="margin-bottom: 0; font-size: 0.95rem; color: var(--text-muted);">
+                  A letter of recommendation from an ordained pastor, elder, or spiritual facilitator attesting to your Christian character, active local church involvement, and moral conduct.
+                </p>
+              </div>
+            </div>
+
+            <!-- Req 3 -->
+            <div style="display: flex; gap: 1rem; align-items: flex-start;">
+              <div style="background-color: rgba(11, 25, 44, 0.1); color: var(--primary); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: bold;"><i class="fa-solid fa-heart"></i></div>
+              <div>
+                <h4 style="margin-bottom: 0.25rem; font-weight: bold; color: var(--primary);">Personal Testimony & Calling</h4>
+                <p style="margin-bottom: 0; font-size: 0.95rem; color: var(--text-muted);">
+                  A written essay (minimum 300 words) describing your salvation experience, spiritual journey, and specific sense of calling to Christian theological training.
+                </p>
+              </div>
+            </div>
+
+            <!-- Req 4 -->
+            <div style="display: flex; gap: 1rem; align-items: flex-start;">
+              <div style="background-color: rgba(11, 25, 44, 0.1); color: var(--primary); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: bold;"><i class="fa-solid fa-id-card"></i></div>
+              <div>
+                <h4 style="margin-bottom: 0.25rem; font-weight: bold; color: var(--primary);">Identification Documents</h4>
+                <p style="margin-bottom: 0; font-size: 0.95rem; color: var(--text-muted);">
+                  Valid state identification card (National ID, International Passport, or Driver's License) along with two recent passport-sized photographs.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background-color: var(--bg-slate); border-radius: var(--border-radius-lg); padding: 3rem; border: 1px dashed var(--border-color); width: 100%; display: flex; flex-direction: column; justify-content: center; box-shadow: var(--shadow-sm);">
+          <h4 class="font-display" style="color: var(--primary); margin-bottom: 1.5rem; font-size: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fa-solid fa-circle-info" style="color: var(--accent);"></i> Dynamic Requirements space
+          </h4>
+          <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 1.5rem;">
+            In line with our primary motto, <strong>Fear of God Without a Mess</strong>, candidates who do not possess a verifiable track record of high moral standard and godly character will not be approved for admission, regardless of academic excellence.
+          </p>
+          
+          <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+            <p style="font-size: 0.85rem; color: var(--text-muted); font-style: italic; margin-bottom: 0;">
+              [ Additional course prerequisites, specialized foreign transcripts, age parameters, or tuition configurations will be updated in this block dynamically as defined by the DIMABIN admissions committee. ]
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Study at DIMABIN -->
+  <section class="py-5" style="background-color: var(--bg-slate);">
+    <div class="container">
+      <div class="text-center section-title-box">
+        <span class="section-label">Our Unique Edge</span>
+        <h2 class="section-title">Why Study at DIMABIN?</h2>
+        <p class="section-subtitle">Developing outstanding Christian leaders for the global harvest</p>
+      </div>
+
+      <div class="grid-3">
+        <!-- 1. Sound Biblical Teaching -->
+        <div class="why-card" style="background-color: var(--bg-white);">
+          <div class="why-icon" style="color: var(--primary);"><i class="fa-solid fa-scroll"></i></div>
+          <h3>Sound Biblical Teaching</h3>
+          <p>Uncompromising adherence to the Word of God as the infallible source of truth and authority, delivering accurate systematic theology.</p>
+        </div>
+
+        <!-- 2. Experienced Lecturers -->
+        <div class="why-card" style="background-color: var(--bg-white);">
+          <div class="why-icon" style="color: var(--primary);"><i class="fa-solid fa-user-graduate"></i></div>
+          <h3>Experienced Lecturers</h3>
+          <p>Learn from seasoned theologians, pastors, and Christian mentors with decades of proven ministerial competence and teaching excellence.</p>
+        </div>
+
+        <!-- 3. Practical Ministry Training -->
+        <div class="why-card" style="background-color: var(--bg-white);">
+          <div class="why-icon" style="color: var(--primary);"><i class="fa-solid fa-hands-holding-child"></i></div>
+          <h3>Practical Ministry Training</h3>
+          <p>Hands-on clinical training, church apprenticeships, and direct missions exposure to translate classroom theories into immediate kingdom impact.</p>
+        </div>
+
+        <!-- 4. Spiritual Development -->
+        <div class="why-card" style="background-color: var(--bg-white);">
+          <div class="why-icon" style="color: var(--primary);"><i class="fa-solid fa-fire-flame-curved"></i></div>
+          <h3>Spiritual Development</h3>
+          <p>Enrich your prayer life, cultivate mature spiritual disciplines, and foster genuine, scandal-free personal holiness.</p>
+        </div>
+
+        <!-- 5. Leadership Training -->
+        <div class="why-card" style="background-color: var(--bg-white);">
+          <div class="why-icon" style="color: var(--primary);"><i class="fa-solid fa-users-gear"></i></div>
+          <h3>Leadership Training</h3>
+          <p>Refine critical administrative skills, organizational stewardship, emotional intelligence, and clean administrative governance.</p>
+        </div>
+
+        <!-- 6. Interdenominational Learning Environment -->
+        <div class="why-card" style="background-color: var(--bg-white);">
+          <div class="why-icon" style="color: var(--primary);"><i class="fa-solid fa-globe"></i></div>
+          <h3>Interdenominational Learning</h3>
+          <p>Engage with diverse Christian body members under a unified theological standard, building vast cross-denominational ministerial networks.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Admission Process Section -->
+  <section class="py-5" style="background-color: var(--bg-white);">
+    <div class="container">
+      <div class="text-center section-title-box">
+        <span class="section-label">Workflow Guide</span>
+        <h2 class="section-title">Admission Process</h2>
+        <p class="section-subtitle">Our simple, robust steps towards full theological enrollment</p>
+      </div>
+
+      <div class="timeline-wrapper">
+        <div class="timeline-steps">
+          <!-- Step 1 -->
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <h3>Application</h3>
+            <p>Complete the admission application form either online or at our physical registrar office with precise detail.</p>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <h3>Documentation</h3>
+            <p>Submit required credentials, pastoral recommendation letters, passport photographs, and identification papers.</p>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <h3>Review</h3>
+            <p>Our admissions committee evaluates your scriptural calling, character reports, and academic profiles.</p>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="step-card accent-step">
+            <div class="step-num">4</div>
+            <h3>Approval</h3>
+            <p>Successful candidates receive their official provisional admission notification via their registered contact.</p>
+          </div>
+
+          <!-- Step 5 -->
+          <div class="step-card">
+            <div class="step-num">5</div>
+            <h3>Resumption</h3>
+            <p>Complete standard registration, clear administrative tuition frameworks, and resume theological lectures.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Call to Action -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-content">
+        <h2 class="cta-title">Begin Your Theological Journey</h2>
+        <div class="cta-subtitle">Admissions are open for the current academic session</div>
+        <p class="cta-description">
+          Take the critical step towards spiritual proficiency and theological precision. Enrolling at DIMABIN aligns your natural talents with divine competence.
+        </p>
+        <div style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem;">
+          <a href="#" class="btn btn-accent btn-lg" onclick="alert('The direct registration module is fully automated! Please head over to our interactive student onboarding desk inside the portal or contact registry.'); return false;"><i class="fa-solid fa-file-signature"></i> Apply for Admission</a>
+          <a href="contact.html" class="btn btn-outline-white btn-lg" style="color: var(--bg-white); border-color: var(--bg-white);"><i class="fa-solid fa-headset"></i> Contact Admissions Office</a>
         </div>
       </div>
     </div>
