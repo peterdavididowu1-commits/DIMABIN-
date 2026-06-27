@@ -1,6 +1,6 @@
 {
-  "name": "His Grace School",
-  "description": "Comprehensive school management portal for His Grace Nursery & Primary School including smart admissions, parents portal, results and student records.",
+  "name": "DIMABIN",
+  "description": "Divine Mandate Bible Institute - Interdenominational Citadel of Learning. Motto: Fear of God Without a Mess. Rector: Sorinola J.O.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

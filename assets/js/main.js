@@ -1,299 +1,55 @@
-// His Grace School - Shared Interaction Logic
+/**
+ * DIVINE MANDATE BIBLE INSTITUTE (DIMABIN)
+ * Global Javascript Actions
+ */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Mobile Nav Toggle
+  // Sticky navigation scrolling effect
+  const header = document.querySelector('header');
+  
+  const handleScroll = () => {
+    if (window.scrollY > 50) {
+      header.classList.add('scrolled');
+    } else {
+      header.classList.remove('scrolled');
+    }
+  };
+
+  window.addEventListener('scroll', handleScroll);
+  // Run once on load in case page is already scrolled
+  handleScroll();
+
+  // Mobile menu functionality
   const mobileToggle = document.getElementById('mobileToggle');
-  const mobileMenu = document.getElementById('mobileMenuOverlay');
+  const mobileMenu = document.getElementById('mobileMenu');
+  const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
 
-  if (mobileToggle && mobileMenu) {
-    mobileToggle.addEventListener('click', () => {
+  if (mobileToggle && mobileMenu && mobileMenuOverlay) {
+    const toggleMenu = () => {
+      mobileToggle.classList.toggle('active');
       mobileMenu.classList.toggle('active');
-      mobileToggle.classList.toggle('open');
+      mobileMenuOverlay.classList.toggle('active');
       
-      // Toggle Hamburger to simple X icon
-      const spans = mobileToggle.querySelectorAll('span');
-      if (mobileToggle.classList.contains('open')) {
-        spans[0].style.transform = 'rotate(45deg) translate(6px, 6px)';
-        spans[1].style.opacity = '0';
-        spans[2].style.transform = 'rotate(-45deg) translate(6px, -6px)';
+      // Prevent body scrolling when menu is active
+      if (mobileMenu.classList.contains('active')) {
+        document.body.style.overflow = 'hidden';
       } else {
-        spans[0].style.transform = 'none';
-        spans[1].style.opacity = '1';
-        spans[2].style.transform = 'none';
+        document.body.style.overflow = '';
       }
-    });
+    };
 
-    // Close mobile menu on clicking any link
-    const mobileLinks = mobileMenu.querySelectorAll('a');
+    mobileToggle.addEventListener('click', toggleMenu);
+    mobileMenuOverlay.addEventListener('click', toggleMenu);
+
+    // Close menu when a link is clicked
+    const mobileLinks = mobileMenu.querySelectorAll('.nav-link');
     mobileLinks.forEach(link => {
       link.addEventListener('click', () => {
+        mobileToggle.classList.remove('active');
         mobileMenu.classList.remove('active');
-        mobileToggle.classList.remove('open');
-        const spans = mobileToggle.querySelectorAll('span');
-        spans[0].style.transform = 'none';
-        spans[1].style.opacity = '1';
-        spans[2].style.transform = 'none';
+        mobileMenuOverlay.classList.remove('active');
+        document.body.style.overflow = '';
       });
-    });
-  }
-
-  // Active Link Highlight
-  const currentPath = window.location.pathname.split('/').pop() || 'index.html';
-  const navLinks = document.querySelectorAll('.nav-link');
-  navLinks.forEach(link => {
-    const href = link.getAttribute('href');
-    if (href === currentPath) {
-      link.classList.add('active');
-    } else {
-      link.classList.remove('active');
-    }
-  });
-
-  // Lightbox Modal for Gallery
-  const galleryItems = document.querySelectorAll('.gallery-item');
-  const lightbox = document.getElementById('lightboxDialog');
-  const lightboxClose = document.getElementById('lightboxClose');
-  const lightboxTitle = document.getElementById('lightboxTitle');
-  const lightboxImg = document.getElementById('lightboxImg');
-  const lightboxDesc = document.getElementById('lightboxDesc');
-
-  if (galleryItems.length > 0 && lightbox) {
-    galleryItems.forEach(item => {
-      item.addEventListener('click', () => {
-        const titleText = item.getAttribute('data-title');
-        const imgSrc = item.getAttribute('data-img');
-        const descText = item.getAttribute('data-desc');
-
-        lightboxTitle.textContent = titleText;
-        lightboxImg.src = imgSrc;
-        lightboxImg.alt = titleText;
-        lightboxDesc.textContent = descText;
-
-        lightbox.classList.add('active');
-      });
-    });
-
-    lightboxClose.addEventListener('click', () => {
-      lightbox.classList.remove('active');
-    });
-
-    // Close on overlay background click
-    lightbox.addEventListener('click', (e) => {
-      if (e.target === lightbox) {
-        lightbox.classList.remove('active');
-      }
-    });
-  }
-
-  // Form Submissions
-  const admissionForm = document.getElementById('admissionForm');
-  const contactForm = document.getElementById('contactForm');
-  const loginForm = document.getElementById('loginForm');
-
-  if (admissionForm) {
-    admissionForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const submitBtn = admissionForm.querySelector('button[type="submit"]');
-      const origText = submitBtn.innerHTML;
-      
-      try {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Directing Enrolment Registry...';
-
-        const studentName = document.getElementById('studentName').value.trim();
-        const studentDob = document.getElementById('studentDob').value;
-        const studentGender = document.getElementById('studentGender').value;
-        const gradeApplying = document.getElementById('gradeApplying').value;
-        const parentName = document.getElementById('parentName').value.trim();
-        const parentPhone = document.getElementById('parentPhone').value.trim();
-        const parentEmail = document.getElementById('parentEmail').value.trim();
-        const homeAddress = document.getElementById('homeAddress').value.trim();
-        const medicalNote = document.getElementById('medicalNote').value.trim();
-
-        // Dynamically import database helper
-        const { saveAdmission } = await import('./firebase-core.js');
-
-        const record = {
-          studentName,
-          studentDob,
-          studentGender,
-          gradeApplying,
-          parentName,
-          parentPhone,
-          parentEmail,
-          homeAddress,
-          medicalNote,
-          status: 'Pending'
-        };
-
-        const alertSuccess = document.getElementById('successAlert');
-        const alertError = document.getElementById('errorAlert');
-
-        if (alertSuccess) alertSuccess.style.display = 'none';
-        if (alertError) alertError.style.display = 'none';
-
-        const result = await saveAdmission(record);
-
-        if (result.success) {
-          if (alertSuccess) {
-            alertSuccess.style.cssText = 'display: block; background-color: #dcfce7; color: #14532d; border: 1px solid #bbf7d0; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;';
-            alertSuccess.innerHTML = `
-              <strong>Congratulations!</strong> Your Admission enrollment request has been logged successfully under reference <strong>HGS-${result.id.slice(-5).toUpperCase()}</strong>.<br>
-              A coordinator will call <strong>${parentPhone}</strong> within 24 business hours to finalize grade assessments and schedule a campus meeting.
-            `;
-            admissionForm.reset();
-            window.scrollTo({ top: alertSuccess.offsetTop - 120, behavior: 'smooth' });
-          }
-        }
-      } catch (err) {
-        console.error("Admission submission error:", err);
-        const alertError = document.getElementById('errorAlert');
-        if (alertError) {
-          alertError.style.cssText = 'display: block; background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem;';
-          alertError.innerHTML = `
-            <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
-              <i class="fa-solid fa-circle-exclamation" style="font-size: 1.25rem; margin-top: 0.15rem; color: #dc2626; flex-shrink: 0;"></i>
-              <div>
-                <strong style="display: block; margin-bottom: 0.25rem; font-weight: 700;">Submission Error</strong>
-                <span>Submission not completed. Please check your internet connection and try again.</span>
-              </div>
-            </div>
-          `;
-          window.scrollTo({ top: alertError.offsetTop - 120, behavior: 'smooth' });
-        }
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = origText;
-      }
-    });
-  }
-
-  if (contactForm) {
-    contactForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const submitBtn = contactForm.querySelector('button[type="submit"]');
-      const origText = submitBtn.innerHTML;
-      
-      try {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Delivering Message...';
-
-        const contactName = document.getElementById('contactName').value.trim();
-        const contactPhone = document.getElementById('contactPhone').value.trim();
-        const contactEmail = document.getElementById('contactEmail').value.trim();
-        const contactSubject = document.getElementById('contactSubject').value;
-        const contactMessage = document.getElementById('contactMessage').value.trim();
-
-        const alertSuccess = document.getElementById('successAlert');
-        const alertError = document.getElementById('errorAlert');
-
-        if (alertSuccess) alertSuccess.style.display = 'none';
-        if (alertError) alertError.style.display = 'none';
-
-        const { saveContactMessage } = await import('./firebase-core.js');
-
-        const record = {
-          contactName,
-          contactPhone,
-          contactEmail,
-          contactSubject,
-          contactMessage
-        };
-
-        const result = await saveContactMessage(record);
-
-        if (result.success) {
-          if (alertSuccess) {
-            alertSuccess.style.cssText = 'display: block; background-color: #dcfce7; color: #14532d; border: 1px solid #bbf7d0; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;';
-            alertSuccess.innerHTML = `
-              <strong>Thank you, ${contactName}!</strong> Your message (Subject: ${contactSubject}) has been catalogued in our desk inbox.<br>
-              The administrative division will respond via <strong>${contactEmail}</strong> or telephone shortly.
-            `;
-            contactForm.reset();
-            window.scrollTo({ top: alertSuccess.offsetTop - 120, behavior: 'smooth' });
-          }
-        }
-      } catch (err) {
-        console.error("Contact form delivery error:", err);
-        const alertError = document.getElementById('errorAlert');
-        if (alertError) {
-          const errorCode = err.code || "unknown-error-code";
-          const errorMessage = err.message || "An unexpected error occurred.";
-          alertError.style.cssText = 'display: block; background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; padding: 1.25rem; border-radius: 8px; margin-bottom: 1.5rem;';
-          alertError.innerHTML = `
-            <div style="font-weight: 800; margin-bottom: 0.5rem;"><i class="fa-solid fa-triangle-exclamation"></i> Firestore Write Failure Details:</div>
-            <div style="font-family: monospace; font-size: 0.95rem; background: #fff; border: 1px solid #fda4af; padding: 0.75rem; border-radius: 6px; margin: 0.5rem 0; word-break: break-word;">
-              <strong>Error Code:</strong> <span style="color: #dc2626;">${errorCode}</span><br>
-              <strong>Error Message:</strong> ${errorMessage}
-            </div>
-            <div style="font-size: 0.85rem; margin-top: 0.5rem;">
-              <em>This real Firebase error confirms that Firestore rejected the direct write to the <code style="background:rgba(0,0,0,0.05); padding:2px 4px; border-radius:3px;">hgs_messages</code> collection. If the error is <code>permission-denied</code> or <code>missing-or-insufficient-permissions</code>, unauthenticated public submissions are currently locked by live Database Rules. Please apply the recommended Firestore Rules in your Firebase console.</em>
-            </div>
-          `;
-          window.scrollTo({ top: alertError.offsetTop - 120, behavior: 'smooth' });
-        }
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = origText;
-      }
-    });
-  }
-
-  if (loginForm) {
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const submitBtn = loginForm.querySelector('button[type="submit"]');
-      const origText = submitBtn.innerHTML;
-      
-      const roleEl = document.getElementById('portalRole');
-      const role = roleEl ? roleEl.value : 'Student';
-      const portalIdStr = document.getElementById('portalId').value.trim();
-      const portalPassword = document.getElementById('portalPassword').value;
-
-      if (role === 'Teacher') {
-        const customPrompt = document.createElement('div');
-        customPrompt.style.cssText = 'position:fixed; top:20px; right:20px; background:#1e3a8a; color:#fff; padding:1.25rem; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15); z-index:9999; font-size:0.95rem; font-family:sans-serif; max-width:350px; border-left:5px solid var(--accent);';
-        customPrompt.innerHTML = `
-          <div style="font-weight:bold; margin-bottom:0.5rem;"><i class="fa-solid fa-chalkboard-user"></i> Administrative Access Required</div>
-          <span>Redirecting to the secure Admin Portal Login to verify credentials...</span>
-        `;
-        document.body.appendChild(customPrompt);
-        setTimeout(() => {
-          window.location.href = 'admin-login.html';
-        }, 1500);
-        return;
-      }
-
-      // Find local student-login errors if any
-      let loginErrorContainer = document.getElementById('loginErrorContainer');
-      if (!loginErrorContainer) {
-        loginErrorContainer = document.createElement('div');
-        loginErrorContainer.id = 'loginErrorContainer';
-        loginErrorContainer.style.cssText = 'display:none; background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; padding: 0.75rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.85rem;';
-        loginForm.insertBefore(loginErrorContainer, loginForm.firstChild);
-      }
-      loginErrorContainer.style.display = 'none';
-
-      try {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Authenticating secure student portal...';
-
-        const { loginStudent } = await import('./firebase-core.js');
-        const res = await loginStudent(portalIdStr, portalPassword);
-
-        if (res.success) {
-          window.location.href = 'student-portal-v2.html';
-        }
-      } catch (err) {
-        console.error("Student login failed:", err);
-        loginErrorContainer.style.display = 'block';
-        loginErrorContainer.innerHTML = `
-          <strong>Authentication Error:</strong> ${err.message || 'Verification rejected.'}
-        `;
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = origText;
-      }
     });
   }
 });
