@@ -523,6 +523,13 @@ async function renderCoursesTab() {
   tbodyFirst.innerHTML = `<tr><td colspan="4" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Retrieving first semester records...</td></tr>`;
   tbodySecond.innerHTML = `<tr><td colspan="4" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Retrieving second semester records...</td></tr>`;
 
+  if (assignedCodes.length === 0) {
+    const emptyHtml = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); font-weight: 600; padding: 2.5rem 0;"><i class="fa-solid fa-circle-info" style="color: var(--accent); margin-right: 0.5rem;"></i> No assigned courses</td></tr>`;
+    tbodyFirst.innerHTML = emptyHtml;
+    tbodySecond.innerHTML = emptyHtml;
+    return;
+  }
+
   try {
     // Read registrations for student counting
     const regSnap = await getDocs(collection(db, "registrations"));
@@ -551,14 +558,19 @@ async function renderCoursesTab() {
       if (assignedCodes.includes(course.courseCode)) {
         const studentCount = courseStats[course.courseCode] || 0;
         const row = `
-          <tr>
+          <tr class="clickable-course-row" data-course-code="${course.courseCode}" style="cursor: pointer; transition: background-color 0.2s;">
             <td><strong>${course.courseCode}</strong></td>
             <td>${course.courseTitle}</td>
             <td>${course.creditUnit || course.creditUnits || 3} Units</td>
             <td>
-              <span class="status-badge cleared" style="padding: 0.25rem 0.75rem; font-weight: 700;">
-                <i class="fa-solid fa-users"></i> ${studentCount} Registered
-              </span>
+              <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <span class="status-badge cleared" style="padding: 0.25rem 0.75rem; font-weight: 700;">
+                  <i class="fa-solid fa-users"></i> ${studentCount} Registered
+                </span>
+                <button class="btn btn-view-course-details" data-course-code="${course.courseCode}" style="background-color: var(--primary); color: white; padding: 0.3rem 0.7rem; font-size: 0.8rem; border-radius: var(--border-radius-md); border: none; cursor: pointer; display: flex; align-items: center; gap: 0.3rem;">
+                  <i class="fa-solid fa-eye"></i> Details
+                </button>
+              </div>
             </td>
           </tr>
         `;
@@ -576,6 +588,52 @@ async function renderCoursesTab() {
     tbodyFirst.innerHTML = firstCount > 0 ? htmlFirst : `<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No First Semester courses assigned for session ${sessionFilterVal}.</td></tr>`;
     tbodySecond.innerHTML = secondCount > 0 ? htmlSecond : `<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No Second Semester courses assigned for session ${sessionFilterVal}.</td></tr>`;
 
+    // Setup detail modal triggers
+    const openDetails = (courseCode) => {
+      const course = officialCoursesList.find(c => c.courseCode === courseCode);
+      if (!course) return;
+
+      document.getElementById("courseDetailTitle").textContent = course.courseTitle || course.name;
+      document.getElementById("courseDetailCode").textContent = course.courseCode;
+      document.getElementById("courseDetailUnits").textContent = `${course.creditUnit || course.creditUnits || 3} Units`;
+      document.getElementById("courseDetailSemester").textContent = course.semester || "N/A";
+      document.getElementById("courseDetailDept").textContent = course.department || "N/A";
+      document.getElementById("courseDetailSession").textContent = sessionFilterVal;
+      document.getElementById("courseDetailStatus").innerHTML = `<span class="status-badge ${course.status === 'Active' ? 'cleared' : 'pending'}">${course.status || 'Active'}</span>`;
+      document.getElementById("courseDetailDesc").textContent = course.description || "No description provided.";
+
+      document.getElementById("courseDetailModal").style.display = "flex";
+    };
+
+    document.querySelectorAll(".clickable-course-row").forEach(row => {
+      row.addEventListener("click", (e) => {
+        // Prevent click if button was clicked
+        if (e.target.closest(".btn-view-course-details")) return;
+        const code = row.getAttribute("data-course-code");
+        openDetails(code);
+      });
+    });
+
+    document.querySelectorAll(".btn-view-course-details").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const code = btn.getAttribute("data-course-code");
+        openDetails(code);
+      });
+    });
+
+    // Setup close modal handlers
+    const closeModal = () => {
+      document.getElementById("courseDetailModal").style.display = "none";
+    };
+
+    document.getElementById("btnCloseCourseDetailModal")?.addEventListener("click", closeModal);
+    document.getElementById("btnExitCourseDetailModal")?.addEventListener("click", closeModal);
+    
+    // Also close on background click
+    document.getElementById("courseDetailModal")?.addEventListener("click", (e) => {
+      if (e.target === document.getElementById("courseDetailModal")) closeModal();
+    });
+
   } catch (err) {
     console.error("Error cataloging assigned courses:", err);
     tbodyFirst.innerHTML = `<tr><td colspan="4" style="text-align: center; color: red;">Query error occurred.</td></tr>`;
@@ -590,7 +648,7 @@ async function renderStudentsTab() {
   const searchVal = document.getElementById("studentsSearchInput")?.value.trim().toLowerCase() || "";
 
   const tbody = document.getElementById("registeredStudentsTableBody");
-  tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Filtering enrolled students...</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="6" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Filtering enrolled students...</td></tr>`;
 
   try {
     const assignedCodes = currentLecturerDoc.coursesAssigned || [];
@@ -625,13 +683,23 @@ async function renderStudentsTab() {
               reg.matricNumber.toLowerCase().includes(searchVal);
 
             if (searchVal === "" || matchesSearch) {
+              const studentDept = reg.programme || reg.department || "Diploma in Theology";
+              const registrationStatus = reg.status || "Approved";
               rowsHTML += `
                 <tr>
-                  <td><strong>${reg.fullName}</strong></td>
+                  <td><code>${reg.studentId}</code></td>
                   <td><code style="background-color: var(--bg-slate); padding: 0.2rem 0.5rem; border-radius: 4px; color: var(--primary); font-family: 'Poppins', sans-serif;">${reg.matricNumber}</code></td>
-                  <td><span class="status-badge" style="background-color: var(--bg-slate); color: var(--primary); border: 1px solid var(--border-color); font-weight: 700; padding: 0.25rem 0.75rem;">${course}</span></td>
-                  <td>${reg.programme || "Diploma in Theology"}</td>
+                  <td><strong>${reg.fullName}</strong></td>
+                  <td>
+                    ${studentDept}
+                    <span style="font-size: 0.75rem; color: var(--text-muted); display: block;"><i class="fa-solid fa-book-open"></i> Course: <strong>${course}</strong></span>
+                  </td>
                   <td>${reg.academicSession}</td>
+                  <td>
+                    <span class="status-badge cleared" style="font-weight: 700; padding: 0.25rem 0.75rem;">
+                      <i class="fa-solid fa-circle-check"></i> ${registrationStatus}
+                    </span>
+                  </td>
                 </tr>
               `;
               filteredCount++;
@@ -641,7 +709,7 @@ async function renderStudentsTab() {
       }
     });
 
-    tbody.innerHTML = filteredCount > 0 ? rowsHTML : `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2.5rem 0;">No enrolled students match current criteria.</td></tr>`;
+    tbody.innerHTML = filteredCount > 0 ? rowsHTML : `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2.5rem 0;">No enrolled students match current criteria.</td></tr>`;
 
     // Populate Recipient selector under EmailJS
     if (recipientDropdown) {
@@ -654,7 +722,7 @@ async function renderStudentsTab() {
 
   } catch (err) {
     console.error("Error filtering student list:", err);
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Search error occurred.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: red;">Search error occurred.</td></tr>`;
   }
 }
 
@@ -887,6 +955,12 @@ async function handleResultSubmissionFlow(targetStatus) {
   const courseCode = document.getElementById("resultsCourseSelector").value;
   if (!courseCode) {
     window.showToast("Select a course to submit results.", "warning");
+    return;
+  }
+
+  const assignedCodes = currentLecturerDoc.coursesAssigned || [];
+  if (!assignedCodes.includes(courseCode)) {
+    window.showToast("Security Access Denied: You cannot upload results for courses not assigned to you.", "error");
     return;
   }
 

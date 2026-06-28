@@ -1221,6 +1221,47 @@
               </table>
             </div>
           </div>
+
+          <!-- Course Detail Modal -->
+          <div id="courseDetailModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+            <div class="portal-card" style="background: white; width: 90%; max-width: 600px; padding: 2rem; border-radius: var(--border-radius-lg); box-shadow: 0 4px 20px rgba(0,0,0,0.15); position: relative; max-height: 90vh; overflow-y: auto;">
+              <button id="btnCloseCourseDetailModal" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);"><i class="fa-solid fa-xmark"></i></button>
+              <h3 id="courseDetailTitle" class="font-display" style="color: var(--primary); font-size: 1.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem;">Course Details</h3>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div>
+                  <label style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block;">Course Code</label>
+                  <p id="courseDetailCode" style="font-size: 1rem; font-weight: 600; color: var(--text-dark); margin: 0.2rem 0 0 0;"></p>
+                </div>
+                <div>
+                  <label style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block;">Credit Units</label>
+                  <p id="courseDetailUnits" style="font-size: 1rem; font-weight: 600; color: var(--text-dark); margin: 0.2rem 0 0 0;"></p>
+                </div>
+                <div>
+                  <label style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block;">Semester</label>
+                  <p id="courseDetailSemester" style="font-size: 1rem; font-weight: 600; color: var(--text-dark); margin: 0.2rem 0 0 0;"></p>
+                </div>
+                <div>
+                  <label style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block;">Department</label>
+                  <p id="courseDetailDept" style="font-size: 1rem; font-weight: 600; color: var(--text-dark); margin: 0.2rem 0 0 0;"></p>
+                </div>
+                <div>
+                  <label style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block;">Academic Session</label>
+                  <p id="courseDetailSession" style="font-size: 1rem; font-weight: 600; color: var(--text-dark); margin: 0.2rem 0 0 0;"></p>
+                </div>
+                <div>
+                  <label style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block;">Course Status</label>
+                  <p id="courseDetailStatus" style="font-size: 1rem; font-weight: 600; color: var(--text-dark); margin: 0.2rem 0 0 0;"></p>
+                </div>
+              </div>
+              <div style="margin-bottom: 1.5rem;">
+                <label style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block;">Course Description</label>
+                <p id="courseDetailDesc" style="font-size: 0.95rem; line-height: 1.6; color: var(--text-dark); margin: 0.2rem 0 0 0; background: var(--bg-slate); padding: 1rem; border-radius: var(--border-radius-md); border: 1px solid var(--border-color); white-space: pre-line;"></p>
+              </div>
+              <div style="text-align: right;">
+                <button id="btnExitCourseDetailModal" class="btn" style="background-color: var(--border-color); color: var(--text-dark); border: none; font-weight: 700; padding: 0.5rem 1.5rem; border-radius: var(--border-radius-md); cursor: pointer;">Close</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Tab 4: Registered Students -->
@@ -1254,16 +1295,17 @@
             <table class="custom-table">
               <thead>
                 <tr>
-                  <th>Student Name</th>
+                  <th>Student ID</th>
                   <th>Matric Number</th>
-                  <th>Course Code</th>
-                  <th>Programme</th>
+                  <th>Full Name</th>
+                  <th>Department</th>
                   <th>Academic Session</th>
+                  <th>Registration Status</th>
                 </tr>
               </thead>
               <tbody id="registeredStudentsTableBody">
                 <tr>
-                  <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem 0;">No registered students found.</td>
+                  <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem 0;">No registered students found.</td>
                 </tr>
               </tbody>
             </table>
