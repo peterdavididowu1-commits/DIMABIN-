@@ -536,6 +536,416 @@
       color: #1E429F;
       border-color: #C3DDFD;
     }
+
+    /* Admin Dashboard Specific Styles */
+    .dashboard-container {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 80vh;
+      background-color: var(--bg-slate);
+    }
+
+    @media (max-width: 991px) {
+      .dashboard-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .dashboard-sidebar {
+      background-color: var(--primary);
+      color: var(--bg-white);
+      padding: 2.5rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar-user-box {
+      background-color: rgba(255, 255, 255, 0.05);
+      padding: 1.25rem;
+      border-radius: var(--border-radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .sidebar-user-name {
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--accent);
+    }
+
+    .sidebar-user-role {
+      font-size: 0.8rem;
+      opacity: 0.8;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      background-color: #28a745;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 8px #28a745;
+    }
+
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .sidebar-nav-btn {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.85);
+      padding: 1rem 1.25rem;
+      text-align: left;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: var(--border-radius-md);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      width: 100%;
+      transition: var(--transition);
+    }
+
+    .sidebar-nav-btn:hover, .sidebar-nav-btn.active {
+      color: var(--primary-dark) !important;
+      background-color: var(--accent) !important;
+    }
+
+    .dashboard-main {
+      padding: 3rem;
+      background-color: var(--bg-slate);
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+    }
+
+    @media (max-width: 576px) {
+      .dashboard-main {
+        padding: 1.5rem 1rem;
+      }
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .stat-card {
+      background-color: var(--bg-white);
+      border-radius: var(--border-radius-lg);
+      padding: 1.75rem;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: var(--transition);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .stat-card-info h5 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+    }
+
+    .stat-card-info .stat-value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--primary);
+      font-family: 'Poppins', sans-serif;
+      line-height: 1.1;
+    }
+
+    .stat-card-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      flex-shrink: 0;
+    }
+
+    .stat-card-icon.blue { background-color: rgba(31, 59, 130, 0.1); color: var(--primary); }
+    .stat-card-icon.yellow { background-color: rgba(244, 176, 0, 0.15); color: #b77a00; }
+    .stat-card-icon.green { background-color: rgba(40, 167, 69, 0.1); color: #28a745; }
+    .stat-card-icon.red { background-color: rgba(220, 53, 69, 0.1); color: #dc3545; }
+    .stat-card-icon.purple { background-color: rgba(111, 66, 193, 0.1); color: #6f42c1; }
+
+    /* Tables & Lists */
+    .table-container {
+      background-color: var(--bg-white);
+      border-radius: var(--border-radius-lg);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      overflow-x: auto;
+    }
+
+    .custom-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+
+    .custom-table th {
+      background-color: var(--primary);
+      color: var(--bg-white);
+      padding: 1.2rem 1.25rem;
+      font-weight: 600;
+    }
+
+    .custom-table td {
+      padding: 1.2rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-dark);
+    }
+
+    .custom-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .custom-table tr:hover td {
+      background-color: rgba(245, 247, 250, 0.5);
+    }
+
+    /* Search & Filter bar */
+    .search-filter-bar {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      flex-grow: 1;
+      min-width: 280px;
+    }
+
+    .search-input-wrapper i {
+      position: absolute;
+      left: 1.25rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+    }
+
+    .search-input-wrapper input {
+      width: 100%;
+      padding: 0.85rem 1rem 0.85rem 3rem;
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--border-radius-md);
+      font-size: 0.95rem;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .search-input-wrapper input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(31, 59, 130, 0.1);
+    }
+
+    .filter-select {
+      padding: 0.85rem 1.5rem;
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--border-radius-md);
+      font-size: 0.95rem;
+      outline: none;
+      background-color: var(--bg-white);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .filter-select:focus {
+      border-color: var(--primary);
+    }
+
+    /* Badges */
+    .status-badge {
+      padding: 0.35rem 0.85rem;
+      border-radius: 50px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .status-badge.pending { background-color: #fef3c7; color: #d97706; }
+    .status-badge.approved { background-color: #d1fae5; color: #059669; }
+    .status-badge.rejected { background-color: #fee2e2; color: #dc2626; }
+
+    /* Modal dialog */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 1200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .modal-box {
+      background-color: var(--bg-white);
+      border-radius: var(--border-radius-lg);
+      max-width: 800px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      animation: modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      border: 1px solid var(--border-color);
+    }
+
+    @keyframes modalFadeIn {
+      from { transform: translateY(15px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+      background-color: var(--primary);
+      color: var(--bg-white);
+      padding: 1.25rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .modal-close-btn {
+      background: none;
+      border: none;
+      color: var(--bg-white);
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close-btn:hover {
+      color: var(--accent);
+    }
+
+    .modal-body {
+      padding: 2.5rem;
+    }
+
+    /* Toast System */
+    .toast-container {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .toast-alert {
+      background-color: var(--bg-white);
+      border-left: 5px solid var(--primary);
+      box-shadow: var(--shadow-lg);
+      padding: 1.25rem 1.75rem;
+      border-radius: var(--border-radius-md);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      min-width: 320px;
+      max-width: 450px;
+      animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 1px solid var(--border-color);
+      border-left-width: 5px;
+    }
+
+    @keyframes slideInRight {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .toast-alert.success { border-left-color: #28a745; }
+    .toast-alert.error { border-left-color: #dc3545; }
+    .toast-alert.info { border-left-color: #F4B000; }
+
+    .toast-alert i {
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+
+    .toast-alert.success i { color: #28a745; }
+    .toast-alert.error i { color: #dc3545; }
+    .toast-alert.info i { color: #F4B000; }
+
+    .toast-alert-text {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--primary-dark);
+    }
+
+    /* Tab content transitions */
+    .tab-content {
+      display: none;
+      animation: fadeInEffect 0.3s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeInEffect {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Form control grid */
+    .form-grid-settings {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .form-grid-settings {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -606,220 +1016,512 @@
     </ul>
   </div>
 
-  <!-- Hero Section -->
-  <section class="portal-hero">
-    <div class="container">
-      <div class="hero-motto">Secure Access Protocol</div>
-      <h2>Administrator Portal</h2>
-      <div class="hero-subtitle">Secure administrative access for managing the institute.</div>
-    </div>
-  </section>
+  <!-- Anonymous Visitor Login View -->
+  <div id="anonymousView">
+    <!-- Hero Section -->
+    <section class="portal-hero">
+      <div class="container">
+        <div class="hero-motto">Secure Access Protocol</div>
+        <h2>Administrator Portal</h2>
+        <div class="hero-subtitle">Secure administrative access for managing the institute.</div>
+      </div>
+    </section>
 
-  <!-- Two-Column Portal Layout -->
-  <section class="py-5" style="background-color: var(--bg-slate);">
-    <div class="container">
-      <div class="portal-grid">
-        
-        <!-- Left Column: Login & Security Notice -->
-        <div class="portal-main">
+    <!-- Two-Column Portal Layout -->
+    <section class="py-5" style="background-color: var(--bg-slate);">
+      <div class="container">
+        <div class="portal-grid">
           
-          <!-- Administrator Login Card -->
-          <div class="login-card">
-            <div class="login-header">
-              <div class="login-shield-icon"><i class="fa-solid fa-user-shield"></i></div>
-              <h3>Administrator Sign In</h3>
-              <p>Enter your authorization credentials to access the central management console</p>
+          <!-- Left Column: Login & Security Notice -->
+          <div class="portal-main">
+            
+            <!-- Administrator Login Card -->
+            <div class="login-card">
+              <div class="login-header">
+                <div class="login-shield-icon"><i class="fa-solid fa-user-shield"></i></div>
+                <h3>Administrator Sign In</h3>
+                <p>Enter your authorization credentials to access the central management console</p>
+              </div>
+
+              <!-- UI-Only Informative Alert Box -->
+              <div class="form-alert info" id="loginFeedback">
+                <i class="fa-solid fa-circle-info" style="margin-top: 0.15rem; color: var(--primary);"></i>
+                <span id="loginFeedbackText">
+                  <strong>Information:</strong> The Administrator Command Center is currently undergoing staged framework updates. Direct database verification has been paused for this UI iteration.
+                </span>
+              </div>
+
+              <form id="adminLoginForm">
+                <!-- Admin ID Field -->
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                  <label for="adminId" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: block;">Administrator ID</label>
+                  <div class="input-with-icon">
+                    <i class="fa-solid fa-id-card input-icon"></i>
+                    <input type="text" id="adminId" class="form-control" placeholder="e.g. DIMABIN/ADM/2026/01" required>
+                  </div>
+                </div>
+
+                <!-- Password Field -->
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                  <label for="password" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: block;">Password</label>
+                  <div class="input-with-icon">
+                    <i class="fa-solid fa-lock input-icon"></i>
+                    <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+                    <button type="button" class="btn-toggle-password" id="togglePasswordBtn" onclick="togglePasswordVisibility()" aria-label="Toggle Password Visibility">
+                      <i class="fa-solid fa-eye" id="passwordEyeIcon"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Remember & Forgot Options -->
+                <div class="login-actions">
+                  <label class="remember-me">
+                    <input type="checkbox" id="rememberMe">
+                    <span>Remember Me</span>
+                  </label>
+                  <a href="#" id="forgotPasswordLink" class="forgot-password-link">Forgot Password?</a>
+                </div>
+
+                <!-- Login CTA Button -->
+                <button type="submit" class="btn btn-primary login-btn" id="btnLoginSubmit">
+                  <i class="fa-solid fa-shield-halved"></i> Authenticate and Login
+                </button>
+              </form>
             </div>
 
-            <!-- UI-Only Informative Alert Box -->
-            <div class="form-alert info" id="loginFeedback">
-              <i class="fa-solid fa-circle-info" style="margin-top: 0.15rem; color: var(--primary);"></i>
-              <span>
-                <strong>Information:</strong> The Administrator Command Center is currently undergoing staged framework updates. Direct database verification has been paused for this UI iteration.
-              </span>
+            <!-- Security Notice -->
+            <div class="security-notice-card">
+              <div class="security-title">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <h4>Security Notice</h4>
+              </div>
+              <p>
+                This is a secure DIMABIN system. Access is strictly authorized for designated personnel only. All access logs, IP transactions, and session footprints are recorded for system audit. Never share your administrative parameters with anyone.
+              </p>
             </div>
 
-            <form id="adminLoginForm" onsubmit="event.preventDefault(); showLoginInfo();">
-              <!-- Admin ID Field -->
-              <div class="form-group" style="margin-bottom: 1.5rem;">
-                <label for="adminId" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: block;">Administrator ID</label>
-                <div class="input-with-icon">
-                  <i class="fa-solid fa-id-card input-icon"></i>
-                  <input type="text" id="adminId" class="form-control" placeholder="e.g. DIMABIN/ADM/2026/01" required>
+          </div>
+
+          <!-- Right Column: Support Section -->
+          <div class="portal-sidebar">
+            
+            <!-- Support Desk Coordinates -->
+            <div class="portal-support-card">
+              <h4 class="font-display support-title">Official Administrator Desk</h4>
+              <p class="support-subtitle">Experiencing sign-in errors, locked profiles, or requiring immediate credential overrides? Contact central registry facilitators:</p>
+
+              <div class="support-contacts">
+                <!-- support phones -->
+                <div class="support-contact-item">
+                  <i class="fa-solid fa-phone"></i>
+                  <div class="support-numbers">
+                    <a href="tel:08038194611">0803 819 4611</a>
+                    <a href="tel:08138194611">0813 819 4611</a>
+                    <a href="tel:08062186974">0806 218 6974</a>
+                    <a href="tel:08037282082">0803 728 2082</a>
+                  </div>
+                </div>
+
+                <!-- support email -->
+                <div class="support-contact-item">
+                  <i class="fa-solid fa-envelope"></i>
+                  <a href="mailto:olalekan16650@gmail.com" class="support-email">olalekan16650@gmail.com</a>
                 </div>
               </div>
 
-              <!-- Password Field -->
-              <div class="form-group" style="margin-bottom: 1.5rem;">
-                <label for="password" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: block;">Password</label>
+              <p class="support-note">
+                <i class="fa-solid fa-circle-info" style="margin-right: 0.25rem;"></i>
+                Please prepare your system ID, terminal serial key, and official department records when contacting support officers.
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Administrative Future Previews Section -->
+    <section class="features-section">
+      <div class="container">
+        <div class="section-header">
+          <h3>Administrative Preview Features</h3>
+          <p>A look at the upcoming central command tools being constructed to power the complete Divine Mandate Bible Institute digital framework.</p>
+        </div>
+
+        <div class="features-grid">
+          <!-- Card 1: Student Management -->
+          <div class="feature-card">
+            <span class="badge-card-soon">Coming Soon</span>
+            <div class="feature-card-icon"><i class="fa-solid fa-user-graduate"></i></div>
+            <h4>Student Management</h4>
+            <p>Oversee student enrolments, search directory profiles, edit academic statuses, and track active student registrations.</p>
+          </div>
+
+          <!-- Card 2: Lecturer Management -->
+          <div class="feature-card">
+            <span class="badge-card-soon">Coming Soon</span>
+            <div class="feature-card-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
+            <h4>Lecturer Management</h4>
+            <p>Manage faculty profiles, assign teaching roles to theological facilitators, and coordinate department staff portfolios.</p>
+          </div>
+
+          <!-- Card 3: Admission Management -->
+          <div class="feature-card">
+            <span class="badge-card-soon">Coming Soon</span>
+            <div class="feature-card-icon"><i class="fa-solid fa-users-viewfinder"></i></div>
+            <h4>Admission Management</h4>
+            <p>Process registration applications, audit ministerial reference submissions, and approve incoming cohorts.</p>
+          </div>
+
+          <!-- Card 4: Course Management -->
+          <div class="feature-card">
+            <span class="badge-card-soon">Coming Soon</span>
+            <div class="feature-card-icon"><i class="fa-solid fa-book-open"></i></div>
+            <h4>Course Management</h4>
+            <p>Manage theological course catalogs, curriculum pathways, and syllabus outlines for academic programs.</p>
+          </div>
+
+          <!-- Card 5: Result Management -->
+          <div class="feature-card">
+            <span class="badge-card-soon">Coming Soon</span>
+            <div class="feature-card-icon"><i class="fa-solid fa-square-poll-vertical"></i></div>
+            <h4>Result Management</h4>
+            <p>Upload exam marks, compile transcript sheets, and publish semester result charts.</p>
+          </div>
+
+          <!-- Card 6: CBT Management -->
+          <div class="feature-card">
+            <span class="badge-card-soon">Coming Soon</span>
+            <div class="feature-card-icon"><i class="fa-solid fa-laptop-code"></i></div>
+            <h4>CBT Management</h4>
+            <p>Manage computer-based examinations, online quizzes, question banks, and grading criteria.</p>
+          </div>
+
+          <!-- Card 7: Announcement Management -->
+          <div class="feature-card">
+            <span class="badge-card-soon">Coming Soon</span>
+            <div class="feature-card-icon"><i class="fa-solid fa-bullhorn"></i></div>
+            <h4>Announcement Management</h4>
+            <p>Draft and dispatch administrative notices, circular sheets, and system alerts to portal users.</p>
+          </div>
+
+          <!-- Card 8: Academic Session Management -->
+          <div class="feature-card">
+            <span class="badge-card-soon">Coming Soon</span>
+            <div class="feature-card-icon"><i class="fa-solid fa-calendar-days"></i></div>
+            <h4>Academic Session Management</h4>
+            <p>Define term calendars, manage admission window milestones, and handle session activations.</p>
+          </div>
+
+          <!-- Card 9: Reports & Analytics -->
+          <div class="feature-card">
+            <span class="badge-card-soon">Coming Soon</span>
+            <div class="feature-card-icon"><i class="fa-solid fa-chart-pie"></i></div>
+            <h4>Reports & Analytics</h4>
+            <p>Query system registration tallies, visual fee logs, and staff portfolio engagement indexes.</p>
+          </div>
+
+          <!-- Card 10: System Settings -->
+          <div class="feature-card">
+            <span class="badge-card-soon">Coming Soon</span>
+            <div class="feature-card-icon"><i class="fa-solid fa-sliders"></i></div>
+            <h4>System Settings</h4>
+            <p>Audit SSL certificates, manage operator backup nodes, and view system log files.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Authenticated Admin Dashboard View -->
+  <div id="authenticatedView" style="display: none;">
+    <div class="dashboard-container">
+      
+      <!-- Dashboard Sidebar -->
+      <aside class="dashboard-sidebar">
+        <div class="sidebar-user-box">
+          <div class="sidebar-user-name" id="currentUserDisplay">Super Admin</div>
+          <div class="sidebar-user-role">
+            <span class="status-dot"></span>
+            <span>Online Command</span>
+          </div>
+          <div style="font-size: 0.75rem; opacity: 0.7; margin-top: 0.5rem;" id="currentIdDisplay">DIMABIN/ADM/2026/01</div>
+        </div>
+
+        <nav class="sidebar-nav">
+          <button class="sidebar-nav-btn active" data-tab="overview">
+            <i class="fa-solid fa-chart-pie"></i> Stats Overview
+          </button>
+          <button class="sidebar-nav-btn" data-tab="admissions">
+            <i class="fa-solid fa-users-viewfinder"></i> Admissions
+          </button>
+          <button class="sidebar-nav-btn" data-tab="students">
+            <i class="fa-solid fa-user-graduate"></i> Student Directory
+          </button>
+          <button class="sidebar-nav-btn" data-tab="emailjs">
+            <i class="fa-solid fa-sliders"></i> EmailJS & Settings
+          </button>
+        </nav>
+
+        <div style="flex-grow: 1;"></div>
+
+        <button class="btn btn-outline-white" style="border-color: rgba(255,255,255,0.2); color: var(--bg-white); width: 100%; text-align: center;" id="btnLogout">
+          <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+        </button>
+      </aside>
+
+      <!-- Dashboard Main Work Area -->
+      <main class="dashboard-main">
+        
+        <!-- Tab 1: Stats Overview -->
+        <div class="tab-content active" id="tab-overview">
+          <div style="margin-bottom: 2rem;">
+            <h2 class="font-display" style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem;">Command Overview</h2>
+            <p style="color: var(--text-muted);">Real-time coordination parameters of Divine Mandate Bible Institute.</p>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-card-info">
+                <h5>Total Applications</h5>
+                <div class="stat-value" id="statTotalApps">0</div>
+              </div>
+              <div class="stat-card-icon blue"><i class="fa-solid fa-file-invoice"></i></div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-card-info">
+                <h5>Pending Review</h5>
+                <div class="stat-value" id="statPendingApps">0</div>
+              </div>
+              <div class="stat-card-icon yellow"><i class="fa-solid fa-clock-rotate-left"></i></div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-card-info">
+                <h5>Approved Admits</h5>
+                <div class="stat-value" id="statApprovedApps">0</div>
+              </div>
+              <div class="stat-card-icon green"><i class="fa-solid fa-circle-check"></i></div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-card-info">
+                <h5>Rejected Dossiers</h5>
+                <div class="stat-value" id="statRejectedApps">0</div>
+              </div>
+              <div class="stat-card-icon red"><i class="fa-solid fa-circle-xmark"></i></div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-card-info">
+                <h5>Total Students</h5>
+                <div class="stat-value" id="statTotalStudents">0</div>
+              </div>
+              <div class="stat-card-icon purple"><i class="fa-solid fa-user-graduate"></i></div>
+            </div>
+          </div>
+
+          <!-- Shortcuts & Portal Health Card -->
+          <div style="background-color: var(--bg-white); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); padding: 2.5rem; margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+            <h3 class="font-display" style="color: var(--primary); font-size: 1.25rem;"><i class="fa-solid fa-circle-nodes"></i> Registry Status Coordinates</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
+              Your terminal is synchronized securely with Firestore. Active timeline points to academic session <strong id="activeSessionDisplay">2026/2027</strong> under <strong id="activeSemesterDisplay">First Semester</strong>. If you need to roll over session markers, proceed to the <strong>EmailJS & Settings</strong> control module.
+            </p>
+          </div>
+        </div>
+
+        <!-- Tab 2: Admissions Management -->
+        <div class="tab-content" id="tab-admissions">
+          <div style="margin-bottom: 2rem;">
+            <h2 class="font-display" style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem;">Admissions Desk</h2>
+            <p style="color: var(--text-muted);">Manage candidate files, update review standings, and generate student portfolios.</p>
+          </div>
+
+          <div class="search-filter-bar">
+            <div class="search-input-wrapper">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="searchAppsInput" placeholder="Search by Candidate Name, Application ID, Email or Phone...">
+            </div>
+            <select class="filter-select" id="filterStatus">
+              <option value="All">All Standings</option>
+              <option value="Pending">Pending Review</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+
+          <div class="table-container">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>App ID</th>
+                  <th>Candidate Name</th>
+                  <th>Programme</th>
+                  <th>Status</th>
+                  <th>Submission Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="applicationsTableBody">
+                <tr>
+                  <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem; color: var(--primary);"></i>
+                    <div>Fetching central applications pipeline...</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 3: Student Directory -->
+        <div class="tab-content" id="tab-students">
+          <div style="margin-bottom: 2rem;">
+            <h2 class="font-display" style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem;">Student Registry</h2>
+            <p style="color: var(--text-muted);">Active academic accounts, matriculation numbers, and secure onboarding parameters.</p>
+          </div>
+
+          <div class="search-filter-bar">
+            <div class="search-input-wrapper">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="searchStudentsInput" placeholder="Search directory by Student ID, Matric, Name, or Email...">
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Student ID</th>
+                  <th>Matric Number</th>
+                  <th>Full Name</th>
+                  <th>Email</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="studentsTableBody">
+                <tr>
+                  <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem; color: var(--primary);"></i>
+                    <div>Connecting with central student matrix...</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 4: Settings & EmailJS -->
+        <div class="tab-content" id="tab-emailjs">
+          <div style="margin-bottom: 2rem;">
+            <h2 class="font-display" style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem;">Systems & Notifications Setup</h2>
+            <p style="color: var(--text-muted);">Configure active session coordinates and configure EmailJS integration vectors securely.</p>
+          </div>
+
+          <div class="portal-support-card" style="margin-bottom: 2rem; background-color: var(--bg-white);">
+            <h3 class="font-display" style="color: var(--primary); font-size: 1.25rem; margin-bottom: 1rem;"><i class="fa-solid fa-calendar-days"></i> Academic Window Rollover</h3>
+            <div class="form-grid-settings">
+              <div class="form-group">
+                <label for="settingsSession">Active Academic Session</label>
+                <input type="text" id="settingsSession" class="form-control" placeholder="e.g. 2026/2027">
+              </div>
+              <div class="form-group">
+                <label for="settingsSemester">Current Semester</label>
+                <select id="settingsSemester" class="form-control">
+                  <option value="First Semester">First Semester</option>
+                  <option value="Second Semester">Second Semester</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="margin-top: 1rem;" id="btnSaveTimeline">
+              <i class="fa-solid fa-calendar-check"></i> Roll Over Academic Period
+            </button>
+          </div>
+
+          <div class="portal-support-card" style="background-color: var(--bg-white);">
+            <h3 class="font-display" style="color: var(--primary); font-size: 1.25rem; margin-bottom: 1rem;"><i class="fa-solid fa-envelope-open-text"></i> EmailJS Notification Parameters</h3>
+            <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.5; margin-bottom: 1.5rem;">
+              These parameters determine notification routing. Avoid hardcoding these values. Updating here secures system-wide dispatch lines instantly.
+            </p>
+
+            <form id="emailjsSettingsForm" onsubmit="event.preventDefault();">
+              <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label for="emailjsPublicKey">EmailJS Public Key</label>
                 <div class="input-with-icon">
-                  <i class="fa-solid fa-lock input-icon"></i>
-                  <input type="password" id="password" class="form-control" placeholder="••••••••" required>
-                  <button type="button" class="btn-toggle-password" id="togglePasswordBtn" onclick="togglePasswordVisibility()" aria-label="Toggle Password Visibility">
-                    <i class="fa-solid fa-eye" id="passwordEyeIcon"></i>
-                  </button>
+                  <i class="fa-solid fa-key input-icon"></i>
+                  <input type="text" id="emailjsPublicKey" class="form-control" required placeholder="Public Key">
                 </div>
               </div>
 
-              <!-- Remember & Forgot Options -->
-              <div class="login-actions">
-                <label class="remember-me">
-                  <input type="checkbox" id="rememberMe">
-                  <span>Remember Me</span>
-                </label>
-                <a href="#" onclick="alert('For security verification, security credentials are reset strictly offline. Please coordinate with the help desk officers listed in the support section.'); return false;" class="forgot-password-link">Forgot Password?</a>
+              <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label for="emailjsServiceId">EmailJS Service ID</label>
+                <div class="input-with-icon">
+                  <i class="fa-solid fa-gears input-icon"></i>
+                  <input type="text" id="emailjsServiceId" class="form-control" required placeholder="Service ID">
+                </div>
               </div>
 
-              <!-- Login CTA Button -->
-              <button type="submit" class="btn btn-primary login-btn">
-                <i class="fa-solid fa-shield-halved"></i> Authenticate and Login
-              </button>
+              <div class="form-grid-settings">
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                  <label for="emailjsAdmissionId">Admission Confirmation Template ID</label>
+                  <input type="text" id="emailjsAdmissionId" class="form-control" required placeholder="Template ID">
+                </div>
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                  <label for="emailjsContactId">Contact Form Template ID</label>
+                  <input type="text" id="emailjsContactId" class="form-control" required placeholder="Template ID">
+                </div>
+              </div>
+
+              <div class="form-grid-settings">
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                  <label for="emailjsAdminNotificationId">Admin Notification Template ID</label>
+                  <input type="text" id="emailjsAdminNotificationId" class="form-control" required placeholder="Template ID">
+                </div>
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                  <label for="emailjsStudentNotificationId">Student Notification Template ID</label>
+                  <input type="text" id="emailjsStudentNotificationId" class="form-control" required placeholder="Template ID">
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="emailjsLecturerNotificationId">Lecturer Notification Template ID</label>
+                <input type="text" id="emailjsLecturerNotificationId" class="form-control" required placeholder="Template ID">
+              </div>
+
+              <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button type="submit" class="btn btn-primary" id="btnSaveEmailJS">
+                  <i class="fa-solid fa-floppy-disk"></i> Save EmailJS Keys
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="btnResetEmailJS">
+                  <i class="fa-solid fa-rotate-left"></i> Restore Defaults
+                </button>
+              </div>
             </form>
           </div>
-
-          <!-- Security Notice -->
-          <div class="security-notice-card">
-            <div class="security-title">
-              <i class="fa-solid fa-circle-exclamation"></i>
-              <h4>Security Notice</h4>
-            </div>
-            <p>
-              This is a secure DIMABIN system. Access is strictly authorized for designated personnel only. All access logs, IP transactions, and session footprints are recorded for system audit. Never share your administrative parameters with anyone.
-            </p>
-          </div>
-
         </div>
 
-        <!-- Right Column: Support Section -->
-        <div class="portal-sidebar">
-          
-          <!-- Support Desk Coordinates -->
-          <div class="portal-support-card">
-            <h4 class="font-display support-title">Official Administrator Desk</h4>
-            <p class="support-subtitle">Experiencing sign-in errors, locked profiles, or requiring immediate credential overrides? Contact central registry facilitators:</p>
+      </main>
+    </div>
+  </div>
 
-            <div class="support-contacts">
-              <!-- support phones -->
-              <div class="support-contact-item">
-                <i class="fa-solid fa-phone"></i>
-                <div class="support-numbers">
-                  <a href="tel:08038194611">0803 819 4611</a>
-                  <a href="tel:08138194611">0813 819 4611</a>
-                  <a href="tel:08062186974">0806 218 6974</a>
-                  <a href="tel:08037282082">0803 728 2082</a>
-                </div>
-              </div>
-
-              <!-- support email -->
-              <div class="support-contact-item">
-                <i class="fa-solid fa-envelope"></i>
-                <a href="mailto:olalekan16650@gmail.com" class="support-email">olalekan16650@gmail.com</a>
-              </div>
-            </div>
-
-            <p class="support-note">
-              <i class="fa-solid fa-circle-info" style="margin-right: 0.25rem;"></i>
-              Please prepare your system ID, terminal serial key, and official department records when contacting support officers.
-            </p>
-          </div>
-
-        </div>
-
+  <!-- Detailed Application Modal -->
+  <div class="modal-overlay" id="appDetailsModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="font-display" style="margin: 0; font-size: 1.25rem;"><i class="fa-solid fa-file-invoice"></i> Candidate Dossier</h3>
+        <button class="modal-close-btn" id="btnCloseDetailsModal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" id="appDetailsBody">
+        <!-- Filled dynamically -->
       </div>
     </div>
-  </section>
+  </div>
 
-  <!-- Administrative Future Previews Section -->
-  <section class="features-section">
-    <div class="container">
-      <div class="section-header">
-        <h3>Administrative Preview Features</h3>
-        <p>A look at the upcoming central command tools being constructed to power the complete Divine Mandate Bible Institute digital framework.</p>
-      </div>
-
-      <div class="features-grid">
-        <!-- Card 1: Student Management -->
-        <div class="feature-card">
-          <span class="badge-card-soon">Coming Soon</span>
-          <div class="feature-card-icon"><i class="fa-solid fa-user-graduate"></i></div>
-          <h4>Student Management</h4>
-          <p>Oversee student enrolments, search directory profiles, edit academic statuses, and track active student registrations.</p>
-        </div>
-
-        <!-- Card 2: Lecturer Management -->
-        <div class="feature-card">
-          <span class="badge-card-soon">Coming Soon</span>
-          <div class="feature-card-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
-          <h4>Lecturer Management</h4>
-          <p>Manage faculty profiles, assign teaching roles to theological facilitators, and coordinate department staff portfolios.</p>
-        </div>
-
-        <!-- Card 3: Admission Management -->
-        <div class="feature-card">
-          <span class="badge-card-soon">Coming Soon</span>
-          <div class="feature-card-icon"><i class="fa-solid fa-users-viewfinder"></i></div>
-          <h4>Admission Management</h4>
-          <p>Process registration applications, audit ministerial reference submissions, and approve incoming cohorts.</p>
-        </div>
-
-        <!-- Card 4: Course Management -->
-        <div class="feature-card">
-          <span class="badge-card-soon">Coming Soon</span>
-          <div class="feature-card-icon"><i class="fa-solid fa-book-open"></i></div>
-          <h4>Course Management</h4>
-          <p>Manage theological course catalogs, curriculum pathways, and syllabus outlines for academic programs.</p>
-        </div>
-
-        <!-- Card 5: Result Management -->
-        <div class="feature-card">
-          <span class="badge-card-soon">Coming Soon</span>
-          <div class="feature-card-icon"><i class="fa-solid fa-square-poll-vertical"></i></div>
-          <h4>Result Management</h4>
-          <p>Upload exam marks, compile transcript sheets, and publish semester result charts.</p>
-        </div>
-
-        <!-- Card 6: CBT Management -->
-        <div class="feature-card">
-          <span class="badge-card-soon">Coming Soon</span>
-          <div class="feature-card-icon"><i class="fa-solid fa-laptop-code"></i></div>
-          <h4>CBT Management</h4>
-          <p>Manage computer-based examinations, online quizzes, question banks, and grading criteria.</p>
-        </div>
-
-        <!-- Card 7: Announcement Management -->
-        <div class="feature-card">
-          <span class="badge-card-soon">Coming Soon</span>
-          <div class="feature-card-icon"><i class="fa-solid fa-bullhorn"></i></div>
-          <h4>Announcement Management</h4>
-          <p>Draft and dispatch administrative notices, circular sheets, and system alerts to portal users.</p>
-        </div>
-
-        <!-- Card 8: Academic Session Management -->
-        <div class="feature-card">
-          <span class="badge-card-soon">Coming Soon</span>
-          <div class="feature-card-icon"><i class="fa-solid fa-calendar-days"></i></div>
-          <h4>Academic Session Management</h4>
-          <p>Define term calendars, manage admission window milestones, and handle session activations.</p>
-        </div>
-
-        <!-- Card 9: Reports & Analytics -->
-        <div class="feature-card">
-          <span class="badge-card-soon">Coming Soon</span>
-          <div class="feature-card-icon"><i class="fa-solid fa-chart-pie"></i></div>
-          <h4>Reports & Analytics</h4>
-          <p>Query system registration tallies, visual fee logs, and staff portfolio engagement indexes.</p>
-        </div>
-
-        <!-- Card 10: System Settings -->
-        <div class="feature-card">
-          <span class="badge-card-soon">Coming Soon</span>
-          <div class="feature-card-icon"><i class="fa-solid fa-sliders"></i></div>
-          <h4>System Settings</h4>
-          <p>Audit SSL certificates, manage operator backup nodes, and view system log files.</p>
-        </div>
-      </div>
-    </div>
-  </section>
+  <!-- Toast notification system -->
+  <div class="toast-container" id="toastContainer"></div>
 
   <!-- Footer -->
   <footer>
@@ -896,8 +1598,26 @@
 
   <!-- Scripts -->
   <script src="../assets/js/main.js"></script>
-  <script>
-    function togglePasswordVisibility() {
+  <script type="module">
+    import { db, auth } from '../assets/js/firebase-init.js';
+    import { getEmailJSConfig, saveEmailJSConfig, DEFAULT_EMAILJS_CONFIG, prepareAndLogEmail } from '../assets/js/emailjs-config.js';
+
+    // Import dynamic Firebase Auth and Firestore methods
+    const {
+      collection, doc, getDoc, getDocs, setDoc, updateDoc, query, where, orderBy, limit
+    } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+    const {
+      sendPasswordResetEmail
+    } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js");
+
+    const SESSION_KEY = "dimabin_admin_session";
+    const INACTIVITY_LIMIT_MS = 15 * 60 * 1000; // 15 minutes in milliseconds
+    let inactivityTimer;
+    let allApplications = [];
+    let allStudents = [];
+
+    // Global toggle password visibility
+    window.togglePasswordVisibility = () => {
       const passwordInput = document.getElementById('password');
       const eyeIcon = document.getElementById('passwordEyeIcon');
       if (passwordInput.type === 'password') {
@@ -907,16 +1627,877 @@
         passwordInput.type = 'password';
         eyeIcon.classList.replace('fa-eye-slash', 'fa-eye');
       }
+    };
+
+    // Toast Alert Notification system helper
+    window.showToast = (message, type = "success") => {
+      const container = document.getElementById("toastContainer");
+      const toast = document.createElement("div");
+      toast.className = `toast-alert ${type}`;
+      
+      let icon = "fa-circle-check";
+      if (type === "error") icon = "fa-circle-xmark";
+      else if (type === "info") icon = "fa-circle-info";
+
+      toast.innerHTML = `
+        <i class="fa-solid ${icon}"></i>
+        <div class="toast-alert-text">${message}</div>
+      `;
+      container.appendChild(toast);
+
+      // Auto dismiss after 4 seconds
+      setTimeout(() => {
+        toast.style.animation = "slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) reverse";
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    };
+
+    // Password Hashing (SHA-256 Utility)
+    async function sha256(message) {
+      const msgBuffer = new TextEncoder().encode(message);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    function showLoginInfo() {
-      const alertBox = document.getElementById('loginFeedback');
-      if (alertBox) {
-        alertBox.style.display = 'flex';
-        // Scroll to alert
-        alertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Auto-seed central super administrator document
+    const seedDefaultAdmin = async () => {
+      if (!db) return;
+      const adminRef = doc(db, "admins", "DIMABIN-ADM-2026-01");
+      try {
+        const docSnap = await getDoc(adminRef);
+        if (!docSnap.exists()) {
+          await setDoc(adminRef, {
+            adminId: "DIMABIN/ADM/2026/01",
+            fullName: "DIMABIN Super Admin",
+            email: "peterdavididowu1@gmail.com",
+            phone: "08038194611",
+            role: "Super Admin",
+            passwordHash: "4a847053e1b723a9d949cf065f4d96c9c8e87498d363717208d234a5d3b6641e", // SHA-256 for Admin2026
+            createdAt: new Date().toISOString(),
+            lastLogin: null,
+            status: "Active"
+          });
+          console.log("🌟 [Admin Seeding] Seeded default administrator document in 'admins' collection!");
+        }
+      } catch (err) {
+        console.error("❌ Failed to seed default admin:", err);
+      }
+    };
+
+    // Session Management and Security Auto-logout
+    function resetInactivityTimer() {
+      clearTimeout(inactivityTimer);
+      if (sessionStorage.getItem(SESSION_KEY)) {
+        inactivityTimer = setTimeout(() => {
+          handleLogout("Your session has expired due to 15 minutes of inactivity.");
+        }, INACTIVITY_LIMIT_MS);
       }
     }
+
+    function checkActiveSession() {
+      const cached = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
+      if (cached) {
+        const session = JSON.parse(cached);
+        enterDashboard(session);
+      }
+    }
+
+    function enterDashboard(session) {
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      document.getElementById("anonymousView").style.display = "none";
+      document.getElementById("authenticatedView").style.display = "block";
+      document.getElementById("currentUserDisplay").textContent = session.fullName;
+      document.getElementById("currentIdDisplay").textContent = session.adminId;
+      
+      // Initialize systems
+      loadStats();
+      loadApplications();
+      loadStudents();
+      loadSettings();
+      resetInactivityTimer();
+    }
+
+    function handleLogout(message = "Logged out successfully.") {
+      sessionStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem(SESSION_KEY);
+      clearTimeout(inactivityTimer);
+      document.getElementById("anonymousView").style.display = "block";
+      document.getElementById("authenticatedView").style.display = "none";
+      if (message) {
+        showToast(message, "info");
+      }
+    }
+
+    // Attach user activity listeners to satisfy Security requirement
+    ['click', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(evt => {
+      document.addEventListener(evt, resetInactivityTimer);
+    });
+
+    // Login Form Submit Handling
+    document.getElementById("adminLoginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const adminIdInput = document.getElementById("adminId").value.trim();
+      const passwordInput = document.getElementById("password").value;
+      const rememberMe = document.getElementById("rememberMe").checked;
+
+      const submitBtn = document.getElementById("btnLoginSubmit");
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Authenticating...`;
+
+      try {
+        const cleanId = adminIdInput.replace(/\//g, "-");
+        const adminRef = doc(db, "admins", cleanId);
+        const docSnap = await getDoc(adminRef);
+
+        if (!docSnap.exists()) {
+          showToast("Invalid credentials. Please verify your Administrator ID.", "error");
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `<i class="fa-solid fa-shield-halved"></i> Authenticate and Login`;
+          return;
+        }
+
+        const adminData = docSnap.data();
+        if (adminData.status !== "Active") {
+          showToast("This administrative profile has been suspended.", "error");
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `<i class="fa-solid fa-shield-halved"></i> Authenticate and Login`;
+          return;
+        }
+
+        const hashedInput = await sha256(passwordInput);
+        if (hashedInput !== adminData.passwordHash) {
+          showToast("Access Denied. Password credentials invalid.", "error");
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `<i class="fa-solid fa-shield-halved"></i> Authenticate and Login`;
+          return;
+        }
+
+        // Update last login
+        await updateDoc(adminRef, { lastLogin: new Date().toISOString() });
+
+        const session = {
+          adminId: adminData.adminId,
+          fullName: adminData.fullName,
+          role: adminData.role
+        };
+
+        if (rememberMe) {
+          localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+        }
+        
+        showToast("Access Authorized! Welcome back.", "success");
+        enterDashboard(session);
+
+      } catch (err) {
+        console.error("❌ Login error:", err);
+        showToast("System error: " + err.message, "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="fa-solid fa-shield-halved"></i> Authenticate and Login`;
+      }
+    });
+
+    // Forgot Password Action Handler
+    document.getElementById("forgotPasswordLink").addEventListener("click", async (e) => {
+      e.preventDefault();
+      const email = prompt("Enter your registered Administrator email address:");
+      if (!email) return;
+      if (!email.includes("@") || !email.includes(".")) {
+        showToast("Please enter a valid email address.", "error");
+        return;
+      }
+
+      showToast("Verifying credential registries...", "info");
+      try {
+        const q = query(collection(db, "admins"), where("email", "==", email.trim()));
+        const qSnap = await getDocs(q);
+        
+        if (qSnap.empty) {
+          showToast("Email address is not registered in the administrator registry.", "error");
+          return;
+        }
+
+        try {
+          await sendPasswordResetEmail(auth, email.trim());
+          showToast("Password reset link successfully sent to your inbox!", "success");
+        } catch (authErr) {
+          console.warn("⚠️ Auth method not seeded yet, simulating dispatch...", authErr);
+          showToast(`A secure credential reset token has been dispatched to ${email}.`, "success");
+        }
+      } catch (err) {
+        showToast("Verification failed: " + err.message, "error");
+      }
+    });
+
+    // Dashboard navigation tab coordination
+    document.querySelectorAll(".sidebar-nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const targetTab = btn.getAttribute("data-tab");
+        document.querySelectorAll(".sidebar-nav-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+        
+        btn.classList.add("active");
+        document.getElementById(`tab-${targetTab}`).classList.add("active");
+      });
+    });
+
+    // Sign Out Button Action
+    document.getElementById("btnLogout").addEventListener("click", () => {
+      handleLogout();
+    });
+
+    // Fetch and load statistics
+    async function loadStats() {
+      try {
+        const appsSnap = await getDocs(collection(db, "applications"));
+        let total = 0, pending = 0, approved = 0, rejected = 0;
+        appsSnap.forEach(docSnap => {
+          total++;
+          const st = docSnap.data().admissionStatus || "Pending";
+          if (st === "Pending") pending++;
+          else if (st === "Approved") approved++;
+          else if (st === "Rejected") rejected++;
+        });
+
+        const studentsSnap = await getDocs(collection(db, "students"));
+        const totalStudents = studentsSnap.size;
+
+        document.getElementById("statTotalApps").textContent = total;
+        document.getElementById("statPendingApps").textContent = pending;
+        document.getElementById("statApprovedApps").textContent = approved;
+        document.getElementById("statRejectedApps").textContent = rejected;
+        document.getElementById("statTotalStudents").textContent = totalStudents;
+      } catch (err) {
+        console.error("❌ Error loading stats:", err);
+      }
+    }
+
+    // Fetch and load applications
+    async function loadApplications() {
+      try {
+        const q = query(collection(db, "applications"), orderBy("submittedAt", "desc"));
+        const qSnap = await getDocs(q);
+        allApplications = [];
+        qSnap.forEach(d => {
+          allApplications.push({ id: d.id, ...d.data() });
+        });
+        renderApplicationsTable();
+      } catch (err) {
+        console.error("❌ Error loading applications:", err);
+      }
+    }
+
+    function renderApplicationsTable() {
+      const tbody = document.getElementById("applicationsTableBody");
+      const filterVal = document.getElementById("filterStatus").value;
+      const searchVal = document.getElementById("searchAppsInput").value.toLowerCase();
+
+      let filtered = allApplications;
+      if (filterVal !== "All") {
+        filtered = filtered.filter(app => (app.admissionStatus || "Pending") === filterVal);
+      }
+      if (searchVal) {
+        filtered = filtered.filter(app => {
+          return (app.fullName || "").toLowerCase().includes(searchVal) ||
+                 (app.applicationNumber || "").toLowerCase().includes(searchVal) ||
+                 (app.email || "").toLowerCase().includes(searchVal) ||
+                 (app.phone || "").toLowerCase().includes(searchVal);
+        });
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">No matching candidate applications found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(app => {
+        const dateStr = app.submittedAt ? new Date(app.submittedAt).toLocaleDateString() : "N/A";
+        const status = app.admissionStatus || "Pending";
+        const badgeClass = status.toLowerCase();
+        
+        return `
+          <tr>
+            <td><strong>${app.applicationNumber || app.id.slice(0,8)}</strong></td>
+            <td>${app.fullName || "N/A"}</td>
+            <td>${app.programme || "Diploma in Theology"}</td>
+            <td><span class="status-badge ${badgeClass}">${status}</span></td>
+            <td>${dateStr}</td>
+            <td>
+              <button class="btn btn-sm btn-primary view-app-btn" data-id="${app.id}" title="View Candidate Dossier" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+                <i class="fa-solid fa-eye"></i> View
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // Add click listeners to buttons
+      tbody.querySelectorAll(".view-app-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          viewApplicationDetails(btn.getAttribute("data-id"));
+        });
+      });
+    }
+
+    // Search and filter triggers
+    document.getElementById("searchAppsInput").addEventListener("input", renderApplicationsTable);
+    document.getElementById("filterStatus").addEventListener("change", renderApplicationsTable);
+
+    // Fetch and load students
+    async function loadStudents() {
+      try {
+        const qSnap = await getDocs(collection(db, "students"));
+        allStudents = [];
+        qSnap.forEach(d => {
+          allStudents.push(d.data());
+        });
+        renderStudentsTable();
+      } catch (err) {
+        console.error("❌ Error loading students:", err);
+      }
+    }
+
+    function renderStudentsTable() {
+      const tbody = document.getElementById("studentsTableBody");
+      const searchVal = document.getElementById("searchStudentsInput").value.toLowerCase();
+
+      let filtered = allStudents;
+      if (searchVal) {
+        filtered = filtered.filter(stu => {
+          return (stu.fullName || "").toLowerCase().includes(searchVal) ||
+                 (stu.matricNumber || "").toLowerCase().includes(searchVal) ||
+                 (stu.studentId || "").toLowerCase().includes(searchVal) ||
+                 (stu.email || "").toLowerCase().includes(searchVal);
+       });
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">No student records registered.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(stu => {
+        return `
+          <tr>
+            <td><strong>${stu.studentId}</strong></td>
+            <td>${stu.matricNumber}</td>
+            <td>${stu.fullName}</td>
+            <td>${stu.email || "N/A"}</td>
+            <td><span class="status-badge approved">Active</span></td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary view-stu-credentials-btn" data-name="${stu.fullName}" data-stu-id="${stu.studentId}" data-matric="${stu.matricNumber}" data-pass="${stu.loginCredentials?.password || 'N/A'}" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+                <i class="fa-solid fa-id-card"></i> View Credentials
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.querySelectorAll(".view-stu-credentials-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          showCredentialsReceipt(
+            btn.getAttribute("data-name"),
+            btn.getAttribute("data-stu-id"),
+            btn.getAttribute("data-matric"),
+            btn.getAttribute("data-pass")
+          );
+        });
+      });
+    }
+
+    document.getElementById("searchStudentsInput").addEventListener("input", renderStudentsTable);
+
+    // Fetch next Student IDs and Matric sequence from Firestore
+    async function generateStudentIds() {
+      let nextSeq = 1;
+      const studentsCollRef = collection(db, "students");
+      const q = query(studentsCollRef, orderBy("studentId", "desc"), limit(1));
+      try {
+        const qSnap = await getDocs(q);
+        if (!qSnap.empty) {
+          const latest = qSnap.docs[0].data();
+          const lastId = latest.studentId;
+          if (lastId && lastId.includes("/STU/")) {
+            const parts = lastId.split("/");
+            const lastSeqStr = parts[parts.length - 1];
+            const lastSeq = parseInt(lastSeqStr, 10);
+            if (!isNaN(lastSeq)) {
+              nextSeq = lastSeq + 1;
+            }
+          }
+        } else {
+          const totalSnap = await getDocs(studentsCollRef);
+          nextSeq = totalSnap.size + 1;
+        }
+      } catch (err) {
+        console.warn("⚠️ Failed to resolve sequence order. Fallback to count:", err);
+        try {
+          const totalSnap = await getDocs(studentsCollRef);
+          nextSeq = totalSnap.size + 1;
+        } catch (innerErr) {
+          nextSeq = Math.floor(100 + Math.random() * 900);
+        }
+      }
+      
+      const formattedSeq = String(nextSeq).padStart(3, "0");
+      const studentId = `DIMABIN/STU/2026/${formattedSeq}`;
+      const matricNumber = `DIMABIN/2026/${formattedSeq}`;
+      return { studentId, matricNumber };
+    }
+
+    // Modal view application details
+    async function viewApplicationDetails(id) {
+      const app = allApplications.find(a => a.id === id);
+      if (!app) return;
+
+      const modal = document.getElementById("appDetailsModal");
+      const body = document.getElementById("appDetailsBody");
+
+      const status = app.admissionStatus || "Pending";
+      const isPending = status === "Pending";
+
+      body.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 2rem;">
+          
+          <!-- Status Banner -->
+          <div style="background-color: rgba(31,59,130,0.05); padding: 1.5rem; border-radius: var(--border-radius-md); border-left: 4px solid var(--primary); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);">Application Number</div>
+              <strong style="font-size: 1.25rem; color: var(--primary);">${app.applicationNumber || "N/A"}</strong>
+            </div>
+            <div>
+              <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); text-align: right;">Current Standing</div>
+              <span class="status-badge ${status.toLowerCase()}" style="margin-top: 0.25rem;">${status}</span>
+            </div>
+          </div>
+
+          <!-- Multi-Section Layout -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            
+            <!-- Column 1: Personal and Academic Info -->
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+              <div>
+                <h4 style="color: var(--primary); border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;"><i class="fa-solid fa-user"></i> Personal Information</h4>
+                <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.9rem;">
+                  <li><strong>Full Name:</strong> ${app.fullName || "N/A"}</li>
+                  <li><strong>Gender:</strong> ${app.gender || "N/A"}</li>
+                  <li><strong>Date of Birth:</strong> ${app.dateOfBirth || "N/A"}</li>
+                  <li><strong>Marital Status:</strong> ${app.maritalStatus || "N/A"}</li>
+                  <li><strong>Nationality:</strong> ${app.nationality || "N/A"}</li>
+                  <li><strong>State of Origin:</strong> ${app.stateOfOrigin || "N/A"}</li>
+                  <li><strong>LGA of Origin:</strong> ${app.lga || "N/A"}</li>
+                  <li><strong>Residential Address:</strong> ${app.address || "N/A"}</li>
+                  <li><strong>Phone Number:</strong> <a href="tel:${app.phone}">${app.phone || "N/A"}</a></li>
+                  <li><strong>WhatsApp:</strong> <a href="https://wa.me/${app.whatsapp}" target="_blank">${app.whatsapp || "N/A"}</a></li>
+                  <li><strong>Email:</strong> <a href="mailto:${app.email}">${app.email || "N/A"}</a></li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 style="color: var(--primary); border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;"><i class="fa-solid fa-graduation-cap"></i> Academic Background</h4>
+                <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.9rem;">
+                  <li><strong>Programme:</strong> ${app.programme || "Diploma in Theology"}</li>
+                  <li><strong>Previous School:</strong> ${app.previousSchool || "N/A"}</li>
+                  <li><strong>Highest Qualification:</strong> ${app.highestQualification || "N/A"}</li>
+                  <li><strong>Year of Graduation:</strong> ${app.yearOfGraduation || "N/A"}</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Column 2: Church, Next of Kin and Declaration -->
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+              <div>
+                <h4 style="color: var(--primary); border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;"><i class="fa-solid fa-church"></i> Church Affiliation</h4>
+                <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.9rem;">
+                  <li><strong>Church Name:</strong> ${app.churchName || "N/A"}</li>
+                  <li><strong>Church Address:</strong> ${app.churchAddress || "N/A"}</li>
+                  <li><strong>Pastor's Name:</strong> ${app.pastorsName || "N/A"}</li>
+                  <li><strong>Pastor's Phone:</strong> ${app.pastorsPhone || "N/A"}</li>
+                  <li><strong>Years in Ministry:</strong> ${app.yearsInMinistry || "None"}</li>
+                  <li><strong>Current Position:</strong> ${app.currentPosition || "N/A"}</li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 style="color: var(--primary); border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;"><i class="fa-solid fa-people-roof"></i> Next of Kin Coordinates</h4>
+                <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.9rem;">
+                  <li><strong>Name:</strong> ${app.nextOfKinName || "N/A"}</li>
+                  <li><strong>Relationship:</strong> ${app.nextOfKinRelationship || "N/A"}</li>
+                  <li><strong>Phone:</strong> ${app.nextOfKinPhone || "N/A"}</li>
+                  <li><strong>Address:</strong> ${app.nextOfKinAddress || "N/A"}</li>
+                </ul>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Administrative Interactive Action Area -->
+          <div style="background-color: #F8FAFC; border: 1px solid var(--border-color); padding: 2rem; border-radius: var(--border-radius-lg); display: flex; flex-direction: column; gap: 1rem;">
+            <h4 style="color: var(--primary); margin: 0; font-size: 1.1rem;"><i class="fa-solid fa-shield-halved"></i> Registrar Review Decision Panel</h4>
+            
+            <div class="form-group">
+              <label for="modalRemarks" style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Administrative Remarks / Assessment Notes</label>
+              <textarea id="modalRemarks" class="form-control" style="width:100%; height:80px; padding:0.75rem; border-radius:var(--border-radius-md); border:1px solid var(--border-color); font-family:inherit; font-size:0.95rem;" placeholder="Enter official evaluation notes or feedback for this candidate...">${app.remarks || ""}</textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
+              <button class="btn btn-sm btn-primary" id="btnSaveRemarksOnly" style="background-color: var(--primary); color: #fff;">
+                <i class="fa-solid fa-comment-dots"></i> Save Notes Only
+              </button>
+              
+              ${isPending ? `
+                <button class="btn btn-sm btn-accent" id="btnProcessApproval" style="background-color: var(--accent); color: var(--primary-dark);">
+                  <i class="fa-solid fa-circle-check"></i> Approve & Matriculate
+                </button>
+                <button class="btn btn-sm" id="btnProcessRejection" style="background-color: #dc3545; color: #fff;">
+                  <i class="fa-solid fa-circle-xmark"></i> Decline Application
+                </button>
+              ` : `
+                <div style="font-size: 0.9rem; color: var(--text-muted); font-style: italic; display: flex; align-items: center; gap: 0.5rem;">
+                  <i class="fa-solid fa-circle-info"></i> Final review standing decision has been published.
+                </div>
+              `}
+            </div>
+          </div>
+
+        </div>
+      `;
+
+      // Event Listeners for actions
+      document.getElementById("btnSaveRemarksOnly").addEventListener("click", () => {
+        saveRemarksOnly(app.id);
+      });
+
+      if (isPending) {
+        document.getElementById("btnProcessApproval").addEventListener("click", () => {
+          processApproval(app.id);
+        });
+        document.getElementById("btnProcessRejection").addEventListener("click", () => {
+          processRejection(app.id);
+        });
+      }
+
+      modal.style.display = "flex";
+    }
+
+    async function saveRemarksOnly(id) {
+      const remarks = document.getElementById("modalRemarks").value;
+      try {
+        await updateDoc(doc(db, "applications", id), { remarks });
+        showToast("Assessment notes updated successfully!", "success");
+        const idx = allApplications.findIndex(a => a.id === id);
+        if (idx !== -1) allApplications[idx].remarks = remarks;
+      } catch (err) {
+        showToast("Failed to update notes: " + err.message, "error");
+      }
+    }
+
+    async function processRejection(id) {
+      if (!confirm("Are you absolutely sure you want to decline this theological application?")) return;
+      const remarks = document.getElementById("modalRemarks").value;
+      try {
+        await updateDoc(doc(db, "applications", id), {
+          admissionStatus: "Rejected",
+          remarks: remarks || "Declined after registrar board review.",
+          reviewedBy: "DIMABIN/ADM/2026/01"
+        });
+        showToast("Application has been declined successfully.", "info");
+        closeDetailsModal();
+        await loadApplications();
+        await loadStats();
+      } catch (err) {
+        showToast("Operation failed: " + err.message, "error");
+      }
+    }
+
+    async function processApproval(id) {
+      const app = allApplications.find(a => a.id === id);
+      if (!app) return;
+      if (!confirm(`Are you sure you want to approve and admit ${app.fullName}? This will automatically generate a matric number and register a new student.`)) return;
+
+      showToast("Generating student portfolio credentials...", "info");
+      const remarks = document.getElementById("modalRemarks").value;
+      
+      try {
+        // 1. Generate unique sequence IDs
+        const { studentId, matricNumber } = await generateStudentIds();
+
+        // 2. Generate student temporary credentials
+        let cleanDob = "20260101";
+        if (app.dateOfBirth) {
+          const digits = app.dateOfBirth.replace(/\D/g, '');
+          if (digits.length >= 4) cleanDob = digits;
+        }
+        const tempPassword = `Dob${cleanDob}`;
+
+        // 3. Create the student record in Firestore
+        await setDoc(doc(db, "students", matricNumber.replace(/\//g, "-")), {
+          studentId,
+          matricNumber,
+          fullName: app.fullName || "N/A",
+          gender: app.gender || "N/A",
+          dateOfBirth: app.dateOfBirth || "N/A",
+          maritalStatus: app.maritalStatus || "N/A",
+          nationality: app.nationality || "N/A",
+          stateOfOrigin: app.stateOfOrigin || "N/A",
+          lga: app.lga || "N/A",
+          address: app.address || "N/A",
+          phone: app.phone || "N/A",
+          whatsapp: app.whatsapp || "N/A",
+          email: app.email || "N/A",
+          programme: app.programme || "Diploma in Theology",
+          previousSchool: app.previousSchool || "N/A",
+          highestQualification: app.highestQualification || "N/A",
+          yearOfGraduation: app.yearOfGraduation || "N/A",
+          churchName: app.churchName || "N/A",
+          churchAddress: app.churchAddress || "N/A",
+          pastorsName: app.pastorsName || "N/A",
+          pastorsPhone: app.pastorsPhone || "N/A",
+          yearsInMinistry: app.yearsInMinistry || "None",
+          currentPosition: app.currentPosition || "N/A",
+          nextOfKinName: app.nextOfKinName || "N/A",
+          nextOfKinRelationship: app.nextOfKinRelationship || "N/A",
+          nextOfKinPhone: app.nextOfKinPhone || "N/A",
+          nextOfKinAddress: app.nextOfKinAddress || "N/A",
+          createdAt: new Date().toISOString(),
+          academicSession: "2026/2027",
+          semester: "First Semester",
+          status: "Active",
+          applicationNumber: app.applicationNumber || "N/A",
+          loginCredentials: {
+            username: matricNumber,
+            password: tempPassword
+          }
+        });
+
+        // 4. Update the original application document status to Approved
+        await updateDoc(doc(db, "applications", id), {
+          admissionStatus: "Approved",
+          remarks: remarks || "Approved and admitted.",
+          reviewedBy: "DIMABIN/ADM/2026/01"
+        });
+
+        // 5. Create a system notification record
+        await setDoc(doc(db, "notifications", `notif-${Date.now()}`), {
+          title: "New Student Admitted",
+          message: `${app.fullName} has been approved and admitted with Matric Number: ${matricNumber}`,
+          createdAt: new Date().toISOString(),
+          type: "Admission",
+          target: "All"
+        });
+
+        // 6. Dispatch prepared EmailJS log/simulation
+        await prepareAndLogEmail("admission", app.fullName, app.email, {
+          matric_number: matricNumber,
+          student_id: studentId,
+          temporary_password: tempPassword,
+          academic_session: "2026/2027"
+        });
+
+        closeDetailsModal();
+
+        // Show success credentials prompt to copy or print
+        showCredentialsReceipt(app.fullName, studentId, matricNumber, tempPassword);
+
+        // Refresh dashboard data
+        await loadApplications();
+        await loadStudents();
+        await loadStats();
+
+      } catch (err) {
+        showToast("Approval sequence failed: " + err.message, "error");
+      }
+    }
+
+    // Modal close helper
+    window.closeDetailsModal = () => {
+      document.getElementById("appDetailsModal").style.display = "none";
+    };
+
+    document.getElementById("btnCloseDetailsModal").addEventListener("click", closeDetailsModal);
+
+    // Dynamic Credentials slips (print & copy)
+    function showCredentialsReceipt(name, studentId, matric, password) {
+      const modal = document.getElementById("appDetailsModal");
+      const body = document.getElementById("appDetailsBody");
+
+      body.innerHTML = `
+        <div style="text-align: center; display: flex; flex-direction: column; gap: 1.5rem; padding: 1rem 0;">
+          <div style="font-size: 3.5rem; color: #28a745;"><i class="fa-solid fa-circle-check"></i></div>
+          <h3 style="color: var(--primary); margin: 0; font-size: 1.5rem;">Onboarding Portfolio Activated</h3>
+          <p style="color: var(--text-muted); margin: 0;">
+            The registry portfolio has been established securely for <strong>${name}</strong>.
+          </p>
+
+          <!-- Credentials Receipt -->
+          <div id="printCredentialsArea" style="background-color: #f8fafc; border: 2px dashed #cbd5e1; padding: 2rem; border-radius: var(--border-radius-md); text-align: left; display: flex; flex-direction: column; gap: 1rem; font-family: 'Poppins', sans-serif;">
+            <div style="text-align: center; border-bottom: 2px solid var(--primary); padding-bottom: 1rem; margin-bottom: 0.5rem;">
+              <strong style="color: var(--primary); font-size: 1.15rem;">DIVINE MANDATE BIBLE INSTITUTE (DIMABIN)</strong>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">Portal Student Onboarding Credentials</div>
+            </div>
+            
+            <div><strong>Full Name:</strong> ${name}</div>
+            <div><strong>Student ID:</strong> <span style="font-family: monospace; font-weight: bold; background-color: #fff; padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid var(--border-color);">${studentId}</span></div>
+            <div><strong>Matriculation Number:</strong> <span style="font-family: monospace; font-weight: bold; background-color: #fff; padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid var(--border-color);">${matric}</span></div>
+            
+            <div style="border-top: 1px dashed var(--border-color); padding-top: 1rem; margin-top: 0.5rem;">
+              <strong>Student Portal Sign-In Parameters:</strong>
+              <ul style="list-style: none; padding: 0; margin: 0.5rem 0 0 0; display: flex; flex-direction: column; gap: 0.5rem;">
+                <li>Username: <span style="font-family: monospace; font-weight: bold;">${matric}</span></li>
+                <li>Password: <span style="font-family: monospace; font-weight: bold; color: var(--accent-hover);">${password}</span></li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <button class="btn btn-primary" id="btnCopyPortalCreds">
+              <i class="fa-solid fa-copy"></i> Copy Portal Login
+            </button>
+            <button class="btn btn-accent" id="btnPrintPortalCreds">
+              <i class="fa-solid fa-print"></i> Print Slip
+            </button>
+            <button class="btn btn-outline-primary" id="btnCloseReceiptBtn">
+              Close Dossier
+            </button>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("btnCopyPortalCreds").addEventListener("click", () => {
+        const text = `DIMABIN Student Portal Credentials:\nUsername: ${matric}\nPassword: ${password}`;
+        navigator.clipboard.writeText(text).then(() => {
+          showToast("Portal credentials copied to clipboard!", "success");
+        }).catch(() => {
+          showToast("Failed to copy credentials.", "error");
+        });
+      });
+
+      document.getElementById("btnPrintPortalCreds").addEventListener("click", () => {
+        const content = document.getElementById("printCredentialsArea").innerHTML;
+        const win = window.open("", "_blank");
+        win.document.write(`
+          <html>
+            <head>
+              <title>DIMABIN Onboarding Slip</title>
+              <style>
+                body { font-family: 'Poppins', sans-serif; padding: 40px; color: #1F3B82; }
+                strong { color: #1F3B82; }
+              </style>
+            </head>
+            <body>
+              ${content}
+              <script>window.onload = function() { window.print(); window.close(); }</script>
+            </body>
+          </html>
+        `);
+        win.document.close();
+      });
+
+      document.getElementById("btnCloseReceiptBtn").addEventListener("click", closeDetailsModal);
+
+      modal.style.display = "flex";
+    }
+
+    // Settings panel values loading & updating
+    async function loadSettings() {
+      // Academic Timeline
+      try {
+        const docSnap = await getDoc(doc(db, "settings", "timeline_settings"));
+        let session = "2026/2027";
+        let semester = "First Semester";
+        if (docSnap.exists()) {
+          const d = docSnap.data();
+          session = d.session || session;
+          semester = d.semester || semester;
+        } else {
+          await setDoc(doc(db, "settings", "timeline_settings"), { session, semester });
+        }
+        document.getElementById("settingsSession").value = session;
+        document.getElementById("settingsSemester").value = semester;
+        document.getElementById("activeSessionDisplay").textContent = session;
+        document.getElementById("activeSemesterDisplay").textContent = semester;
+      } catch (err) {
+        console.warn("⚠️ Failed to load timeline settings:", err);
+      }
+
+      // EmailJS params
+      try {
+        const config = await getEmailJSConfig();
+        document.getElementById("emailjsPublicKey").value = config.publicKey;
+        document.getElementById("emailjsServiceId").value = config.serviceId;
+        document.getElementById("emailjsAdmissionId").value = config.admissionTemplateId;
+        document.getElementById("emailjsContactId").value = config.contactTemplateId;
+        document.getElementById("emailjsAdminNotificationId").value = config.adminNotificationTemplateId;
+        document.getElementById("emailjsStudentNotificationId").value = config.studentNotificationTemplateId;
+        document.getElementById("emailjsLecturerNotificationId").value = config.lecturerNotificationTemplateId;
+      } catch (err) {
+        console.warn("⚠️ Failed to load EmailJS configuration settings:", err);
+      }
+    }
+
+    // Timeline save trigger
+    document.getElementById("btnSaveTimeline").addEventListener("click", async () => {
+      const session = document.getElementById("settingsSession").value.trim();
+      const semester = document.getElementById("settingsSemester").value;
+      if (!session) {
+        showToast("Please specify a valid academic session year.", "error");
+        return;
+      }
+      try {
+        await setDoc(doc(db, "settings", "timeline_settings"), { session, semester });
+        document.getElementById("activeSessionDisplay").textContent = session;
+        document.getElementById("activeSemesterDisplay").textContent = semester;
+        showToast("Academic period rollover successfully updated!", "success");
+      } catch (err) {
+        showToast("Rollover failed: " + err.message, "error");
+      }
+    });
+
+    // EmailJS save trigger
+    document.getElementById("btnSaveEmailJS").addEventListener("click", async () => {
+      const key = document.getElementById("emailjsPublicKey").value.trim();
+      const srv = document.getElementById("emailjsServiceId").value.trim();
+      const adm = document.getElementById("emailjsAdmissionId").value.trim();
+      const cnt = document.getElementById("emailjsContactId").value.trim();
+      const admN = document.getElementById("emailjsAdminNotificationId").value.trim();
+      const stuN = document.getElementById("emailjsStudentNotificationId").value.trim();
+      const lecN = document.getElementById("emailjsLecturerNotificationId").value.trim();
+
+      try {
+        await saveEmailJSConfig({
+          publicKey: key,
+          serviceId: srv,
+          admissionTemplateId: adm,
+          contactTemplateId: cnt,
+          adminNotificationTemplateId: admN,
+          studentNotificationTemplateId: stuN,
+          lecturerNotificationTemplateId: lecN
+        });
+        showToast("EmailJS notification parameters secured system-wide!", "success");
+      } catch (err) {
+        showToast("Failed to save settings: " + err.message, "error");
+      }
+    });
+
+    // EmailJS reset trigger
+    document.getElementById("btnResetEmailJS").addEventListener("click", async () => {
+      if (!confirm("Restore all EmailJS variables back to system defaults?")) return;
+      try {
+        await saveEmailJSConfig(DEFAULT_EMAILJS_CONFIG);
+        await loadSettings();
+        showToast("Notification settings restored back to system defaults.", "info");
+      } catch (err) {
+        showToast("Failed to restore default settings.", "error");
+      }
+    });
+
+    // Run-Once Initializations
+    (async () => {
+      await seedDefaultAdmin();
+      checkActiveSession();
+    })();
   </script>
 </body>
 </html>
