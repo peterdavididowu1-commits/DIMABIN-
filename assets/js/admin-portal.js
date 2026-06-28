@@ -6,7 +6,10 @@ const {
   collection, doc, getDoc, getDocs, setDoc, updateDoc, query, where, orderBy, limit
 } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
 const {
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut
 } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js");
 
 const SESSION_KEY = "dimabin_admin_session";
@@ -62,15 +65,16 @@ async function sha256(message) {
 
 // Auto-seed central super administrator document
 const seedDefaultAdmin = async () => {
-  if (!db) return;
+  if (!db || !auth) return;
   const adminRef = doc(db, "admins", "DIMABIN-ADM-2026-01");
+  const defaultEmail = "dimabin233@gmail.com";
   try {
     const docSnap = await getDoc(adminRef);
     if (!docSnap.exists()) {
       await setDoc(adminRef, {
         adminId: "DIMABIN/ADM/2026/01",
         fullName: "DIMABIN Super Admin",
-        email: "peterdavididowu1@gmail.com",
+        email: defaultEmail,
         phone: "08038194611",
         role: "Super Admin",
         passwordHash: "4a847053e1b723a9d949cf065f4d96c9c8e87498d363717208d234a5d3b6641e", // SHA-256 for Admin2026
@@ -79,6 +83,26 @@ const seedDefaultAdmin = async () => {
         status: "Active"
       });
       console.log("🌟 [Admin Seeding] Seeded default administrator document in 'admins' collection!");
+    } else {
+      const currentData = docSnap.data();
+      if (currentData.email !== defaultEmail) {
+        await updateDoc(adminRef, { email: defaultEmail });
+        console.log("🌟 [Admin Seeding] Updated default administrator email in Firestore to match:", defaultEmail);
+      }
+    }
+
+    // Ensure administrator exists in Firebase Authentication
+    try {
+      await createUserWithEmailAndPassword(auth, defaultEmail, "Admin2026");
+      console.log("🌟 [Auth Seeding] Created default admin auth account securely in Firebase Authentication!");
+      // Sign out immediately so we don't auto-login during seeding
+      await signOut(auth);
+    } catch (authErr) {
+      if (authErr.code === "auth/email-already-in-use" || authErr.code === "auth/email-already-exists") {
+        console.log("🌟 [Auth Seeding] Admin auth account already exists in Firebase Authentication.");
+      } else {
+        console.error("❌ [Auth Seeding] Failed to create default admin auth account:", authErr);
+      }
     }
   } catch (err) {
     console.error("❌ Failed to seed default admin:", err);
@@ -134,6 +158,35 @@ function handleLogout(message = "Logged out successfully.") {
   document.addEventListener(evt, resetInactivityTimer);
 });
 
+// Helper to find administrator record in Firestore using various formats of Administrator ID
+async function findAdminRecord(adminIdInput) {
+  const trimmed = adminIdInput.trim();
+  
+  // 1. Query by adminId field
+  const q = query(collection(db, "admins"), where("adminId", "==", trimmed));
+  const qSnap = await getDocs(q);
+  if (!qSnap.empty) {
+    return { id: qSnap.docs[0].id, data: qSnap.docs[0].data() };
+  }
+  
+  // 2. Direct get by clean ID (replacing slashes with dashes)
+  const cleanId = trimmed.replace(/\//g, "-");
+  const refClean = doc(db, "admins", cleanId);
+  const snapClean = await getDoc(refClean);
+  if (snapClean.exists()) {
+    return { id: snapClean.id, data: snapClean.data() };
+  }
+
+  // 3. Direct get by raw ID
+  const refRaw = doc(db, "admins", trimmed);
+  const snapRaw = await getDoc(refRaw);
+  if (snapRaw.exists()) {
+    return { id: snapRaw.id, data: snapRaw.data() };
+  }
+
+  return null;
+}
+
 // Login Form Submit Handling
 const loginForm = document.getElementById("adminLoginForm");
 if (loginForm) {
@@ -148,18 +201,17 @@ if (loginForm) {
     submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Authenticating...`;
 
     try {
-      const cleanId = adminIdInput.replace(/\//g, "-");
-      const adminRef = doc(db, "admins", cleanId);
-      const docSnap = await getDoc(adminRef);
+      // 1. Search the admins collection in Firestore using the Administrator ID
+      const adminRecord = await findAdminRecord(adminIdInput);
 
-      if (!docSnap.exists()) {
+      if (!adminRecord) {
         window.showToast("Invalid credentials. Please verify your Administrator ID.", "error");
         submitBtn.disabled = false;
         submitBtn.innerHTML = `<i class="fa-solid fa-shield-halved"></i> Authenticate and Login`;
         return;
       }
 
-      const adminData = docSnap.data();
+      const adminData = adminRecord.data;
       if (adminData.status !== "Active") {
         window.showToast("This administrative profile has been suspended.", "error");
         submitBtn.disabled = false;
@@ -167,15 +219,20 @@ if (loginForm) {
         return;
       }
 
-      const hashedInput = await sha256(passwordInput);
-      if (hashedInput !== adminData.passwordHash) {
-        window.showToast("Access Denied. Password credentials invalid.", "error");
+      // 2. Retrieve the administrator's registered email
+      const email = adminData.email;
+      if (!email) {
+        window.showToast("No registered email found for this Administrator ID.", "error");
         submitBtn.disabled = false;
         submitBtn.innerHTML = `<i class="fa-solid fa-shield-halved"></i> Authenticate and Login`;
         return;
       }
 
-      // Update last login
+      // 3. Authenticate using Firebase Authentication with the retrieved email and the entered password
+      await signInWithEmailAndPassword(auth, email, passwordInput);
+
+      // 4. Update last login timestamp in Firestore
+      const adminRef = doc(db, "admins", adminRecord.id);
       await updateDoc(adminRef, { lastLogin: new Date().toISOString() });
 
       const session = {
@@ -193,7 +250,11 @@ if (loginForm) {
 
     } catch (err) {
       console.error("❌ Login error:", err);
-      window.showToast("System error: " + err.message, "error");
+      let errorMsg = err.message;
+      if (err.code === "auth/invalid-credential" || err.code === "auth/user-not-found" || err.code === "auth/wrong-password") {
+        errorMsg = "Access Denied. Invalid password credentials.";
+      }
+      window.showToast(errorMsg, "error");
     } finally {
       submitBtn.disabled = false;
       submitBtn.innerHTML = `<i class="fa-solid fa-shield-halved"></i> Authenticate and Login`;
