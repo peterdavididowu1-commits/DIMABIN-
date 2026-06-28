@@ -476,6 +476,280 @@
       color: #1E429F;
       border-color: #C3DDFD;
     }
+
+    /* Student Dashboard Layout Styles */
+    .dashboard-container {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 80vh;
+      background-color: var(--bg-slate);
+    }
+
+    @media (max-width: 991px) {
+      .dashboard-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .dashboard-sidebar {
+      background-color: var(--primary);
+      color: var(--bg-white);
+      padding: 2.5rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar-user-box {
+      background-color: rgba(255, 255, 255, 0.05);
+      padding: 1.25rem;
+      border-radius: var(--border-radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .sidebar-user-name {
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--accent);
+    }
+
+    .sidebar-user-role {
+      font-size: 0.8rem;
+      opacity: 0.8;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      background-color: #28a745;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 8px #28a745;
+    }
+
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .sidebar-nav-btn {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.85);
+      padding: 1rem 1.25rem;
+      text-align: left;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: var(--border-radius-md);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      width: 100%;
+      transition: var(--transition);
+    }
+
+    .sidebar-nav-btn:hover, .sidebar-nav-btn.active {
+      color: var(--primary-dark) !important;
+      background-color: var(--accent) !important;
+    }
+
+    .dashboard-main {
+      padding: 3rem;
+      background-color: var(--bg-slate);
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+    }
+
+    @media (max-width: 576px) {
+      .dashboard-main {
+        padding: 1.5rem 1rem;
+      }
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .stat-card {
+      background-color: var(--bg-white);
+      border-radius: var(--border-radius-lg);
+      padding: 1.75rem;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .stat-card-info h5 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+    }
+
+    .stat-card-info .stat-value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--primary);
+      font-family: 'Poppins', sans-serif;
+      line-height: 1.1;
+    }
+
+    .stat-card-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.35rem;
+      flex-shrink: 0;
+    }
+
+    .stat-card-icon.blue { background-color: rgba(31, 59, 130, 0.1); color: var(--primary); }
+    .stat-card-icon.yellow { background-color: rgba(244, 176, 0, 0.15); color: #b77a00; }
+    .stat-card-icon.green { background-color: rgba(40, 167, 69, 0.1); color: #28a745; }
+    .stat-card-icon.red { background-color: rgba(220, 53, 69, 0.1); color: #dc3545; }
+    .stat-card-icon.purple { background-color: rgba(111, 66, 193, 0.1); color: #6f42c1; }
+
+    /* Tables & Lists */
+    .table-container {
+      background-color: var(--bg-white);
+      border-radius: var(--border-radius-lg);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      overflow-x: auto;
+    }
+
+    .custom-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+
+    .custom-table th {
+      background-color: var(--primary);
+      color: var(--bg-white);
+      padding: 1.2rem 1.25rem;
+      font-weight: 600;
+    }
+
+    .custom-table td {
+      padding: 1.2rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-dark);
+    }
+
+    .custom-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .custom-table tr:hover td {
+      background-color: rgba(245, 247, 250, 0.5);
+    }
+
+    /* Badges */
+    .status-badge {
+      padding: 0.35rem 0.85rem;
+      border-radius: 50px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .status-badge.cleared { background-color: rgba(40, 167, 101, 0.1); color: #28a745; }
+    .status-badge.pending { background-color: rgba(244, 176, 0, 0.15); color: #b77a00; }
+
+    /* Tab content transitions */
+    .tab-content {
+      display: none;
+      animation: fadeInEffect 0.3s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeInEffect {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Form Grid Settings */
+    .form-grid-settings {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .form-grid-settings {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Print styling rules */
+    @media print {
+      body {
+        background-color: white !important;
+        color: black !important;
+        padding-top: 0 !important;
+      }
+      header, footer, aside, .sidebar-nav, .btn, button, .dashboard-sidebar, .sidebar-user-box, .no-print, .login-card, .portal-sidebar, .security-notice-card, .portal-hero {
+        display: none !important;
+      }
+      .dashboard-main, main {
+        padding: 0 !important;
+        margin: 0 !important;
+        background-color: white !important;
+        width: 100% !important;
+      }
+      .tab-content {
+        display: none !important;
+      }
+      .tab-content.active {
+        display: block !important;
+      }
+      .custom-table th {
+        background-color: #1F3B82 !important;
+        color: white !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      /* Specifically show print areas */
+      .print-section {
+        display: block !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -546,190 +820,679 @@
     </ul>
   </div>
 
-  <!-- Hero Section -->
-  <section class="portal-hero">
-    <div class="container">
-      <div class="hero-content">
-        <div class="hero-motto">Secure Connection</div>
-        <h2>Student Portal</h2>
-        <div class="hero-subtitle">Access your academic information securely.</div>
+  <!-- Anonymous Visitor Login View -->
+  <div id="anonymousView">
+    <!-- Hero Section -->
+    <section class="portal-hero">
+      <div class="container">
+        <div class="hero-content">
+          <div class="hero-motto">Secure Connection</div>
+          <h2>Student Portal</h2>
+          <div class="hero-subtitle">Access your academic information securely.</div>
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Main Section: Two-Column Login Grid -->
-  <section class="py-5" style="background-color: var(--bg-slate);">
-    <div class="container">
-      <div class="portal-grid">
+    <!-- Main Section: Two-Column Login Grid -->
+    <section class="py-5" style="background-color: var(--bg-slate);">
+      <div class="container">
+        <div class="portal-grid">
+          
+          <!-- Left: Student Login Card & Security Notice -->
+          <div class="portal-main">
+            <!-- Student Login Card -->
+            <div class="login-card">
+              <div class="login-header">
+                <div class="login-shield-icon"><i class="fa-solid fa-user-lock"></i></div>
+                <h3>Student Sign In</h3>
+                <p>Please enter your matriculation details to access your account</p>
+              </div>
+
+              <!-- UI-Only Informative Alert Box -->
+              <div class="form-alert info" id="loginFeedback" style="display: none;">
+                <i class="fa-solid fa-circle-info" style="margin-top: 0.15rem;"></i>
+                <span id="loginFeedbackText">
+                  Authenticating student...
+                </span>
+              </div>
+
+              <form id="portalLoginForm">
+                <!-- Student ID Field -->
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                  <label for="studentId" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: block;">Student ID / Matric Number</label>
+                  <div class="input-with-icon">
+                    <i class="fa-solid fa-id-card input-icon"></i>
+                    <input type="text" id="studentId" class="form-control" placeholder="e.g. DIMABIN/STU/2026/102" required>
+                  </div>
+                </div>
+
+                <!-- Password Field -->
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                  <label for="password" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: block;">Password</label>
+                  <div class="input-with-icon">
+                    <i class="fa-solid fa-key input-icon"></i>
+                    <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+                    <button type="button" class="btn-toggle-password" id="togglePasswordBtn" aria-label="Toggle Password Visibility">
+                      <i class="fa-solid fa-eye" id="passwordEyeIcon"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Remember & Forgot Options -->
+                <div class="login-actions">
+                  <label class="remember-me">
+                    <input type="checkbox" id="rememberMe">
+                    <span>Remember Me</span>
+                  </label>
+                  <a href="#" id="linkForgotPassword" class="forgot-password-link">Forgot Password?</a>
+                </div>
+
+                <!-- Login CTA Button -->
+                <button type="submit" class="btn btn-primary login-btn" id="btnLoginSubmit">
+                  <i class="fa-solid fa-arrow-right-to-bracket"></i> Login to Portal
+                </button>
+              </form>
+            </div>
+
+            <!-- Security Notice -->
+            <div class="security-notice-card">
+              <div class="security-title">
+                <i class="fa-solid fa-shield-halved"></i>
+                <h4>Security Notice</h4>
+              </div>
+              <p>
+                This portal utilizes industrial SSL parameters. For your safety, never disclose your student credentials or default password keys to any external party. Always log out completely when wrapping up your sessions on shared devices.
+              </p>
+            </div>
+          </div>
+
+          <!-- Right: Quick Information Panel & Support Section -->
+          <div class="portal-sidebar">
+            <!-- Portal Capabilities Preview -->
+            <div class="quick-info-card">
+              <h4 class="font-display quick-info-title">Portal Capabilities</h4>
+              <p class="quick-info-subtitle">Registered candidates enjoy robust digital access to standard institutional resources post-login:</p>
+
+              <div class="capabilities-grid">
+                <!-- capability 1 -->
+                <div class="capability-item">
+                  <div class="capability-icon"><i class="fa-solid fa-circle-user"></i></div>
+                  <div class="capability-content">
+                    <h5>View Profile</h5>
+                    <p>View administrative registers, bio records, and customize emergency parameters.</p>
+                  </div>
+                </div>
+
+                <!-- capability 2 -->
+                <div class="capability-item">
+                  <div class="capability-icon"><i class="fa-solid fa-pen-to-square"></i></div>
+                  <div class="capability-content">
+                    <h5>Register Courses</h5>
+                    <p>Select and clear academic study programs online at the start of each semester.</p>
+                  </div>
+                </div>
+
+                <!-- capability 3 -->
+                <div class="capability-item">
+                  <div class="capability-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+                  <div class="capability-content">
+                    <h5>View Results</h5>
+                    <p>Securely query cumulative performance reports, score averages, and class lists.</p>
+                  </div>
+                </div>
+
+                <!-- capability 4 -->
+                <div class="capability-item">
+                  <div class="capability-icon"><i class="fa-solid fa-chart-line"></i></div>
+                  <div class="capability-content">
+                    <h5>Check Academic Progress</h5>
+                    <p>Keep a clear visual view of course credit requirements, and graduation checklists.</p>
+                  </div>
+                </div>
+
+                <!-- capability 5 -->
+                <div class="capability-item">
+                  <div class="capability-icon"><i class="fa-solid fa-book-open"></i></div>
+                  <div class="capability-content">
+                    <h5>Access Learning Materials</h5>
+                    <p>Instantly retrieve lecture outlines, assigned research publications, and biblical indexes.</p>
+                  </div>
+                </div>
+
+                <!-- capability 6 -->
+                <div class="capability-item">
+                  <div class="capability-icon"><i class="fa-solid fa-bell"></i></div>
+                  <div class="capability-content">
+                    <h5>Receive Notifications</h5>
+                    <p>Stay updated on lecture timetables, spiritual convocations, and registrar decisions.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Support Desk Coordinates -->
+            <div class="portal-support-card">
+              <h4 class="font-display support-title">Portal Help Desk</h4>
+              <p class="support-subtitle">Experiencing sign-in errors, or misplaced your default matric details? Contact help officers:</p>
+
+              <div class="support-contacts">
+                <!-- support phones -->
+                <div class="support-contact-item">
+                  <i class="fa-solid fa-phone"></i>
+                  <div class="support-numbers">
+                    <a href="tel:08038194611">0803 819 4611</a>
+                    <a href="tel:08138194611">0813 819 4611</a>
+                    <a href="tel:08062186974">0806 218 6974</a>
+                    <a href="tel:08037282082">0803 728 2082</a>
+                  </div>
+                </div>
+
+                <!-- support email -->
+                <div class="support-contact-item">
+                  <i class="fa-solid fa-envelope"></i>
+                  <a href="mailto:olalekan16650@gmail.com" class="support-email">olalekan16650@gmail.com</a>
+                </div>
+              </div>
+
+              <p class="support-note">
+                Please note: Official profile registration credentials are exclusively processed and delivered by the campus registrar center upon student resumption.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Authenticated Student Dashboard View -->
+  <div id="authenticatedView" style="display: none;">
+    <div class="dashboard-container">
+      
+      <!-- Dashboard Sidebar -->
+      <aside class="dashboard-sidebar no-print">
+        <div class="sidebar-user-box">
+          <div class="sidebar-user-name" id="studentNameDisplay">Loading...</div>
+          <div class="sidebar-user-role">
+            <span class="status-dot"></span>
+            <span id="studentStatusDisplay">Student Portal Active</span>
+          </div>
+          <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.25rem;" id="studentIdDisplay">STU/ID</div>
+          <div style="font-size: 0.75rem; opacity: 0.8;" id="matricNumberDisplay">MATRIC</div>
+        </div>
+
+        <nav class="sidebar-nav">
+          <button class="sidebar-nav-btn active" data-tab="overview">
+            <i class="fa-solid fa-chart-pie"></i> Home
+          </button>
+          <button class="sidebar-nav-btn" data-tab="profile">
+            <i class="fa-solid fa-user-graduate"></i> My Profile
+          </button>
+          <button class="sidebar-nav-btn" data-tab="courses">
+            <i class="fa-solid fa-pen-to-square"></i> Course Registration
+          </button>
+          <button class="sidebar-nav-btn" data-tab="results">
+            <i class="fa-solid fa-graduation-cap"></i> My Results
+          </button>
+          <button class="sidebar-nav-btn" data-tab="notifications">
+            <i class="fa-solid fa-bell"></i> Notifications
+          </button>
+          <button class="sidebar-nav-btn" data-tab="security">
+            <i class="fa-solid fa-key"></i> Password & Security
+          </button>
+          
+          <!-- Future Compatibility Modules (Styled elegantly as coming soon) -->
+          <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 0.5rem 0; padding-top: 0.5rem;">
+            <div style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; opacity: 0.5; padding-left: 1.25rem; margin-bottom: 0.25rem;">Future Modules</div>
+            
+            <button class="sidebar-nav-btn" disabled style="opacity: 0.5; cursor: not-allowed; pointer-events: none;">
+              <i class="fa-solid fa-book-open"></i> Learning Materials <span style="font-size: 0.6rem; background-color: var(--accent); color: var(--primary-dark); padding: 0.1rem 0.4rem; border-radius: 4px; margin-left: auto;">Soon</span>
+            </button>
+            <button class="sidebar-nav-btn" disabled style="opacity: 0.5; cursor: not-allowed; pointer-events: none;">
+              <i class="fa-solid fa-calendar-days"></i> Timetable <span style="font-size: 0.6rem; background-color: var(--accent); color: var(--primary-dark); padding: 0.1rem 0.4rem; border-radius: 4px; margin-left: auto;">Soon</span>
+            </button>
+            <button class="sidebar-nav-btn" disabled style="opacity: 0.5; cursor: not-allowed; pointer-events: none;">
+              <i class="fa-solid fa-laptop-code"></i> CBT Prep <span style="font-size: 0.6rem; background-color: var(--accent); color: var(--primary-dark); padding: 0.1rem 0.4rem; border-radius: 4px; margin-left: auto;">Soon</span>
+            </button>
+            <button class="sidebar-nav-btn" disabled style="opacity: 0.5; cursor: not-allowed; pointer-events: none;">
+              <i class="fa-solid fa-id-card"></i> Student ID Card <span style="font-size: 0.6rem; background-color: var(--accent); color: var(--primary-dark); padding: 0.1rem 0.4rem; border-radius: 4px; margin-left: auto;">Soon</span>
+            </button>
+            <button class="sidebar-nav-btn" disabled style="opacity: 0.5; cursor: not-allowed; pointer-events: none;">
+              <i class="fa-solid fa-file-signature"></i> Admission Letter <span style="font-size: 0.6rem; background-color: var(--accent); color: var(--primary-dark); padding: 0.1rem 0.4rem; border-radius: 4px; margin-left: auto;">Soon</span>
+            </button>
+            <button class="sidebar-nav-btn" disabled style="opacity: 0.5; cursor: not-allowed; pointer-events: none;">
+              <i class="fa-solid fa-file-invoice"></i> Transcript <span style="font-size: 0.6rem; background-color: var(--accent); color: var(--primary-dark); padding: 0.1rem 0.4rem; border-radius: 4px; margin-left: auto;">Soon</span>
+            </button>
+            <button class="sidebar-nav-btn" disabled style="opacity: 0.5; cursor: not-allowed; pointer-events: none;">
+              <i class="fa-solid fa-award"></i> Certificate <span style="font-size: 0.6rem; background-color: var(--accent); color: var(--primary-dark); padding: 0.1rem 0.4rem; border-radius: 4px; margin-left: auto;">Soon</span>
+            </button>
+          </div>
+        </nav>
+
+        <div style="flex-grow: 1;"></div>
+
+        <button class="btn btn-outline-white" style="border-color: rgba(255,255,255,0.2); color: var(--bg-white); width: 100%; text-align: center; margin-top: 1rem;" id="btnLogout">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </button>
+      </aside>
+
+      <!-- Dashboard Main Work Area -->
+      <main class="dashboard-main">
         
-        <!-- Left: Student Login Card & Security Notice -->
-        <div class="portal-main">
-          <!-- Student Login Card -->
-          <div class="login-card">
-            <div class="login-header">
-              <div class="login-shield-icon"><i class="fa-solid fa-user-lock"></i></div>
-              <h3>Student Sign In</h3>
-              <p>Please enter your matriculation details to access your account</p>
+        <!-- Tab 1: Dashboard Home / Overview -->
+        <div class="tab-content active" id="tab-overview">
+          <div style="margin-bottom: 2.5rem;">
+            <h2 class="font-display" style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem;" id="welcomeMessage">Welcome!</h2>
+            <p style="color: var(--text-muted); margin-bottom: 0;" id="stuNavDetails">Loading your academic index information...</p>
+          </div>
+
+          <div class="stats-grid">
+            <!-- Registered Courses Card -->
+            <div class="stat-card" id="cardRegCoursesBtn">
+              <div class="stat-card-info">
+                <h5>Registered Courses</h5>
+                <div class="stat-value" id="cardRegCoursesCount">0</div>
+              </div>
+              <div class="stat-card-icon blue"><i class="fa-solid fa-pen-to-square"></i></div>
             </div>
 
-            <!-- UI-Only Informative Alert Box -->
-            <div class="form-alert info" id="loginFeedback">
-              <i class="fa-solid fa-circle-info" style="margin-top: 0.15rem;"></i>
-              <span>
-                <strong>System Information:</strong> The dynamic Student Dashboard is currently in the UI design phase. Real-time credential database checks are paused during this platform layout staging.
-              </span>
+            <!-- Results Count Card -->
+            <div class="stat-card" id="cardResultsBtn">
+              <div class="stat-card-info">
+                <h5>Results Released</h5>
+                <div class="stat-value" id="cardResultsCount">0</div>
+              </div>
+              <div class="stat-card-icon green"><i class="fa-solid fa-graduation-cap"></i></div>
             </div>
 
-            <form id="portalLoginForm" onsubmit="event.preventDefault(); showLoginInfo();">
-              <!-- Student ID Field -->
-              <div class="form-group" style="margin-bottom: 1.5rem;">
-                <label for="studentId" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: block;">Student ID / Matric Number</label>
-                <div class="input-with-icon">
-                  <i class="fa-solid fa-id-card input-icon"></i>
-                  <input type="text" id="studentId" class="form-control" placeholder="e.g. DIMABIN/STU/2026/102" required>
+            <!-- Notifications Count Card -->
+            <div class="stat-card" id="cardNotifBtn">
+              <div class="stat-card-info">
+                <h5>Notifications</h5>
+                <div class="stat-value" id="cardNotifCount">0</div>
+              </div>
+              <div class="stat-card-icon yellow"><i class="fa-solid fa-bell"></i></div>
+            </div>
+
+            <!-- Academic Session Card -->
+            <div class="stat-card">
+              <div class="stat-card-info">
+                <h5>Current Session</h5>
+                <div class="stat-value" style="font-size: 1.25rem; font-weight: 700; margin-top: 0.5rem;" id="cardSessionName">Loading...</div>
+              </div>
+              <div class="stat-card-icon purple"><i class="fa-solid fa-calendar-days"></i></div>
+            </div>
+          </div>
+
+          <!-- Quick Guidelines -->
+          <div style="background-color: var(--bg-white); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); padding: 2.5rem; margin-top: 2rem;">
+            <h3 class="font-display" style="color: var(--primary); font-size: 1.25rem; margin-bottom: 1rem;"><i class="fa-solid fa-circle-nodes" style="color: var(--accent);"></i> Student Registry Information</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.7; margin-bottom: 0;">
+              Your student dashboard integrates securely with the registrar terminal to manage your bio-data updates, theological course registration catalogs, and official grading rosters in real-time. Please complete your course selections during the active registration window. For technical issues, contact the help desk coordinates listed on the login page.
+            </p>
+          </div>
+        </div>
+
+        <!-- Tab 2: Student Profile -->
+        <div class="tab-content" id="tab-profile">
+          <div style="margin-bottom: 2rem;">
+            <h2 class="font-display" style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem;">My Profile</h2>
+            <p style="color: var(--text-muted);">View academic registries and customize your direct emergency contact coordinates.</p>
+          </div>
+
+          <!-- Read-Only Academic Registry Card -->
+          <div style="background-color: var(--bg-white); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); padding: 2.5rem; margin-bottom: 2rem;">
+            <h3 class="font-display" style="color: var(--primary); font-size: 1.2rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;"><i class="fa-solid fa-user-shield" style="margin-right: 0.5rem; color: var(--accent);"></i> Read-Only Academic Records</h3>
+            
+            <div class="form-grid-settings" style="gap: 1.5rem 2rem;">
+              <div>
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Student ID</span>
+                <div style="font-size: 0.95rem; color: var(--text-dark); font-weight: 500;" id="profileStudentId">-</div>
+              </div>
+              <div>
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Matric Number</span>
+                <div style="font-size: 0.95rem; color: var(--text-dark); font-weight: 500;" id="profileMatricNo">-</div>
+              </div>
+              <div>
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Full Name</span>
+                <div style="font-size: 0.95rem; color: var(--text-dark); font-weight: 500;" id="profileFullName">-</div>
+              </div>
+              <div>
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Gender</span>
+                <div style="font-size: 0.95rem; color: var(--text-dark); font-weight: 500;" id="profileGender">-</div>
+              </div>
+              <div>
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Date of Birth</span>
+                <div style="font-size: 0.95rem; color: var(--text-dark); font-weight: 500;" id="profileDob">-</div>
+              </div>
+              <div>
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Programme major</span>
+                <div style="font-size: 0.95rem; color: var(--text-dark); font-weight: 500;" id="profileProgramme">-</div>
+              </div>
+              <div>
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Academic Session</span>
+                <div style="font-size: 0.95rem; color: var(--text-dark); font-weight: 500;" id="profileSession">-</div>
+              </div>
+              <div>
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Student Status</span>
+                <div style="font-size: 0.95rem; color: var(--text-dark); font-weight: 500;" id="profileStatus">-</div>
+              </div>
+              <div>
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Church Name</span>
+                <div style="font-size: 0.95rem; color: var(--text-dark); font-weight: 500;" id="profileChurchName">-</div>
+              </div>
+              <div>
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Pastor's Name</span>
+                <div style="font-size: 0.95rem; color: var(--text-dark); font-weight: 500;" id="profilePastorName">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Editable emergency parameters Form -->
+          <div style="background-color: var(--bg-white); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); padding: 2.5rem;">
+            <h3 class="font-display" style="color: var(--primary); font-size: 1.2rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;"><i class="fa-solid fa-user-pen" style="margin-right: 0.5rem; color: var(--accent);"></i> Customizable Contact Details</h3>
+            
+            <form id="profileEditForm">
+              <div class="form-grid-settings" style="margin-bottom: 1.5rem;">
+                <!-- Phone Field -->
+                <div class="form-group">
+                  <label for="editPhone" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: block;">Phone Number</label>
+                  <input type="tel" id="editPhone" class="form-control" style="background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: var(--border-radius-md); padding: 0.85rem 1.25rem; font-size: 0.95rem; width: 100%; transition: var(--transition);" required>
+                </div>
+                <!-- Email Field -->
+                <div class="form-group">
+                  <label for="editEmail" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: block;">Email Address</label>
+                  <input type="email" id="editEmail" class="form-control" style="background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: var(--border-radius-md); padding: 0.85rem 1.25rem; font-size: 0.95rem; width: 100%; transition: var(--transition);" required>
                 </div>
               </div>
-
-              <!-- Password Field -->
-              <div class="form-group" style="margin-bottom: 1.5rem;">
-                <label for="password" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: block;">Password</label>
-                <div class="input-with-icon">
-                  <i class="fa-solid fa-key input-icon"></i>
-                  <input type="password" id="password" class="form-control" placeholder="••••••••" required>
-                  <button type="button" class="btn-toggle-password" id="togglePasswordBtn" onclick="togglePasswordVisibility()" aria-label="Toggle Password Visibility">
-                    <i class="fa-solid fa-eye" id="passwordEyeIcon"></i>
-                  </button>
-                </div>
+              
+              <!-- Address Field -->
+              <div class="form-group" style="margin-bottom: 2rem;">
+                <label for="editAddress" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: block;">Residential Address</label>
+                <textarea id="editAddress" class="form-control" rows="3" style="background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: var(--border-radius-md); padding: 0.85rem 1.25rem; font-size: 0.95rem; width: 100%; font-family: inherit; resize: vertical; transition: var(--transition);" required></textarea>
               </div>
 
-              <!-- Remember & Forgot Options -->
-              <div class="login-actions">
-                <label class="remember-me">
-                  <input type="checkbox" id="rememberMe">
-                  <span>Remember Me</span>
-                </label>
-                <a href="#" onclick="alert('Password reset instructions will be coordinated by the admissions/registrar department. Please contact support via support channels below to authorize a temporary code reset.'); return false;" class="forgot-password-link">Forgot Password?</a>
-              </div>
-
-              <!-- Login CTA Button -->
-              <button type="submit" class="btn btn-primary login-btn">
-                <i class="fa-solid fa-arrow-right-to-bracket"></i> Login to Portal
+              <button type="submit" class="btn btn-primary" id="btnUpdateProfile" style="padding: 0.85rem 2rem; font-size: 1rem; font-weight: 700; border: none; cursor: pointer;">
+                <i class="fa-solid fa-circle-check"></i> Save Profile Details
               </button>
             </form>
           </div>
+        </div>
 
-          <!-- Security Notice -->
-          <div class="security-notice-card">
-            <div class="security-title">
-              <i class="fa-solid fa-shield-halved"></i>
-              <h4>Security Notice</h4>
+        <!-- Tab 3: Course Registration -->
+        <div class="tab-content" id="tab-courses">
+          <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+            <div>
+              <h2 class="font-display" style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem;">Course Registration</h2>
+              <p style="color: var(--text-muted); margin-bottom: 0;">Select your theological curriculum courses below.</p>
             </div>
-            <p>
-              This portal utilizes industrial SSL parameters. For your safety, never disclose your student credentials or default password keys to any external party. Always log out completely when wrapping up your sessions on shared devices.
-            </p>
+            <div id="courseRegStatusBadgeContainer">
+              <!-- Dynamically populated status badge -->
+            </div>
+          </div>
+
+          <!-- Active Registration Window Notice -->
+          <div style="background-color: var(--bg-white); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); padding: 2rem; margin-bottom: 2rem;" id="courseRegTimelineCard">
+            <h4 class="font-display" style="color: var(--primary); font-size: 1.1rem; margin-bottom: 0.5rem;" id="courseRegStatusTitle">Timeline Registration Status</h4>
+            <p style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.6; margin-bottom: 0;" id="courseRegStatusDesc">Loading calendar constraints...</p>
+          </div>
+
+          <!-- Form Area -->
+          <div id="courseRegFormArea">
+            <form id="courseRegForm">
+              <!-- Two Column Course Checkboxes -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem;" class="form-grid-settings">
+                
+                <!-- First Semester Courses -->
+                <div style="background-color: var(--bg-white); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); padding: 2rem;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                    <h3 class="font-display" style="color: var(--primary); font-size: 1.15rem; margin-bottom: 0;"><i class="fa-solid fa-circle-chevron-right" style="color: var(--accent);"></i> First Semester</h3>
+                    <button type="button" class="btn" id="selectAllFirst" style="font-size: 0.8rem; padding: 0.25rem 0.75rem; background-color: var(--bg-slate); color: var(--primary); border: 1px solid var(--border-color); font-weight: 600;"><i class="fa-solid fa-list-check"></i> Select All</button>
+                  </div>
+                  <div id="firstSemesterCoursesList" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <!-- Checkboxes generated dynamically -->
+                  </div>
+                </div>
+
+                <!-- Second Semester Courses -->
+                <div style="background-color: var(--bg-white); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); padding: 2rem;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                    <h3 class="font-display" style="color: var(--primary); font-size: 1.15rem; margin-bottom: 0;"><i class="fa-solid fa-circle-chevron-right" style="color: var(--accent);"></i> Second Semester</h3>
+                    <button type="button" class="btn" id="selectAllSecond" style="font-size: 0.8rem; padding: 0.25rem 0.75rem; background-color: var(--bg-slate); color: var(--primary); border: 1px solid var(--border-color); font-weight: 600;"><i class="fa-solid fa-list-check"></i> Select All</button>
+                  </div>
+                  <div id="secondSemesterCoursesList" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <!-- Checkboxes generated dynamically -->
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Submit Button -->
+              <div style="text-align: right;">
+                <button type="submit" class="btn btn-primary" id="btnSubmitCourseReg" style="padding: 1rem 2.5rem; font-size: 1.05rem; font-weight: 700; border: none; cursor: pointer;">
+                  <i class="fa-solid fa-cloud-arrow-up"></i> Submit Registration
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Course Registration Receipt Slip (Visible ONLY after registration) -->
+          <div id="courseRegReceiptArea" style="display: none; background-color: var(--bg-white); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); padding: 3rem;" class="print-section">
+            <div style="text-align: center; margin-bottom: 2rem;" class="no-print">
+              <button type="button" class="btn" id="btnPrintRegSlip" style="background-color: var(--primary); color: white; padding: 0.75rem 1.5rem; font-weight: 600; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-print"></i> Print Course Registration Slip</button>
+            </div>
+
+            <!-- Receipt Header -->
+            <div style="text-align: center; border-bottom: 2px solid var(--primary); padding-bottom: 1.5rem; margin-bottom: 2rem; position: relative;">
+              <h2 class="font-display" style="color: var(--primary); margin-bottom: 0.25rem; font-size: 1.75rem;">DIVINE MANDATE BIBLE INSTITUTE</h2>
+              <div style="color: var(--accent); font-weight: 700; font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase;">OFFICIAL COURSE REGISTRATION SLIP</div>
+              <p style="color: var(--text-muted); font-size: 0.85rem; font-style: italic; margin-top: 0.25rem; margin-bottom: 0;" id="receiptRegDate">Date: -</p>
+            </div>
+
+            <!-- Student Parameters in Receipt -->
+            <div class="form-grid-settings" style="margin-bottom: 2rem; gap: 1rem;">
+              <div>
+                <strong>Student Name:</strong> <span id="receiptStudentName">-</span>
+              </div>
+              <div>
+                <strong>Student ID:</strong> <span id="receiptStudentId">-</span>
+              </div>
+              <div>
+                <strong>Matric Number:</strong> <span id="receiptMatricNo">-</span>
+              </div>
+              <div>
+                <strong>Programme:</strong> <span id="receiptProgramme">-</span>
+              </div>
+              <div>
+                <strong>Academic Session:</strong> <span id="receiptTerm">-</span>
+              </div>
+              <div>
+                <strong>Status:</strong> <span class="status-badge cleared" style="padding: 0.2rem 0.6rem; font-size: 0.7rem;"><i class="fa-solid fa-circle-check"></i> Registered</span>
+              </div>
+            </div>
+
+            <!-- Receipt Table of registered items -->
+            <div class="table-container" style="margin-bottom: 1.5rem;">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Code</th>
+                    <th>Course Title</th>
+                    <th>Semester</th>
+                    <th style="text-align: right;">Credits</th>
+                  </tr>
+                </thead>
+                <tbody id="receiptCourseList">
+                  <!-- Generated dynamically -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Receipt Footer Signature -->
+            <div style="margin-top: 4rem; display: flex; justify-content: space-between; align-items: flex-end;" class="form-grid-settings">
+              <div style="text-align: center; border-top: 1.5px solid var(--border-color); padding-top: 0.5rem; width: 220px; font-size: 0.85rem; font-weight: 600;">
+                Student Signature & Date
+              </div>
+              <div style="text-align: center; border-top: 1.5px solid var(--border-color); padding-top: 0.5rem; width: 220px; font-size: 0.85rem; font-weight: 600;">
+                Campus Registrar & Seal
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Right: Quick Information Panel & Support Section -->
-        <div class="portal-sidebar">
-          <!-- Portal Capabilities Preview -->
-          <div class="quick-info-card">
-            <h4 class="font-display quick-info-title">Portal Capabilities</h4>
-            <p class="quick-info-subtitle">Registered candidates enjoy robust digital access to standard institutional resources post-login:</p>
+        <!-- Tab 4: Results Display -->
+        <div class="tab-content" id="tab-results">
+          <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <div>
+              <h2 class="font-display" style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem;">Academic Results</h2>
+              <p style="color: var(--text-muted); margin-bottom: 0;">Official cumulative performance report cards uploaded by theological facilitators.</p>
+            </div>
+            <button type="button" class="btn no-print" id="btnPrintTranscript" style="background-color: var(--primary); color: white; padding: 0.75rem 1.5rem; font-weight: 600; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-print"></i> Print Transcript</button>
+          </div>
 
-            <div class="capabilities-grid">
-              <!-- capability 1 -->
-              <div class="capability-item">
-                <div class="capability-icon"><i class="fa-solid fa-circle-user"></i></div>
-                <div class="capability-content">
-                  <h5>View Profile</h5>
-                  <p>View administrative registers, bio records, and customize emergency parameters.</p>
-                </div>
+          <!-- Cumulative Statistics Summary -->
+          <div class="stats-grid" style="margin-bottom: 2rem;" id="resultsSummaryRow">
+            <div class="stat-card" style="cursor: default;">
+              <div class="stat-card-info">
+                <h5>GPA Average</h5>
+                <div class="stat-value" id="resultsGPA">0.00</div>
               </div>
-
-              <!-- capability 2 -->
-              <div class="capability-item">
-                <div class="capability-icon"><i class="fa-solid fa-pen-to-square"></i></div>
-                <div class="capability-content">
-                  <h5>Register Courses</h5>
-                  <p>Select and clear academic study programs online at the start of each semester.</p>
-                </div>
+              <div class="stat-card-icon blue"><i class="fa-solid fa-chart-line"></i></div>
+            </div>
+            <div class="stat-card" style="cursor: default;">
+              <div class="stat-card-info">
+                <h5>Passed Courses</h5>
+                <div class="stat-value" id="resultsPassed">0</div>
               </div>
-
-              <!-- capability 3 -->
-              <div class="capability-item">
-                <div class="capability-icon"><i class="fa-solid fa-graduation-cap"></i></div>
-                <div class="capability-content">
-                  <h5>View Results</h5>
-                  <p>Securely query cumulative performance reports, score averages, and class lists.</p>
-                </div>
+              <div class="stat-card-icon green"><i class="fa-solid fa-circle-check"></i></div>
+            </div>
+            <div class="stat-card" style="cursor: default;">
+              <div class="stat-card-info">
+                <h5>Attempted Courses</h5>
+                <div class="stat-value" id="resultsAttempted">0</div>
               </div>
-
-              <!-- capability 4 -->
-              <div class="capability-item">
-                <div class="capability-icon"><i class="fa-solid fa-chart-line"></i></div>
-                <div class="capability-content">
-                  <h5>Check Academic Progress</h5>
-                  <p>Keep a clear visual view of course credit requirements, and graduation checklists.</p>
-                </div>
-              </div>
-
-              <!-- capability 5 -->
-              <div class="capability-item">
-                <div class="capability-icon"><i class="fa-solid fa-book-open"></i></div>
-                <div class="capability-content">
-                  <h5>Access Learning Materials</h5>
-                  <p>Instantly retrieve lecture outlines, assigned research publications, and biblical indexes.</p>
-                </div>
-              </div>
-
-              <!-- capability 6 -->
-              <div class="capability-item">
-                <div class="capability-icon"><i class="fa-solid fa-bell"></i></div>
-                <div class="capability-content">
-                  <h5>Receive Notifications</h5>
-                  <p>Stay updated on lecture timetables, spiritual convocations, and registrar decisions.</p>
-                </div>
-              </div>
+              <div class="stat-card-icon yellow"><i class="fa-solid fa-list-check"></i></div>
             </div>
           </div>
 
-          <!-- Support Desk Coordinates -->
-          <div class="portal-support-card">
-            <h4 class="font-display support-title">Portal Help Desk</h4>
-            <p class="support-subtitle">Experiencing sign-in errors, or misplaced your default matric details? Contact help officers:</p>
-
-            <div class="support-contacts">
-              <!-- support phones -->
-              <div class="support-contact-item">
-                <i class="fa-solid fa-phone"></i>
-                <div class="support-numbers">
-                  <a href="tel:08038194611">0803 819 4611</a>
-                  <a href="tel:08138194611">0813 819 4611</a>
-                  <a href="tel:08062186974">0806 218 6974</a>
-                  <a href="tel:08037282082">0803 728 2082</a>
-                </div>
-              </div>
-
-              <!-- support email -->
-              <div class="support-contact-item">
-                <i class="fa-solid fa-envelope"></i>
-                <a href="mailto:olalekan16650@gmail.com" class="support-email">olalekan16650@gmail.com</a>
-              </div>
+          <!-- Printable Report Header -->
+          <div class="print-section" style="display: none; text-align: center; border-bottom: 2px solid var(--primary); padding-bottom: 1.5rem; margin-bottom: 2rem;">
+            <h2 class="font-display" style="color: var(--primary); margin-bottom: 0.25rem; font-size: 1.75rem;">DIVINE MANDATE BIBLE INSTITUTE</h2>
+            <div style="color: var(--accent); font-weight: 700; font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase;">OFFICIAL STUDENT ACADEMIC PERFORMANCE SUMMARY</div>
+            <div style="margin-top: 1rem; text-align: left; font-size: 0.9rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;" id="printResultsBio">
+              <!-- Dynamically populated bio parameters during printing -->
             </div>
+          </div>
 
-            <p class="support-note">
-              Please note: Official profile registration credentials are exclusively processed and delivered by the campus registrar center upon student resumption.
-            </p>
+          <!-- Results Table -->
+          <div class="table-container">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Course Code</th>
+                  <th>Course Title</th>
+                  <th>Semester</th>
+                  <th>Session</th>
+                  <th style="text-align: right;">Score</th>
+                  <th style="text-align: center;">Grade</th>
+                </tr>
+              </thead>
+              <tbody id="resultsTableBody">
+                <!-- Row results populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+
+          <div id="resultsEmptyMessage" style="background-color: var(--bg-white); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); padding: 3rem; text-align: center; display: none;">
+            <i class="fa-solid fa-graduation-cap" style="font-size: 3rem; color: var(--text-muted); opacity: 0.5; margin-bottom: 1rem;"></i>
+            <h4 class="font-display" style="color: var(--primary); margin-bottom: 0.5rem;">No Academic Results Available</h4>
+            <p style="color: var(--text-muted); margin-bottom: 0; font-size: 0.95rem;">Grading sheets for registered theological subjects are currently awaiting coordination by facilitating faculty members.</p>
           </div>
         </div>
 
-      </div>
+        <!-- Tab 5: Notifications -->
+        <div class="tab-content" id="tab-notifications">
+          <div style="margin-bottom: 2rem;">
+            <h2 class="font-display" style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem;">Institute Announcements</h2>
+            <p style="color: var(--text-muted);">Stay updated with the newest institutional broadcasts, lectures timelines, and spiritual notices.</p>
+          </div>
+
+          <!-- Notifications Stream Feed -->
+          <div id="notificationsFeed" style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Announce items parsed dynamically -->
+          </div>
+
+          <div id="notificationsEmptyMessage" style="background-color: var(--bg-white); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); padding: 3rem; text-align: center; display: none;">
+            <i class="fa-solid fa-bell-slash" style="font-size: 3rem; color: var(--text-muted); opacity: 0.5; margin-bottom: 1rem;"></i>
+            <h4 class="font-display" style="color: var(--primary); margin-bottom: 0.5rem;">No Active Announcements</h4>
+            <p style="color: var(--text-muted); margin-bottom: 0; font-size: 0.95rem;">You are completely up-to-date with all registrar and faculty broadcast milestones.</p>
+          </div>
+        </div>
+
+        <!-- Tab 6: Password & Security -->
+        <div class="tab-content" id="tab-security">
+          <div style="margin-bottom: 2rem;">
+            <h2 class="font-display" style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem;">Password & Security</h2>
+            <p style="color: var(--text-muted);">Coordinate your portal passwords and maintain absolute account security parameters.</p>
+          </div>
+
+          <div class="portal-grid">
+            <div class="portal-main">
+              <!-- Password Update Card -->
+              <div style="background-color: var(--bg-white); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); padding: 2.5rem; margin-bottom: 2rem;">
+                <h3 class="font-display" style="color: var(--primary); font-size: 1.25rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;"><i class="fa-solid fa-lock" style="margin-right: 0.5rem; color: var(--accent);"></i> Update Portal Password</h3>
+                
+                <form id="passwordChangeForm">
+                  <!-- New Password -->
+                  <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label for="newPassword" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: block;">New Password</label>
+                    <div class="input-with-icon">
+                      <i class="fa-solid fa-key input-icon"></i>
+                      <input type="password" id="newPassword" class="form-control" style="background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: var(--border-radius-md); padding: 0.85rem 1.25rem 0.85rem 3rem; font-size: 0.95rem; width: 100%;" required>
+                    </div>
+                  </div>
+
+                  <!-- Confirm Password -->
+                  <div class="form-group" style="margin-bottom: 2rem;">
+                    <label for="confirmNewPassword" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: block;">Confirm New Password</label>
+                    <div class="input-with-icon">
+                      <i class="fa-solid fa-key input-icon"></i>
+                      <input type="password" id="confirmNewPassword" class="form-control" style="background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: var(--border-radius-md); padding: 0.85rem 1.25rem 0.85rem 3rem; font-size: 0.95rem; width: 100%;" required>
+                    </div>
+                  </div>
+
+                  <button type="submit" class="btn btn-primary" id="btnUpdatePassword" style="padding: 0.85rem 2rem; font-size: 1rem; font-weight: 700; border: none; cursor: pointer;">
+                    <i class="fa-solid fa-circle-check"></i> Change Password Key
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Security Checkpoints sidebar info -->
+            <div class="portal-sidebar">
+              <div style="background-color: var(--bg-white); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); padding: 2.5rem;">
+                <h4 class="font-display" style="color: var(--primary); font-size: 1.15rem; margin-bottom: 1rem;"><i class="fa-solid fa-shield-halved" style="color: var(--accent);"></i> Security Policy</h4>
+                <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.6; margin-bottom: 1rem;">
+                  Portal passcodes must contain strong security structures. Default credentials provided upon admission are transient and must be updated immediately upon logging in to secure personal records.
+                </p>
+                <div style="font-size: 0.82rem; color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 1rem; border-radius: var(--border-radius-md); display: flex; align-items: flex-start; gap: 0.75rem;">
+                  <i class="fa-solid fa-circle-exclamation" style="margin-top: 0.15rem; font-size: 1.1rem;"></i>
+                  <span><strong>Important notice:</strong> If you forget your modified passcode keys, resets can only be authorized via helpdesk physical coordinators or phone parameters.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
     </div>
-  </section>
+  </div>
+
+  <!-- Toast system wrapper for notifications -->
+  <div style="position: fixed; top: 100px; right: 24px; z-index: 2000; display: flex; flex-direction: column; gap: 0.75rem;" id="toastContainer" class="no-print"></div>
 
   <!-- Footer -->
-  <footer>
+  <footer class="no-print">
     <div class="container">
       <div class="grid-4 footer-top">
         <!-- Logo & About Column -->
@@ -803,32 +1566,30 @@
 
   <!-- Scripts -->
   <script src="../assets/js/main.js"></script>
+  <script type="module" src="../assets/js/student-portal.js"></script>
 
   <script>
-    // Show/Hide Password Toggle Interactivity
-    function togglePasswordVisibility() {
-      const passwordInput = document.getElementById('password');
-      const eyeIcon = document.getElementById('passwordEyeIcon');
-      
-      if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        eyeIcon.classList.remove('fa-eye');
-        eyeIcon.classList.add('fa-eye-slash');
-      } else {
-        passwordInput.type = 'password';
-        eyeIcon.classList.remove('fa-eye-slash');
-        eyeIcon.classList.add('fa-eye');
+    // General show/hide password toggle helper
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggleBtn = document.getElementById('togglePasswordBtn');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+          const passwordInput = document.getElementById('password');
+          const eyeIcon = document.getElementById('passwordEyeIcon');
+          if (passwordInput && eyeIcon) {
+            if (passwordInput.type === 'password') {
+              passwordInput.type = 'text';
+              eyeIcon.className = 'fa-solid fa-eye-slash';
+            } else {
+              passwordInput.type = 'password';
+              eyeIcon.className = 'fa-solid fa-eye';
+            }
+          }
+        });
       }
-    }
-
-    // Portal Login Visual Information Notice Trigger
-    function showLoginInfo() {
-      const alertBox = document.getElementById('loginFeedback');
-      alertBox.style.display = 'flex';
-      
-      // Smooth scroll focus to alert
-      alertBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+    });
   </script>
+</body>
+</html>
 </body>
 </html>
