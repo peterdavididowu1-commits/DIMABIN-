@@ -1174,6 +1174,9 @@
           <button class="sidebar-nav-btn" data-tab="courses-allocation">
             <i class="fa-solid fa-list-check"></i> Course Allocation
           </button>
+          <button class="sidebar-nav-btn" data-tab="cbt-control">
+            <i class="fa-solid fa-graduation-cap"></i> CBT Control Center
+          </button>
           <button class="sidebar-nav-btn" data-tab="emailjs">
             <i class="fa-solid fa-sliders"></i> EmailJS & Settings
           </button>
@@ -1813,6 +1816,148 @@
               </div>
             </div>
 
+          </div>
+        </div>
+
+        <!-- Tab 8: CBT Control Center -->
+        <div class="tab-content" id="tab-cbt-control">
+          <div style="margin-bottom: 2rem;">
+            <h2 class="font-display" style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem; font-weight: 800;">CBT Control Center</h2>
+            <p style="color: var(--text-muted);">Manage institution-wide Computer-Based Testing configurations, monitor live runs, and process grades.</p>
+          </div>
+
+          <!-- Statistics cards -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+            <div class="portal-card" style="padding: 1.5rem; background: white; border-left: 4px solid var(--primary); display: flex; align-items: center; gap: 1rem;">
+              <div style="background-color: rgba(31,59,130,0.1); width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--primary);">
+                <i class="fa-solid fa-file-signature"></i>
+              </div>
+              <div>
+                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Total Exams</span>
+                <div style="font-size: 1.75rem; font-weight: 800; color: var(--primary-dark);" id="adminCbtTotalExams">0</div>
+              </div>
+            </div>
+
+            <div class="portal-card" style="padding: 1.5rem; background: white; border-left: 4px solid #28a745; display: flex; align-items: center; gap: 1rem;">
+              <div style="background-color: rgba(40,167,69,0.1); width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #28a745;">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+              </div>
+              <div>
+                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Published</span>
+                <div style="font-size: 1.75rem; font-weight: 800; color: var(--primary-dark);" id="adminCbtPublishedExams">0</div>
+              </div>
+            </div>
+
+            <div class="portal-card" style="padding: 1.5rem; background: white; border-left: 4px solid #F4B000; display: flex; align-items: center; gap: 1rem;">
+              <div style="background-color: rgba(244,176,0,0.1); width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #F4B000;">
+                <i class="fa-solid fa-eye"></i>
+              </div>
+              <div>
+                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Active / Live</span>
+                <div style="font-size: 1.75rem; font-weight: 800; color: var(--primary-dark);" id="adminCbtLiveExams">0</div>
+              </div>
+            </div>
+
+            <div class="portal-card" style="padding: 1.5rem; background: white; border-left: 4px solid #dc3545; display: flex; align-items: center; gap: 1rem;">
+              <div style="background-color: rgba(220,53,69,0.1); width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #dc3545;">
+                <i class="fa-solid fa-graduation-cap"></i>
+              </div>
+              <div>
+                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Submissions</span>
+                <div style="font-size: 1.75rem; font-weight: 800; color: var(--primary-dark);" id="adminCbtTotalSubmissions">0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section Tabs -->
+          <div style="display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 1.5rem; gap: 1.5rem;">
+            <button class="subtab-btn active" id="btnAdminCbtTabExams" style="border: none; background: none; padding: 0.75rem 0.5rem; font-family: 'Poppins'; font-weight: 700; font-size: 0.9rem; color: var(--primary); border-bottom: 3px solid var(--primary); cursor: pointer;"><i class="fa-solid fa-file-lines"></i> Examinations</button>
+            <button class="subtab-btn" id="btnAdminCbtTabSubmissions" style="border: none; background: none; padding: 0.75rem 0.5rem; font-family: 'Poppins'; font-weight: 600; font-size: 0.9rem; color: var(--text-muted); border-bottom: 3px solid transparent; cursor: pointer;"><i class="fa-solid fa-file-invoice"></i> Student Scripts</button>
+          </div>
+
+          <!-- Panel 1: Examinations Directory -->
+          <div id="panelAdminCbtExams" style="display: block;">
+            <div class="portal-card" style="background-color: white; padding: 1.5rem; border-radius: 6px; border: 1.5px solid var(--border-color);">
+              <h3 style="color: var(--primary); margin: 0 0 1rem 0; font-weight: 800; font-size: 1.1rem;"><i class="fa-solid fa-clipboard-list" style="color: var(--accent);"></i> Central Examination Registry</h3>
+              <div class="table-responsive">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left;">
+                  <thead>
+                    <tr style="border-bottom: 2px solid var(--border-color); background-color: var(--bg-slate); color: var(--primary); font-weight: 700;">
+                      <th style="padding: 0.75rem;">Course</th>
+                      <th style="padding: 0.75rem;">Title</th>
+                      <th style="padding: 0.75rem;">Duration</th>
+                      <th style="padding: 0.75rem;">Questions</th>
+                      <th style="padding: 0.75rem;">Schedule Period</th>
+                      <th style="padding: 0.75rem; text-align: center;">Status</th>
+                      <th style="padding: 0.75rem; text-align: center; width: 180px;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminCbtExamsTableBody">
+                    <tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Fetching exams...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel 2: Student Scripts & Submissions -->
+          <div id="panelAdminCbtSubmissions" style="display: none;">
+            <div class="portal-card" style="background-color: white; padding: 1.5rem; border-radius: 6px; border: 1.5px solid var(--border-color); margin-bottom: 1.5rem;">
+              <h3 style="color: var(--primary); margin: 0 0 1rem 0; font-weight: 800; font-size: 1.1rem;"><i class="fa-solid fa-magnifying-glass" style="color: var(--accent);"></i> Select Assessment Results</h3>
+              <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+                <div class="form-group" style="flex-grow: 1; min-width: 250px; margin: 0;">
+                  <label for="adminResultsExamSelect" style="font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Active Examination</label>
+                  <select id="adminResultsExamSelect" class="form-control" style="width: 100%; padding: 0.65rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;">
+                    <option value="">-- Choose Examination --</option>
+                  </select>
+                </div>
+                <button class="btn" id="btnAdminExportCbtResults" style="background-color: #28a745; color: white; border: none; font-weight: 700; height: 38px; padding: 0 1rem;" disabled><i class="fa-solid fa-file-excel"></i> Export CSV</button>
+              </div>
+            </div>
+
+            <!-- Exam Stats Summary Panel -->
+            <div id="adminSelectedExamStatsPanel" style="display: none; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+              <div class="portal-card" style="padding: 1rem; text-align: center; background-color: var(--bg-slate); border: 1px solid var(--border-color);">
+                <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Average Score</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary);" id="adminCbtStatsAvgScore">0%</div>
+              </div>
+              <div class="portal-card" style="padding: 1rem; text-align: center; background-color: var(--bg-slate); border: 1px solid var(--border-color);">
+                <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Highest / Lowest</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: var(--accent);" id="adminCbtStatsHighLow">0% / 0%</div>
+              </div>
+              <div class="portal-card" style="padding: 1rem; text-align: center; background-color: var(--bg-slate); border: 1px solid var(--border-color);">
+                <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Pass Rate</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #28a745;" id="adminCbtStatsPassRate">0%</div>
+              </div>
+              <div class="portal-card" style="padding: 1rem; text-align: center; background-color: var(--bg-slate); border: 1px solid var(--border-color);">
+                <div style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Fail Rate</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #dc3545;" id="adminCbtStatsFailRate">0%</div>
+              </div>
+            </div>
+
+            <!-- Table of Student Results -->
+            <div class="portal-card" style="background-color: white; padding: 1.5rem; border-radius: 6px; border: 1.5px solid var(--border-color);">
+              <div class="table-responsive">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left;">
+                  <thead>
+                    <tr style="border-bottom: 2px solid var(--border-color); background-color: var(--bg-slate); color: var(--primary); font-weight: 700;">
+                      <th style="padding: 0.75rem;">Student ID</th>
+                      <th style="padding: 0.75rem;">Name</th>
+                      <th style="padding: 0.75rem;">Matric No.</th>
+                      <th style="padding: 0.75rem; text-align: center;">Raw Score</th>
+                      <th style="padding: 0.75rem; text-align: center;">Percentage</th>
+                      <th style="padding: 0.75rem; text-align: center;">Grade</th>
+                      <th style="padding: 0.75rem; text-align: center;">Status</th>
+                      <th style="padding: 0.75rem; text-align: center;">Completed At</th>
+                      <th style="padding: 0.75rem; text-align: center; width: 100px;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminCbtResultsTableBody">
+                    <tr><td colspan="9" style="text-align: center; padding: 2rem; color: var(--text-muted);">Please select an examination from the dropdown above.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
 

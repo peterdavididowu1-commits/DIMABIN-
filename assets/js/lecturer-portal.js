@@ -1741,6 +1741,100 @@ function renderQuestionBankList() {
   });
 }
 
+// Dynamic Question Type display handler
+function handleQTypeChange() {
+  const qType = document.getElementById("qType")?.value || "MCQ";
+  const wrapperOptAB = document.getElementById("wrapperOptAB");
+  const wrapperOptCD = document.getElementById("wrapperOptCD");
+  const wrapperCorrectAnswer = document.getElementById("wrapperCorrectAnswer");
+  const qOptA = document.getElementById("qOptA");
+  const qOptB = document.getElementById("qOptB");
+  const qOptC = document.getElementById("qOptC");
+  const qOptD = document.getElementById("qOptD");
+
+  if (!wrapperOptAB || !wrapperOptCD || !wrapperCorrectAnswer) return;
+
+  if (qType === "MCQ") {
+    wrapperOptAB.style.display = "block";
+    wrapperOptCD.style.display = "block";
+    wrapperCorrectAnswer.style.display = "block";
+    qOptA.required = true;
+    qOptB.required = true;
+    qOptC.required = true;
+    qOptD.required = true;
+    
+    // Check if qCorrectAnswer select is there
+    wrapperCorrectAnswer.innerHTML = `
+      <label style="font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase;" id="lblCorrectAnswer">Correct Answer</label>
+      <select id="qCorrectAnswer" class="form-control" style="width: 100%; padding: 0.5rem; font-family:'Poppins'; border-radius:4px; border: 1.5px solid var(--border-color);" required>
+        <option value="A">Option A</option>
+        <option value="B">Option B</option>
+        <option value="C">Option C</option>
+        <option value="D">Option D</option>
+      </select>
+    `;
+  } else if (qType === "TF") {
+    wrapperOptAB.style.display = "block";
+    wrapperOptCD.style.display = "none";
+    wrapperCorrectAnswer.style.display = "block";
+    
+    qOptA.value = "True";
+    qOptB.value = "False";
+    qOptA.required = true;
+    qOptB.required = true;
+    qOptC.required = false;
+    qOptD.required = false;
+    qOptC.value = "";
+    qOptD.value = "";
+
+    wrapperCorrectAnswer.innerHTML = `
+      <label style="font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase;" id="lblCorrectAnswer">Correct Answer</label>
+      <select id="qCorrectAnswer" class="form-control" style="width: 100%; padding: 0.5rem; font-family:'Poppins'; border-radius:4px; border: 1.5px solid var(--border-color);" required>
+        <option value="A">True</option>
+        <option value="B">False</option>
+      </select>
+    `;
+  } else if (qType === "SA") {
+    wrapperOptAB.style.display = "none";
+    wrapperOptCD.style.display = "none";
+    wrapperCorrectAnswer.style.display = "block";
+    
+    qOptA.required = false;
+    qOptB.required = false;
+    qOptC.required = false;
+    qOptD.required = false;
+    qOptA.value = "";
+    qOptB.value = "";
+    qOptC.value = "";
+    qOptD.value = "";
+
+    wrapperCorrectAnswer.innerHTML = `
+      <label style="font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase;" id="lblCorrectAnswer">Correct Answer Text</label>
+      <input type="text" id="qCorrectAnswer" class="form-control" placeholder="Exact answer string" style="width: 100%; padding: 0.5rem; font-family:'Poppins'; border-radius:4px; border: 1.5px solid var(--border-color);" required>
+    `;
+  } else if (qType === "Essay") {
+    wrapperOptAB.style.display = "none";
+    wrapperOptCD.style.display = "none";
+    wrapperCorrectAnswer.style.display = "none";
+    
+    qOptA.required = false;
+    qOptB.required = false;
+    qOptC.required = false;
+    qOptD.required = false;
+    qOptA.value = "";
+    qOptB.value = "";
+    qOptC.value = "";
+    qOptD.value = "";
+
+    wrapperCorrectAnswer.innerHTML = `
+      <input type="hidden" id="qCorrectAnswer" value="Manual Grading">
+    `;
+  }
+}
+
+// Bind Type change
+document.getElementById("qType")?.addEventListener("change", handleQTypeChange);
+
 // Question Bank CRUD handlers
 const qBankForm = document.getElementById("qBankForm");
 if (qBankForm) {
@@ -1749,10 +1843,13 @@ if (qBankForm) {
     if (!currentLecturerDoc) return;
 
     const qIdVal = document.getElementById("qId").value;
+    const qTypeVal = document.getElementById("qType").value;
+
     const data = {
       courseCode: document.getElementById("qCourseSelect").value,
       academicSession: document.getElementById("qSession").value,
       semester: document.getElementById("qSemester").value,
+      qType: qTypeVal,
       question: document.getElementById("qText").value.trim(),
       optionA: document.getElementById("qOptA").value.trim(),
       optionB: document.getElementById("qOptB").value.trim(),
@@ -1800,6 +1897,12 @@ function resetQuestionForm() {
   if (qSession) qSession.value = timelineSettings.session;
   const qSemester = document.getElementById("qSemester");
   if (qSemester) qSemester.value = timelineSettings.semester;
+  
+  const qTypeSelect = document.getElementById("qType");
+  if (qTypeSelect) {
+    qTypeSelect.value = "MCQ";
+    handleQTypeChange();
+  }
 }
 
 function editQuestion(id) {
@@ -1810,13 +1913,25 @@ function editQuestion(id) {
   document.getElementById("qCourseSelect").value = q.courseCode;
   document.getElementById("qSession").value = q.academicSession;
   document.getElementById("qSemester").value = q.semester;
+  
+  const qTypeSelect = document.getElementById("qType");
+  if (qTypeSelect) {
+    qTypeSelect.value = q.qType || "MCQ";
+    handleQTypeChange();
+  }
+
   document.getElementById("qText").value = q.question;
-  document.getElementById("qOptA").value = q.optionA;
-  document.getElementById("qOptB").value = q.optionB;
-  document.getElementById("qOptC").value = q.optionC;
-  document.getElementById("qOptD").value = q.optionD;
-  document.getElementById("qCorrectAnswer").value = q.correctAnswer;
-  document.getElementById("qMarks").value = q.marks;
+  document.getElementById("qOptA").value = q.optionA || "";
+  document.getElementById("qOptB").value = q.optionB || "";
+  document.getElementById("qOptC").value = q.optionC || "";
+  document.getElementById("qOptD").value = q.optionD || "";
+  
+  const qCorrectAnswer = document.getElementById("qCorrectAnswer");
+  if (qCorrectAnswer) {
+    qCorrectAnswer.value = q.correctAnswer || "";
+  }
+  
+  document.getElementById("qMarks").value = q.marks || 1;
   document.getElementById("qExplanation").value = q.explanation || "";
 
   document.getElementById("qFormTitle").innerHTML = `<i class="fa-solid fa-pen-to-square" style="color: var(--accent);"></i> Edit Question`;
@@ -1827,7 +1942,58 @@ function previewQuestion(id) {
   const q = questionBankData.find(item => item.id === id);
   if (!q) return;
 
-  alert(`[QUESTION PREVIEW - ${q.courseCode}]\n\nQuestion: ${q.question}\n\n[A] ${q.optionA}\n[B] ${q.optionB}\n[C] ${q.optionC}\n[D] ${q.optionD}\n\nCorrect Answer: Option [${q.correctAnswer}]\nMarks Allocated: ${q.marks} marks\n\nExplanation:\n${q.explanation || 'None provided.'}`);
+  const modalHtml = `
+    <div id="qPreviewModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1.5rem; font-family: 'Poppins', sans-serif;">
+      <div style="background-color: white; border-radius: var(--border-radius-lg, 12px); max-width: 500px; width: 100%; padding: 2rem; box-shadow: var(--shadow-lg, 0 10px 15px rgba(0,0,0,0.1)); position: relative;">
+        <button id="closeQPreviewModal" style="position: absolute; top: 1rem; right: 1rem; border: none; background: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+        <span style="background-color: var(--primary); color: white; font-size: 0.7rem; font-weight: 800; padding: 0.25rem 0.5rem; border-radius: 4px; text-transform: uppercase;">${q.qType || 'MCQ'} - ${q.courseCode}</span>
+        <h3 style="color: var(--primary); margin-top: 0.75rem; font-size: 1.2rem; font-weight: 700; line-height: 1.4;">${escapeHtml(q.question)}</h3>
+        <div style="margin: 1.5rem 0; display: flex; flex-direction: column; gap: 0.5rem;">
+          ${q.optionA ? `<div style="background-color: var(--bg-slate); padding: 0.75rem 1rem; border-radius: 6px; font-size: 0.9rem; border: 1.5px solid ${q.correctAnswer === 'A' ? 'green' : 'transparent'}"><strong>A:</strong> ${escapeHtml(q.optionA)} ${q.correctAnswer === 'A' ? '✔️' : ''}</div>` : ''}
+          ${q.optionB ? `<div style="background-color: var(--bg-slate); padding: 0.75rem 1rem; border-radius: 6px; font-size: 0.9rem; border: 1.5px solid ${q.correctAnswer === 'B' ? 'green' : 'transparent'}"><strong>B:</strong> ${escapeHtml(q.optionB)} ${q.correctAnswer === 'B' ? '✔️' : ''}</div>` : ''}
+          ${q.optionC ? `<div style="background-color: var(--bg-slate); padding: 0.75rem 1rem; border-radius: 6px; font-size: 0.9rem; border: 1.5px solid ${q.correctAnswer === 'C' ? 'green' : 'transparent'}"><strong>C:</strong> ${escapeHtml(q.optionC)} ${q.correctAnswer === 'C' ? '✔️' : ''}</div>` : ''}
+          ${q.optionD ? `<div style="background-color: var(--bg-slate); padding: 0.75rem 1rem; border-radius: 6px; font-size: 0.9rem; border: 1.5px solid ${q.correctAnswer === 'D' ? 'green' : 'transparent'}"><strong>D:</strong> ${escapeHtml(q.optionD)} ${q.correctAnswer === 'D' ? '✔️' : ''}</div>` : ''}
+        </div>
+        ${q.qType === 'SA' ? `<div style="background-color: #E2F0D9; padding: 0.75rem 1rem; border-radius: 6px; font-size: 0.9rem; border: 1.5px solid green; margin: 1rem 0;"><strong>Correct Answer:</strong> ${escapeHtml(q.correctAnswer)}</div>` : ''}
+        ${q.qType === 'Essay' ? `<div style="background-color: #fdf6e2; padding: 0.75rem 1rem; border-radius: 6px; font-size: 0.9rem; border: 1.5px dashed #f5b000; margin: 1rem 0; color: #b58900;"><strong>[Essay Question]</strong> - Structure only, manually graded.</div>` : ''}
+        <div style="font-size: 0.82rem; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 1rem; display: flex; justify-content: space-between;">
+          <span><strong>Marks:</strong> ${q.marks} Marks</span>
+          <span><strong>Semester:</strong> ${q.semester}</span>
+        </div>
+        ${q.explanation ? `<div style="font-size: 0.8rem; background-color: #FFF2CC; padding: 0.75rem; border-radius: 6px; margin-top: 1rem; color: var(--primary-dark); font-style: italic;"><strong>Explanation:</strong> ${escapeHtml(q.explanation)}</div>` : ''}
+      </div>
+    </div>
+  `;
+  const div = document.createElement("div");
+  div.innerHTML = modalHtml;
+  document.body.appendChild(div);
+
+  document.getElementById("closeQPreviewModal").addEventListener("click", () => {
+    div.remove();
+  });
+}
+
+async function duplicateQuestion(id) {
+  const q = questionBankData.find(item => item.id === id);
+  if (!q) return;
+  if (!confirm("Confirm duplicating this question?")) return;
+
+  try {
+    const { addDoc, collection } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+    const dup = { ...q, updatedAt: new Date().toISOString() };
+    delete dup.id; // delete old id
+    dup.question = q.question + " (Copy)";
+    dup.createdAt = new Date().toISOString();
+
+    const qRef = doc(collection(db, "cbtQuestions"));
+    await setDoc(qRef, dup);
+    window.showToast("Question duplicated successfully!", "success");
+    await loadQuestionBank();
+    renderQuestionBankList();
+  } catch (err) {
+    console.error("Duplicate question error:", err);
+    window.showToast("Failed to duplicate: " + err.message, "error");
+  }
 }
 
 async function deleteQuestion(id) {
@@ -1893,6 +2059,8 @@ if (createExamForm) {
       randomizeQuestions: document.getElementById("examRandQuestions").value === "Yes",
       randomizeOptions: document.getElementById("examRandOptions").value === "Yes",
       showResultImmediately: document.getElementById("examShowResult").value === "Yes",
+      maxAttempts: parseInt(document.getElementById("examMaxAttempts").value) || 1,
+      negativeMarking: document.getElementById("examNegativeMarking").value === "Yes",
       status: document.getElementById("examStatus").value,
       lecturerId: currentLecturerDoc.lecturerId,
       updatedAt: new Date().toISOString()
@@ -1930,6 +2098,10 @@ function resetExamForm() {
   if (examSession) examSession.value = timelineSettings.session;
   const examSemester = document.getElementById("examSemester");
   if (examSemester) examSemester.value = timelineSettings.semester;
+  const examMaxAttempts = document.getElementById("examMaxAttempts");
+  if (examMaxAttempts) examMaxAttempts.value = 1;
+  const examNegativeMarking = document.getElementById("examNegativeMarking");
+  if (examNegativeMarking) examNegativeMarking.value = "No";
 }
 
 // ==========================================
@@ -2025,6 +2197,8 @@ function editExam(id) {
   document.getElementById("examRandQuestions").value = ex.randomizeQuestions ? "Yes" : "No";
   document.getElementById("examRandOptions").value = ex.randomizeOptions ? "Yes" : "No";
   document.getElementById("examShowResult").value = ex.showResultImmediately ? "Yes" : "No";
+  document.getElementById("examMaxAttempts").value = ex.maxAttempts || 1;
+  document.getElementById("examNegativeMarking").value = ex.negativeMarking ? "Yes" : "No";
   document.getElementById("examStatus").value = ex.status;
 
   switchCbtSubtab("create-exam");
@@ -2075,20 +2249,20 @@ async function loadSelectedExamResults(examId) {
   if (!tableBody) return;
 
   if (!examId) {
-    tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">Please select an examination from the dropdown above.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 2rem; color: var(--text-muted);">Please select an examination from the dropdown above.</td></tr>`;
     if (exportBtn) exportBtn.disabled = true;
     resetCbtStatsCounters();
     return;
   }
 
-  tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">Fetching results data...</td></tr>`;
+  tableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 2rem; color: var(--text-muted);">Fetching results data...</td></tr>`;
 
   try {
     const rSnap = await getDocs(query(collection(db, "cbtResults"), where("examId", "==", examId)));
     activeResultsList = rSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     if (activeResultsList.length === 0) {
-      tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 2.5rem; color: var(--text-muted);"><i class="fa-solid fa-graduation-cap" style="font-size: 2rem; opacity: 0.3; display: block; margin-bottom: 0.5rem;"></i> No students have submitted answers for this examination yet.</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 2.5rem; color: var(--text-muted);"><i class="fa-solid fa-graduation-cap" style="font-size: 2rem; opacity: 0.3; display: block; margin-bottom: 0.5rem;"></i> No students have submitted answers for this examination yet.</td></tr>`;
       if (exportBtn) exportBtn.disabled = true;
       resetCbtStatsCounters();
       return;
@@ -2109,12 +2283,102 @@ async function loadSelectedExamResults(examId) {
           <span class="status-badge ${res.passed ? 'cleared' : ''}" style="display:inline-block; font-size:0.7rem; font-weight:700; background-color: ${res.passed ? 'rgba(40,167,69,0.1)' : 'rgba(220,53,69,0.1)'}; color: ${res.passed ? '#28a745' : '#dc3545'}">${res.passed ? 'PASS' : 'FAIL'}</span>
         </td>
         <td style="padding: 0.75rem; text-align: center; font-size: 0.75rem; color: var(--text-muted);">${formatCbtDate(res.submittedAt)}</td>
+        <td style="padding: 0.75rem; text-align: center;">
+          <button class="btn btn-review-script" data-studentid="${res.studentId}" data-examid="${res.examId}" data-studentname="${escapeHtml(res.studentName)}" style="background-color: var(--accent); color: var(--primary); border: none; padding: 0.35rem 0.6rem; border-radius: 4px; font-weight: 700; font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.25rem;"><i class="fa-solid fa-file-invoice"></i> Review</button>
+        </td>
       </tr>
     `).join("");
 
+    document.querySelectorAll(".btn-review-script").forEach(btn => {
+      btn.addEventListener("click", () => {
+        reviewStudentScript(btn.getAttribute("data-studentid"), btn.getAttribute("data-examid"), btn.getAttribute("data-studentname"));
+      });
+    });
+
   } catch (err) {
     console.error("Load exam results error:", err);
-    tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 2rem; color: var(--danger-color);">Error fetching results: ${err.message}</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 2rem; color: var(--danger-color);">Error fetching results: ${err.message}</td></tr>`;
+  }
+}
+
+async function reviewStudentScript(studentId, examId, studentName) {
+  try {
+    const { getDocs, query, collection, where } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+    const answersSnap = await getDocs(query(collection(db, "cbtAnswers"), where("studentId", "==", studentId), where("examId", "==", examId)));
+    const studentAnswers = answersSnap.docs.map(d => d.data());
+
+    const exam = examinationsData.find(ex => ex.id === examId);
+    if (!exam) return;
+
+    const qSnap = await getDocs(query(collection(db, "cbtQuestions"), where("courseCode", "==", exam.courseCode)));
+    const questions = qSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    let rowsHtml = "";
+    questions.forEach((q, idx) => {
+      const ans = studentAnswers.find(a => a.questionId === q.id);
+      const studentChoice = ans ? ans.selectedOption : "No Answer";
+      const isCorrect = ans ? ans.isCorrect : false;
+      const points = ans ? (ans.score || 0) : 0;
+      
+      let answerDetail = "";
+      if (q.qType === "MCQ" || q.qType === "TF") {
+        answerDetail = `
+          <div><strong>Student Selected:</strong> <span style="color: ${isCorrect ? 'green' : 'red'}; font-weight: bold;">${studentChoice}</span></div>
+          <div><strong>Correct Answer:</strong> <span style="color: green; font-weight: bold;">${q.correctAnswer}</span></div>
+        `;
+      } else if (q.qType === "SA") {
+        answerDetail = `
+          <div><strong>Student Typed:</strong> <span style="color: ${isCorrect ? 'green' : 'red'}; font-weight: bold;">"${escapeHtml(studentChoice)}"</span></div>
+          <div><strong>Expected Answer:</strong> <span style="color: green; font-weight: bold;">"${escapeHtml(q.correctAnswer)}"</span></div>
+        `;
+      } else {
+        answerDetail = `
+          <div><strong>Student Submission:</strong> <span style="color: var(--primary); font-weight: bold; font-family: monospace;">"${escapeHtml(studentChoice)}"</span></div>
+          <div style="color: #b58900;"><em>[Essay - Manually Graded or Structural Only]</em></div>
+        `;
+      }
+
+      rowsHtml += `
+        <div style="border-bottom: 1.5px solid var(--border-color); padding: 1rem 0;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 0.5rem;">
+            <span style="font-weight: 700; color: var(--primary);">Question ${idx + 1} (${q.qType || 'MCQ'})</span>
+            <span style="background-color: ${isCorrect ? '#E2F0D9' : '#FCE4D6'}; color: ${isCorrect ? 'green' : 'red'}; font-weight: bold; font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px;">
+              ${points} / ${q.marks} Marks
+            </span>
+          </div>
+          <p style="margin: 0.25rem 0 0.75rem 0; font-size: 0.9rem; font-weight: 500;">${escapeHtml(q.question)}</p>
+          <div style="font-size: 0.82rem; background-color: var(--bg-slate); padding: 0.75rem; border-radius: 6px; display: flex; flex-direction: column; gap: 0.25rem;">
+            ${answerDetail}
+          </div>
+          ${q.explanation ? `<div style="font-size: 0.8rem; background-color: #FFF2CC; padding: 0.5rem; border-radius: 4px; margin-top: 0.5rem; color: var(--primary-dark);"><strong>Explanation:</strong> ${escapeHtml(q.explanation)}</div>` : ''}
+        </div>
+      `;
+    });
+
+    const modalHtml = `
+      <div id="scriptReviewModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1.5rem; font-family: 'Poppins', sans-serif;">
+        <div style="background-color: white; border-radius: var(--border-radius-lg, 12px); max-width: 650px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 2rem; box-shadow: var(--shadow-lg, 0 10px 15px rgba(0,0,0,0.1)); position: relative;">
+          <button id="closeScriptReviewModal" style="position: absolute; top: 1rem; right: 1rem; border: none; background: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+          <h3 style="color: var(--primary); margin: 0 0 0.25rem 0; font-size: 1.25rem; font-weight: 800;"><i class="fa-solid fa-graduation-cap" style="color: var(--accent);"></i> Script Review</h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem; font-weight: 600;">Student: <span style="color: var(--primary);">${escapeHtml(studentName)}</span> | Course: <span style="color: var(--accent);">${exam.courseCode}</span></p>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            ${rowsHtml || '<p style="text-align: center; color: var(--text-muted);">No questions found for review.</p>'}
+          </div>
+        </div>
+      </div>
+    `;
+
+    const div = document.createElement("div");
+    div.innerHTML = modalHtml;
+    document.body.appendChild(div);
+
+    document.getElementById("closeScriptReviewModal").addEventListener("click", () => {
+      div.remove();
+    });
+
+  } catch (err) {
+    console.error("Review script error:", err);
+    window.showToast("Failed to load student responses: " + err.message, "error");
   }
 }
 

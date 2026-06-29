@@ -1012,12 +1012,8 @@ async function renderStudentCbtDashboard() {
 
     const rawExamsList = examSnap.docs.map(d => ({ id: d.id, ...d.data() }));
     // Filter down only to exams that match the student's registered courses, and are Published and currently active
-    const nowFilter = new Date();
     studentCbtExamsList = rawExamsList.filter(ex => {
-      const startDate = new Date(ex.startDate);
-      const endDate = new Date(ex.endDate);
-      const isActive = ex.status === "Published" && nowFilter >= startDate && nowFilter <= endDate;
-      return registeredCourses.includes(ex.courseCode) && isActive;
+      return registeredCourses.includes(ex.courseCode);
     });
 
     if (studentCbtExamsList.length === 0) {
@@ -1356,79 +1352,98 @@ function renderCbtQuestionAndChoices() {
   document.getElementById("activeQuestionMarksText").textContent = `${q.marks || 1} Marks`;
   document.getElementById("activeQuestionText").textContent = q.question;
 
-  // Compile options array (supporting dynamic option shuffling)
-  let choices = [
-    { key: "A", text: q.optionA },
-    { key: "B", text: q.optionB },
-    { key: "C", text: q.optionC },
-    { key: "D", text: q.optionD }
-  ];
-
-  if (activeCbtExam.randomizeOptions) {
-    shuffleCbtArray(choices);
-  }
-
   const container = document.getElementById("cbtOptionsContainer");
   if (!container) return;
 
-  const currentSelection = studentAnswers[q.id];
+  const currentSelection = studentAnswers[q.id] || "";
+  const qType = q.qType || "MCQ";
 
-  container.innerHTML = choices.map(opt => {
-    const isChecked = currentSelection === opt.key;
-    return `
-      <label class="cbt-option-card ${isChecked ? 'active' : ''}" style="display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border: 1.5px solid ${isChecked ? 'var(--primary)' : 'var(--border-color)'}; background-color: ${isChecked ? 'rgba(31,59,130,0.04)' : 'transparent'}; border-radius: var(--border-radius-md); cursor: pointer; transition: all 0.2s;">
-        <input type="radio" name="cbt_answer" value="${opt.key}" ${isChecked ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: var(--primary);">
-        <span style="font-weight: 700; color: ${isChecked ? 'white' : 'var(--primary)'}; font-size: 1rem; background-color: ${isChecked ? 'var(--primary)' : 'var(--bg-slate)'}; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">${opt.key}</span>
-        <span style="font-size: 0.95rem; font-weight: 500; color: var(--text-dark);">${escapeHtml(opt.text)}</span>
-      </label>
+  if (qType === "SA") {
+    container.innerHTML = `
+      <div style="width: 100%; padding: 0.5rem 0;">
+        <label style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.5rem;">Your Answer Text (Exact string comparison):</label>
+        <input type="text" id="cbt_sa_input" class="form-control" placeholder="Type your answer here..." value="${escapeHtml(currentSelection)}" style="width: 100%; padding: 1rem; font-family: 'Poppins'; font-size: 1rem; border-radius: 6px; border: 1.5px solid var(--border-color);">
+      </div>
     `;
-  }).join("");
 
-  // Bind choice listeners
-  const inputs = container.querySelectorAll('input[name="cbt_answer"]');
-  inputs.forEach(input => {
-    input.addEventListener("change", (e) => {
-      const val = e.target.value;
-      studentAnswers[q.id] = val;
-      
-      // Save local progress cache
-      localStorage.setItem(`cbt_temp_answers_${activeCbtExam.id}`, JSON.stringify(studentAnswers));
-
-      // Save to cloud registry in real-time
-      const answerDocId = `${currentStudentDoc.studentId.replace(/\//g, "-")}_${activeCbtExam.id}`;
-      setDoc(doc(db, "cbtAnswers", answerDocId), {
-        studentId: currentStudentDoc.studentId,
-        examId: activeCbtExam.id,
-        answers: studentAnswers,
-        lastUpdated: new Date().toISOString()
-      }, { merge: true }).catch(err => {
-        console.error("Failed to sync answer to cloud:", err);
-      });
-
-      // Style cards
-      container.querySelectorAll(".cbt-option-card").forEach(lbl => {
-        lbl.style.border = "1.5px solid var(--border-color)";
-        lbl.style.backgroundColor = "transparent";
-        lbl.classList.remove("active");
-        const badge = lbl.querySelector("span:nth-of-type(1)");
-        badge.style.backgroundColor = "var(--bg-slate)";
-        badge.style.color = "var(--primary)";
-      });
-
-      const selectedLabel = e.target.closest(".cbt-option-card");
-      if (selectedLabel) {
-        selectedLabel.style.border = "1.5px solid var(--primary)";
-        selectedLabel.style.backgroundColor = "rgba(31,59,130,0.04)";
-        selectedLabel.classList.add("active");
-        const badge = selectedLabel.querySelector("span:nth-of-type(1)");
-        badge.style.backgroundColor = "var(--primary)";
-        badge.style.color = "white";
-      }
-
-      // Re-render indices
-      renderCbtMatrixGrid();
+    const saInput = document.getElementById("cbt_sa_input");
+    saInput.addEventListener("input", (e) => {
+      studentAnswers[q.id] = e.target.value;
+      syncStudentAnswers();
     });
-  });
+
+  } else if (qType === "Essay") {
+    container.innerHTML = `
+      <div style="width: 100%; padding: 0.5rem 0;">
+        <label style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.5rem;">Your Essay Response:</label>
+        <textarea id="cbt_essay_input" class="form-control" rows="8" placeholder="Type your full structured answer text here..." style="width: 100%; padding: 1rem; font-family: 'Poppins'; font-size: 0.95rem; border-radius: 6px; border: 1.5px solid var(--border-color); resize: vertical;">${escapeHtml(currentSelection)}</textarea>
+      </div>
+    `;
+
+    const essayInput = document.getElementById("cbt_essay_input");
+    essayInput.addEventListener("input", (e) => {
+      studentAnswers[q.id] = e.target.value;
+      syncStudentAnswers();
+    });
+
+  } else {
+    let choices = [];
+    if (qType === "TF") {
+      choices = [
+        { key: "A", text: "True" },
+        { key: "B", text: "False" }
+      ];
+    } else {
+      choices = [
+        { key: "A", text: q.optionA || "" },
+        { key: "B", text: q.optionB || "" },
+        { key: "C", text: q.optionC || "" },
+        { key: "D", text: q.optionD || "" }
+      ].filter(opt => opt.text !== "");
+
+      if (activeCbtExam.randomizeOptions) {
+        shuffleCbtArray(choices);
+      }
+    }
+
+    container.innerHTML = choices.map(opt => {
+      const isChecked = currentSelection === opt.key;
+      return `
+        <label class="cbt-option-card ${isChecked ? 'active' : ''}" style="display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border: 1.5px solid ${isChecked ? 'var(--primary)' : 'var(--border-color)'}; background-color: ${isChecked ? 'rgba(31,59,130,0.04)' : 'transparent'}; border-radius: var(--border-radius-md); cursor: pointer; transition: all 0.2s; margin-bottom: 0.5rem;">
+          <input type="radio" name="cbt_answer" value="${opt.key}" ${isChecked ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: var(--primary);">
+          <span style="font-weight: 700; color: ${isChecked ? 'white' : 'var(--primary)'}; font-size: 1rem; background-color: ${isChecked ? 'var(--primary)' : 'var(--bg-slate)'}; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">${opt.key}</span>
+          <span style="font-size: 0.95rem; font-weight: 500; color: var(--text-dark);">${escapeHtml(opt.text)}</span>
+        </label>
+      `;
+    }).join("");
+
+    const inputs = container.querySelectorAll('input[name="cbt_answer"]');
+    inputs.forEach(input => {
+      input.addEventListener("change", (e) => {
+        studentAnswers[q.id] = e.target.value;
+        syncStudentAnswers();
+
+        container.querySelectorAll(".cbt-option-card").forEach(lbl => {
+          lbl.style.border = "1.5px solid var(--border-color)";
+          lbl.style.backgroundColor = "transparent";
+          lbl.classList.remove("active");
+          const badge = lbl.querySelector("span:nth-of-type(1)");
+          badge.style.backgroundColor = "var(--bg-slate)";
+          badge.style.color = "var(--primary)";
+        });
+
+        const selectedLabel = e.target.closest(".cbt-option-card");
+        if (selectedLabel) {
+          selectedLabel.style.border = "1.5px solid var(--primary)";
+          selectedLabel.style.backgroundColor = "rgba(31,59,130,0.04)";
+          selectedLabel.classList.add("active");
+          const badge = selectedLabel.querySelector("span:nth-of-type(1)");
+          badge.style.backgroundColor = "var(--primary)";
+          badge.style.color = "white";
+        }
+      });
+    });
+  }
 
   // Enable/Disable prev/next button keys based on boundaries
   document.getElementById("btnCbtPrev").disabled = currentQuestionIndex === 0;
@@ -1436,6 +1451,22 @@ function renderCbtQuestionAndChoices() {
   
   const isLast = currentQuestionIndex === activeCbtQuestions.length - 1;
   document.getElementById("btnCbtNext").innerHTML = isLast ? `Finish <i class="fa-solid fa-flag-checkered"></i>` : `Next <i class="fa-solid fa-circle-arrow-right"></i>`;
+}
+
+function syncStudentAnswers() {
+  localStorage.setItem(`cbt_temp_answers_${activeCbtExam.id}`, JSON.stringify(studentAnswers));
+
+  const answerDocId = `${currentStudentDoc.studentId.replace(/\//g, "-")}_${activeCbtExam.id}`;
+  setDoc(doc(db, "cbtAnswers", answerDocId), {
+    studentId: currentStudentDoc.studentId,
+    examId: activeCbtExam.id,
+    answers: studentAnswers,
+    lastUpdated: new Date().toISOString()
+  }, { merge: true }).catch(err => {
+    console.error("Failed to sync answer to cloud:", err);
+  });
+
+  renderCbtMatrixGrid();
 }
 
 // Render matrix navigation elements
@@ -1564,12 +1595,31 @@ async function submitExamination(isAutoTimeUp = false) {
   let totalPossibleMarks = 0;
 
   activeCbtQuestions.forEach(q => {
-    totalPossibleMarks += (q.marks || 1);
+    const qMarks = q.marks || 1;
+    totalPossibleMarks += qMarks;
     const selected = studentAnswers[q.id];
-    if (selected && selected === q.correctAnswer) {
-      score += (q.marks || 1);
+    if (selected) {
+      if (q.qType === "SA") {
+        const correctNorm = String(q.correctAnswer).trim().toLowerCase();
+        const studentNorm = String(selected).trim().toLowerCase();
+        if (correctNorm === studentNorm) {
+          score += qMarks;
+        }
+      } else if (q.qType === "Essay") {
+        // Essay is graded manually, default 0 score points
+      } else {
+        if (selected === q.correctAnswer) {
+          score += qMarks;
+        } else if (activeCbtExam.negativeMarking) {
+          score -= 0.25;
+        }
+      }
     }
   });
+
+  if (score < 0) score = 0;
+  // Round score to 2 decimal places in case of fractional negative marking
+  score = Math.round(score * 100) / 100;
 
   const percentage = totalPossibleMarks > 0 ? Math.round((score / totalPossibleMarks) * 100) : 0;
   

@@ -1913,28 +1913,46 @@
                     </div>
                   </div>
                   <div class="form-group" style="margin-bottom: 0.75rem;">
+                    <label style="font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">Question Type</label>
+                    <select id="qType" class="form-control" style="width: 100%; padding: 0.5rem; font-family:'Poppins'; border-radius:4px; border: 1.5px solid var(--border-color);" required>
+                      <option value="MCQ">Multiple Choice (MCQ)</option>
+                      <option value="TF">True / False</option>
+                      <option value="SA">Short Answer</option>
+                      <option value="Essay">Essay (Structure Only)</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0.75rem;">
                     <label style="font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">Question Text</label>
                     <textarea id="qText" rows="3" class="form-control" style="width: 100%; padding: 0.5rem; font-family:'Poppins'; border-radius:4px; border: 1.5px solid var(--border-color);" required></textarea>
                   </div>
-                  <div class="form-group" style="margin-bottom: 0.5rem;">
-                    <label style="font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">Option A</label>
-                    <input type="text" id="qOptA" class="form-control" style="width: 100%; padding: 0.5rem; font-family:'Poppins'; border-radius:4px; border: 1.5px solid var(--border-color);" required>
+                  
+                  <!-- Option Fields Wrapper AB -->
+                  <div id="wrapperOptAB">
+                    <div class="form-group" style="margin-bottom: 0.5rem;">
+                      <label style="font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase;" id="lblOptA">Option A</label>
+                      <input type="text" id="qOptA" class="form-control" style="width: 100%; padding: 0.5rem; font-family:'Poppins'; border-radius:4px; border: 1.5px solid var(--border-color);" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0.5rem;">
+                      <label style="font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase;" id="lblOptB">Option B</label>
+                      <input type="text" id="qOptB" class="form-control" style="width: 100%; padding: 0.5rem; font-family:'Poppins'; border-radius:4px; border: 1.5px solid var(--border-color);" required>
+                    </div>
                   </div>
-                  <div class="form-group" style="margin-bottom: 0.5rem;">
-                    <label style="font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">Option B</label>
-                    <input type="text" id="qOptB" class="form-control" style="width: 100%; padding: 0.5rem; font-family:'Poppins'; border-radius:4px; border: 1.5px solid var(--border-color);" required>
+
+                  <!-- Option Fields Wrapper CD -->
+                  <div id="wrapperOptCD">
+                    <div class="form-group" style="margin-bottom: 0.5rem;">
+                      <label style="font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">Option C</label>
+                      <input type="text" id="qOptC" class="form-control" style="width: 100%; padding: 0.5rem; font-family:'Poppins'; border-radius:4px; border: 1.5px solid var(--border-color);" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0.5rem;">
+                      <label style="font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">Option D</label>
+                      <input type="text" id="qOptD" class="form-control" style="width: 100%; padding: 0.5rem; font-family:'Poppins'; border-radius:4px; border: 1.5px solid var(--border-color);" required>
+                    </div>
                   </div>
-                  <div class="form-group" style="margin-bottom: 0.5rem;">
-                    <label style="font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">Option C</label>
-                    <input type="text" id="qOptC" class="form-control" style="width: 100%; padding: 0.5rem; font-family:'Poppins'; border-radius:4px; border: 1.5px solid var(--border-color);" required>
-                  </div>
-                  <div class="form-group" style="margin-bottom: 0.5rem;">
-                    <label style="font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">Option D</label>
-                    <input type="text" id="qOptD" class="form-control" style="width: 100%; padding: 0.5rem; font-family:'Poppins'; border-radius:4px; border: 1.5px solid var(--border-color);" required>
-                  </div>
+
                   <div class="form-group" style="margin-bottom: 0.75rem; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 0.5rem;">
-                    <div>
-                      <label style="font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">Correct Answer</label>
+                    <div id="wrapperCorrectAnswer">
+                      <label style="font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase;" id="lblCorrectAnswer">Correct Answer</label>
                       <select id="qCorrectAnswer" class="form-control" style="width: 100%; padding: 0.5rem; font-family:'Poppins'; border-radius:4px; border: 1.5px solid var(--border-color);" required>
                         <option value="A">Option A</option>
                         <option value="B">Option B</option>
@@ -2047,7 +2065,7 @@
                   </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; background-color: var(--bg-slate); padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; background-color: var(--bg-slate); padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
                   <div class="form-group">
                     <label style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">Randomize Questions</label>
                     <select id="examRandQuestions" class="form-control" style="width: 100%; padding: 0.5rem; font-family:'Poppins'; border-radius:4px; border: 1px solid var(--border-color);">
@@ -2067,6 +2085,17 @@
                     <select id="examShowResult" class="form-control" style="width: 100%; padding: 0.5rem; font-family:'Poppins'; border-radius:4px; border: 1px solid var(--border-color);">
                       <option value="Yes">Yes</option>
                       <option value="No">No</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">Max Attempts</label>
+                    <input type="number" id="examMaxAttempts" value="1" min="1" max="10" class="form-control" style="width: 100%; padding: 0.5rem; font-family:'Poppins'; border-radius:4px; border: 1px solid var(--border-color);" required>
+                  </div>
+                  <div class="form-group">
+                    <label style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">Negative Marking</label>
+                    <select id="examNegativeMarking" class="form-control" style="width: 100%; padding: 0.5rem; font-family:'Poppins'; border-radius:4px; border: 1px solid var(--border-color);">
+                      <option value="No">No</option>
+                      <option value="Yes">Yes (-0.25 mark per wrong MCQ/TF)</option>
                     </select>
                   </div>
                 </div>
@@ -2165,6 +2194,7 @@
                       <th style="padding: 0.75rem; font-weight: 700; text-align: center;">Grade</th>
                       <th style="padding: 0.75rem; font-weight: 700; text-align: center;">Standing</th>
                       <th style="padding: 0.75rem; font-weight: 700; text-align: center;">Completed At</th>
+                      <th style="padding: 0.75rem; font-weight: 700; text-align: center; width: 100px;">Actions</th>
                     </tr>
                   </thead>
                   <tbody id="cbtResultsTableBody">

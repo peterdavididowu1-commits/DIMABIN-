@@ -310,6 +310,10 @@ document.querySelectorAll(".sidebar-nav-btn").forEach(btn => {
     
     btn.classList.add("active");
     document.getElementById(`tab-${targetTab}`).classList.add("active");
+
+    if (targetTab === "cbt-control") {
+      initAdminCbtControl();
+    }
   });
 });
 
@@ -2341,3 +2345,407 @@ async function resetLecturerPassword(docId) {
   await seedDefaultAdmin();
   checkActiveSession();
 })();
+
+// CBT Control Center Administrative Functions
+let adminCbtExams = [];
+let adminActiveResults = [];
+
+async function initAdminCbtControl() {
+  const tableBody = document.getElementById("adminCbtExamsTableBody");
+  if (!tableBody) return;
+
+  // Bind subtab switching
+  const tabExams = document.getElementById("btnAdminCbtTabExams");
+  const tabSubmissions = document.getElementById("btnAdminCbtTabSubmissions");
+  const panelExams = document.getElementById("panelAdminCbtExams");
+  const panelSubmissions = document.getElementById("panelAdminCbtSubmissions");
+
+  if (tabExams && tabSubmissions && panelExams && panelSubmissions) {
+    tabExams.addEventListener("click", () => {
+      tabExams.classList.add("active");
+      tabExams.style.borderBottom = "3px solid var(--primary)";
+      tabExams.style.color = "var(--primary)";
+      tabSubmissions.classList.remove("active");
+      tabSubmissions.style.borderBottom = "3px solid transparent";
+      tabSubmissions.style.color = "var(--text-muted)";
+      panelExams.style.display = "block";
+      panelSubmissions.style.display = "none";
+    });
+
+    tabSubmissions.addEventListener("click", () => {
+      tabSubmissions.classList.add("active");
+      tabSubmissions.style.borderBottom = "3px solid var(--primary)";
+      tabSubmissions.style.color = "var(--primary)";
+      tabExams.classList.remove("active");
+      tabExams.style.borderBottom = "3px solid transparent";
+      tabExams.style.color = "var(--text-muted)";
+      panelExams.style.display = "none";
+      panelSubmissions.style.display = "block";
+      loadAdminCbtResultsDropdown();
+    });
+  }
+
+  // Load stats and list of exams
+  await loadAdminCbtDashboard();
+}
+
+async function loadAdminCbtDashboard() {
+  const tableBody = document.getElementById("adminCbtExamsTableBody");
+  if (!tableBody) return;
+
+  tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Fetching central exams...</td></tr>`;
+
+  try {
+    const examsSnap = await getDocs(collection(db, "cbtExams"));
+    adminCbtExams = examsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    const attemptsSnap = await getDocs(collection(db, "cbtAttempts"));
+    const liveAttempts = attemptsSnap.docs.filter(d => d.data().status === "started").length;
+
+    const resultsSnap = await getDocs(collection(db, "cbtResults"));
+    const totalSubmissions = resultsSnap.size;
+
+    const publishedCount = adminCbtExams.filter(ex => ex.status === "Published").length;
+
+    // Update stats counters
+    const elTotalEx = document.getElementById("adminCbtTotalExams");
+    const elPubEx = document.getElementById("adminCbtPublishedExams");
+    const elLiveEx = document.getElementById("adminCbtLiveExams");
+    const elSubEx = document.getElementById("adminCbtTotalSubmissions");
+
+    if (elTotalEx) elTotalEx.textContent = adminCbtExams.length;
+    if (elPubEx) elPubEx.textContent = publishedCount;
+    if (elLiveEx) elLiveEx.textContent = liveAttempts;
+    if (elSubEx) elSubEx.textContent = totalSubmissions;
+
+    if (adminCbtExams.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">No Computer-Based Test examinations found in the registry.</td></tr>`;
+      return;
+    }
+
+    tableBody.innerHTML = adminCbtExams.map(ex => {
+      const start = new Date(ex.startDate);
+      const end = new Date(ex.endDate);
+      const isClosed = ex.status === "Closed";
+      const isSuspended = ex.status === "Suspended";
+
+      let statusBadge = "";
+      if (isSuspended) {
+        statusBadge = `<span class="status-badge" style="background-color: rgba(220,53,69,0.1); color: #dc3545; font-weight: 700;"><i class="fa-solid fa-triangle-exclamation"></i> Suspended</span>`;
+      } else if (isClosed) {
+        statusBadge = `<span class="status-badge" style="background-color: rgba(108,117,125,0.1); color: #6c757d; font-weight: 700;"><i class="fa-solid fa-circle-xmark"></i> Closed</span>`;
+      } else {
+        statusBadge = `<span class="status-badge cleared" style="background-color: rgba(40,167,69,0.1); color: #28a745; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> Published</span>`;
+      }
+
+      const toggleActionHtml = (isSuspended || isClosed) 
+        ? `<button class="btn btn-action-reopen" data-id="${ex.id}" style="background-color: #28a745; color: white; border: none; padding: 0.3rem 0.5rem; border-radius: 4px; font-weight: 700; font-size: 0.75rem; cursor: pointer;" title="Re-open Exam"><i class="fa-solid fa-play"></i> Reopen</button>`
+        : `<button class="btn btn-action-suspend" data-id="${ex.id}" style="background-color: #dc3545; color: white; border: none; padding: 0.3rem 0.5rem; border-radius: 4px; font-weight: 700; font-size: 0.75rem; cursor: pointer;" title="Suspend Exam"><i class="fa-solid fa-pause"></i> Suspend</button>`;
+
+      return `
+        <tr style="border-bottom: 1px solid var(--border-color);">
+          <td style="padding: 0.75rem; font-weight: 700; color: var(--primary);">${ex.courseCode}</td>
+          <td style="padding: 0.75rem; font-weight: 600;">${escapeHtml(ex.title)}</td>
+          <td style="padding: 0.75rem;">${ex.duration} Mins</td>
+          <td style="padding: 0.75rem; text-align: center;">${ex.numQuestions}</td>
+          <td style="padding: 0.75rem; font-size: 0.75rem; color: var(--text-muted);">${start.toLocaleDateString()} - ${end.toLocaleDateString()}</td>
+          <td style="padding: 0.75rem; text-align: center;">${statusBadge}</td>
+          <td style="padding: 0.75rem; text-align: center; display: flex; gap: 0.35rem; justify-content: center;">
+            ${toggleActionHtml}
+            <button class="btn btn-action-delete" data-id="${ex.id}" style="background-color: #343a40; color: white; border: none; padding: 0.3rem 0.5rem; border-radius: 4px; font-weight: 700; font-size: 0.75rem; cursor: pointer;" title="Delete Exam"><i class="fa-solid fa-trash"></i></button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+    // Bind action listeners
+    document.querySelectorAll(".btn-action-reopen").forEach(btn => {
+      btn.addEventListener("click", () => handleAdminExamStatus(btn.getAttribute("data-id"), "Published"));
+    });
+
+    document.querySelectorAll(".btn-action-suspend").forEach(btn => {
+      btn.addEventListener("click", () => handleAdminExamStatus(btn.getAttribute("data-id"), "Suspended"));
+    });
+
+    document.querySelectorAll(".btn-action-delete").forEach(btn => {
+      btn.addEventListener("click", () => handleAdminDeleteExam(btn.getAttribute("data-id")));
+    });
+
+  } catch (err) {
+    console.error("Load admin CBT error:", err);
+    tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--danger-color);">Error fetching examinations: ${err.message}</td></tr>`;
+  }
+}
+
+async function handleAdminExamStatus(examId, newStatus) {
+  try {
+    await updateDoc(doc(db, "cbtExams", examId), {
+      status: newStatus,
+      updatedAt: new Date().toISOString()
+    });
+    window.showToast(`Examination status updated to [${newStatus}] successfully.`, "success");
+    await loadAdminCbtDashboard();
+  } catch (err) {
+    console.error("Update exam status error:", err);
+    window.showToast("Failed to update status: " + err.message, "error");
+  }
+}
+
+async function handleAdminDeleteExam(examId) {
+  if (!confirm("⚠️ DANGER: Permanent Deletion Request\n\nAre you absolutely sure you want to permanently delete this examination configuration? This will also disconnect existing student results and student attempts data from the active portal. This action is irreversible.")) {
+    return;
+  }
+
+  try {
+    await deleteDoc(doc(db, "cbtExams", examId));
+    window.showToast("CBT Examination deleted successfully.", "success");
+    await loadAdminCbtDashboard();
+  } catch (err) {
+    console.error("Delete exam error:", err);
+    window.showToast("Failed to delete exam: " + err.message, "error");
+  }
+}
+
+function loadAdminCbtResultsDropdown() {
+  const select = document.getElementById("adminResultsExamSelect");
+  if (!select) return;
+
+  select.innerHTML = `<option value="">-- Choose Examination --</option>`;
+
+  adminCbtExams.forEach(ex => {
+    const opt = document.createElement("option");
+    opt.value = ex.id;
+    opt.textContent = `${ex.courseCode} - ${ex.title}`;
+    select.appendChild(opt);
+  });
+
+  select.removeEventListener("change", handleAdminResultsSelectChange);
+  select.addEventListener("change", handleAdminResultsSelectChange);
+}
+
+async function handleAdminResultsSelectChange(e) {
+  const examId = e.target.value;
+  await loadAdminExamResults(examId);
+}
+
+async function loadAdminExamResults(examId) {
+  const tableBody = document.getElementById("adminCbtResultsTableBody");
+  const exportBtn = document.getElementById("btnAdminExportCbtResults");
+  const statsPanel = document.getElementById("adminSelectedExamStatsPanel");
+  if (!tableBody) return;
+
+  if (!examId) {
+    tableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 2rem; color: var(--text-muted);">Please select an examination from the dropdown above.</td></tr>`;
+    if (exportBtn) exportBtn.disabled = true;
+    if (statsPanel) statsPanel.style.display = "none";
+    return;
+  }
+
+  tableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 2rem; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Fetching results data...</td></tr>`;
+
+  try {
+    const rSnap = await getDocs(query(collection(db, "cbtResults"), where("examId", "==", examId)));
+    adminActiveResults = rSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    if (adminActiveResults.length === 0) {
+      tableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 2.5rem; color: var(--text-muted);"><i class="fa-solid fa-graduation-cap" style="font-size: 2rem; opacity: 0.3; display: block; margin-bottom: 0.5rem;"></i> No students have submitted answers for this examination yet.</td></tr>`;
+      if (exportBtn) exportBtn.disabled = true;
+      if (statsPanel) statsPanel.style.display = "none";
+      return;
+    }
+
+    if (exportBtn) exportBtn.disabled = false;
+    calculateAndRenderAdminStats();
+
+    tableBody.innerHTML = adminActiveResults.map(res => `
+      <tr style="border-bottom: 1px solid var(--border-color);">
+        <td style="padding: 0.75rem;">${res.studentId}</td>
+        <td style="padding: 0.75rem; font-weight: 600;">${escapeHtml(res.studentName)}</td>
+        <td style="padding: 0.75rem;">${res.studentMatric}</td>
+        <td style="padding: 0.75rem; text-align: center; font-weight: 700; color: var(--primary);">${res.score} / ${res.totalQuestions}</td>
+        <td style="padding: 0.75rem; text-align: center; font-weight: 600;">${res.percentage}%</td>
+        <td style="padding: 0.75rem; text-align: center; font-weight: 700;">${res.grade}</td>
+        <td style="padding: 0.75rem; text-align: center;">
+          <span class="status-badge ${res.passed ? 'cleared' : ''}" style="display:inline-block; font-size:0.7rem; font-weight:700; background-color: ${res.passed ? 'rgba(40,167,69,0.1)' : 'rgba(220,53,69,0.1)'}; color: ${res.passed ? '#28a745' : '#dc3545'}">${res.passed ? 'PASS' : 'FAIL'}</span>
+        </td>
+        <td style="padding: 0.75rem; text-align: center; font-size: 0.75rem; color: var(--text-muted);">${new Date(res.submittedAt).toLocaleString()}</td>
+        <td style="padding: 0.75rem; text-align: center;">
+          <button class="btn btn-admin-review-script" data-studentid="${res.studentId}" data-examid="${res.examId}" data-studentname="${escapeHtml(res.studentName)}" style="background-color: var(--accent); color: var(--primary); border: none; padding: 0.35rem 0.6rem; border-radius: 4px; font-weight: 700; font-size: 0.75rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.25rem;"><i class="fa-solid fa-file-invoice"></i> Review</button>
+        </td>
+      </tr>
+    `).join("");
+
+    document.querySelectorAll(".btn-admin-review-script").forEach(btn => {
+      btn.addEventListener("click", () => {
+        reviewAdminStudentScript(btn.getAttribute("data-studentid"), btn.getAttribute("data-examid"), btn.getAttribute("data-studentname"));
+      });
+    });
+
+  } catch (err) {
+    console.error("Load admin results error:", err);
+    tableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 2rem; color: var(--danger-color);">Error fetching results: ${err.message}</td></tr>`;
+  }
+}
+
+function calculateAndRenderAdminStats() {
+  const statsPanel = document.getElementById("adminSelectedExamStatsPanel");
+  if (!statsPanel) return;
+
+  if (adminActiveResults.length === 0) {
+    statsPanel.style.display = "none";
+    return;
+  }
+
+  statsPanel.style.display = "grid";
+
+  const total = adminActiveResults.length;
+  let sum = 0;
+  let max = 0;
+  let min = 100;
+  let passCount = 0;
+
+  adminActiveResults.forEach(r => {
+    sum += r.percentage;
+    if (r.percentage > max) max = r.percentage;
+    if (r.percentage < min) min = r.percentage;
+    if (r.passed) passCount++;
+  });
+
+  const avg = Math.round(sum / total);
+  const passRate = Math.round((passCount / total) * 100);
+  const failRate = 100 - passRate;
+
+  document.getElementById("adminCbtStatsAvgScore").textContent = `${avg}%`;
+  document.getElementById("adminCbtStatsHighLow").textContent = `${max}% / ${min}%`;
+  document.getElementById("adminCbtStatsPassRate").textContent = `${passRate}%`;
+  document.getElementById("adminCbtStatsFailRate").textContent = `${failRate}%`;
+}
+
+async function reviewAdminStudentScript(studentId, examId, studentName) {
+  try {
+    let studentAnswersMap = {};
+    const singleAnsRef = doc(db, "cbtAnswers", `${studentId.replace(/\//g, "-")}_${examId}`);
+    const singleAnsSnap = await getDoc(singleAnsRef);
+    if (singleAnsSnap.exists()) {
+      studentAnswersMap = singleAnsSnap.data().answers || {};
+    } else {
+      const answersSnap = await getDocs(query(collection(db, "cbtAnswers"), where("studentId", "==", studentId), where("examId", "==", examId)));
+      answersSnap.forEach(d => {
+        const data = d.data();
+        if (data.questionId) {
+          studentAnswersMap[data.questionId] = data.selectedOption;
+        } else if (data.answers) {
+          studentAnswersMap = { ...studentAnswersMap, ...data.answers };
+        }
+      });
+    }
+
+    const exam = adminCbtExams.find(ex => ex.id === examId);
+    if (!exam) return;
+
+    const qSnap = await getDocs(query(collection(db, "cbtQuestions"), where("courseCode", "==", exam.courseCode)));
+    const questions = qSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    let rowsHtml = "";
+    questions.forEach((q, idx) => {
+      const studentChoice = studentAnswersMap[q.id] || "No Answer";
+      const isCorrect = studentChoice === q.correctAnswer;
+      const points = isCorrect ? (q.marks || 1) : 0;
+      
+      let answerDetail = "";
+      if (q.qType === "MCQ" || q.qType === "TF" || !q.qType) {
+        answerDetail = `
+          <div><strong>Student Selected:</strong> <span style="color: ${isCorrect ? 'green' : 'red'}; font-weight: bold;">${studentChoice}</span></div>
+          <div><strong>Correct Answer:</strong> <span style="color: green; font-weight: bold;">${q.correctAnswer}</span></div>
+        `;
+      } else if (q.qType === "SA") {
+        const studentNorm = String(studentChoice).trim().toLowerCase();
+        const correctNorm = String(q.correctAnswer).trim().toLowerCase();
+        const saCorrect = studentNorm === correctNorm;
+        answerDetail = `
+          <div><strong>Student Typed:</strong> <span style="color: ${saCorrect ? 'green' : 'red'}; font-weight: bold;">"${escapeHtml(studentChoice)}"</span></div>
+          <div><strong>Expected Answer:</strong> <span style="color: green; font-weight: bold;">"${escapeHtml(q.correctAnswer)}"</span></div>
+        `;
+      } else {
+        answerDetail = `
+          <div><strong>Student Submission:</strong> <span style="color: var(--primary); font-weight: bold; font-family: monospace;">"${escapeHtml(studentChoice)}"</span></div>
+          <div style="color: #b58900;"><em>[Essay - Manually Graded or Structural Only]</em></div>
+        `;
+      }
+
+      rowsHtml += `
+        <div style="border-bottom: 1.5px solid var(--border-color); padding: 1rem 0;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 0.5rem;">
+            <span style="font-weight: 700; color: var(--primary);">Question ${idx + 1} (${q.qType || 'MCQ'})</span>
+            <span style="background-color: ${isCorrect ? '#E2F0D9' : '#FCE4D6'}; color: ${isCorrect ? 'green' : 'red'}; font-weight: bold; font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px;">
+              ${points} / ${q.marks || 1} Marks
+            </span>
+          </div>
+          <p style="margin: 0.25rem 0 0.75rem 0; font-size: 0.9rem; font-weight: 500;">${escapeHtml(q.question)}</p>
+          <div style="font-size: 0.82rem; background-color: var(--bg-slate); padding: 0.75rem; border-radius: 6px; display: flex; flex-direction: column; gap: 0.25rem;">
+            ${answerDetail}
+          </div>
+          ${q.explanation ? `<div style="font-size: 0.8rem; background-color: #FFF2CC; padding: 0.5rem; border-radius: 4px; margin-top: 0.5rem; color: var(--primary-dark);"><strong>Explanation:</strong> ${escapeHtml(q.explanation)}</div>` : ''}
+        </div>
+      `;
+    });
+
+    const modalHtml = `
+      <div id="adminScriptReviewModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1.5rem; font-family: 'Poppins', sans-serif;">
+        <div style="background-color: white; border-radius: var(--border-radius-lg, 12px); max-width: 650px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 2rem; box-shadow: var(--shadow-lg, 0 10px 15px rgba(0,0,0,0.1)); position: relative;">
+          <button id="closeAdminScriptReviewModal" style="position: absolute; top: 1rem; right: 1rem; border: none; background: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+          <h3 style="color: var(--primary); margin: 0 0 0.25rem 0; font-size: 1.25rem; font-weight: 800;"><i class="fa-solid fa-graduation-cap" style="color: var(--accent);"></i> Script Review</h3>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem; font-weight: 600;">Student: <span style="color: var(--primary);">${escapeHtml(studentName)}</span> | Course: <span style="color: var(--accent);">${exam.courseCode}</span></p>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            ${rowsHtml || '<p style="text-align: center; color: var(--text-muted);">No questions found for review.</p>'}
+          </div>
+        </div>
+      </div>
+    `;
+
+    const div = document.createElement("div");
+    div.innerHTML = modalHtml;
+    document.body.appendChild(div);
+
+    document.getElementById("closeAdminScriptReviewModal").addEventListener("click", () => {
+      div.remove();
+    });
+
+  } catch (err) {
+    console.error("Admin review script error:", err);
+    window.showToast("Failed to load script: " + err.message, "error");
+  }
+}
+
+// Bind Export CSV Button Trigger
+document.getElementById("btnAdminExportCbtResults")?.addEventListener("click", () => {
+  if (adminActiveResults.length === 0) return;
+
+  const select = document.getElementById("adminResultsExamSelect");
+  const examText = select ? select.options[select.selectedIndex].text : "cbt_examination";
+  const fileName = `${examText.replace(/[\s/]+/g, "_").toLowerCase()}_results.csv`;
+
+  const headers = ["Student ID", "Full Name", "Matric Number", "Score", "Total Qs", "Percentage (%)", "Grade", "Status", "Submitted At"];
+  const rows = adminActiveResults.map(r => [
+    r.studentId,
+    r.studentName,
+    r.studentMatric,
+    r.score,
+    r.totalQuestions,
+    r.percentage,
+    r.grade,
+    r.passed ? "PASS" : "FAIL",
+    r.submittedAt
+  ]);
+
+  let csvContent = "data:text/csv;charset=utf-8," 
+    + [headers.join(","), ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))].join("\n");
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", fileName);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+});
