@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student CBT Dashboard | DIVINE MANDATE BIBLE INSTITUTE (DIMABIN)</title>
+  
+  <!-- Browser Favicon -->
+  <link rel="icon" type="image/jpeg" href="../assets/images/logo.jpg">
+  
+  <!-- FontAwesome Icons & Stylesheets -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../assets/css/style.css">
+
+  <style>
+    :root {
+      --primary: #1F3B82; /* Deep Royal Blue */
+      --primary-light: #3058BF;
+      --primary-dark: #122452;
+      --primary-rgb: 31, 59, 130;
+      
+      --accent: #F4B000; /* Gold */
+      --accent-hover: #DDA000;
+      --accent-light: #FFFBF0;
+      --accent-rgb: 244, 176, 0;
+      
+      --bg-white: #FFFFFF;
+      --bg-slate: #F4F7FC;
+      --border-color: #E2E8F0;
+    }
+
+    body {
+      background-color: var(--bg-slate);
+      font-family: 'Poppins', sans-serif;
+      color: var(--text-dark);
+      margin: 0;
+      padding: 0;
+    }
+
+    .portal-hero {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      padding: 4rem 0 3rem 0;
+      text-align: center;
+      color: var(--bg-white);
+      position: relative;
+    }
+
+    .dashboard-container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+
+    .profile-summary-card {
+      background-color: var(--bg-white);
+      border-radius: var(--border-radius-lg);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      padding: 1.5rem 2rem;
+      margin-bottom: 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .profile-info {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .profile-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background-color: var(--accent-light);
+      border: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: var(--primary);
+    }
+
+    .profile-text h2 {
+      margin: 0;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
+    .profile-text p {
+      margin: 0.25rem 0 0 0;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .profile-meta-grid {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      font-size: 0.85rem;
+    }
+
+    .meta-item span {
+      display: block;
+      font-weight: 700;
+      color: var(--primary);
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      margin-bottom: 0.15rem;
+    }
+
+    .meta-item div {
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+
+    /* Section Cards layout */
+    .dashboard-section {
+      margin-bottom: 3rem;
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 0.5rem;
+    }
+
+    .exam-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 576px) {
+      .exam-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .exam-card {
+      background-color: var(--bg-white);
+      border-radius: var(--border-radius-lg);
+      border: 1.5px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      padding: 1.5rem;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .exam-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: rgba(31, 59, 130, 0.2);
+    }
+
+    .exam-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background-color: var(--primary);
+    }
+
+    .exam-card.completed::before {
+      background-color: #28a745;
+    }
+
+    .exam-card.upcoming::before {
+      background-color: #F4B000;
+    }
+
+    .exam-badge {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+
+    .badge-live {
+      background-color: rgba(31, 59, 130, 0.1);
+      color: var(--primary);
+    }
+
+    .badge-completed {
+      background-color: rgba(40, 167, 69, 0.1);
+      color: #28a745;
+    }
+
+    .badge-upcoming {
+      background-color: rgba(244, 176, 0, 0.1);
+      color: #b77a00;
+    }
+
+    .exam-title-row {
+      margin-bottom: 1rem;
+    }
+
+    .exam-code {
+      font-weight: 800;
+      color: var(--accent);
+      font-size: 0.85rem;
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    .exam-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin: 0;
+    }
+
+    .exam-course-title {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin: 0.15rem 0 0 0;
+    }
+
+    .exam-details-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.75rem 0;
+      margin-bottom: 1rem;
+      font-size: 0.8rem;
+      color: var(--text-dark);
+    }
+
+    .exam-detail-item i {
+      color: var(--primary);
+      width: 16px;
+      margin-right: 0.25rem;
+    }
+
+    .exam-footer-action {
+      text-align: right;
+    }
+
+    .btn-start-exam {
+      background-color: #1F3B82;
+      color: white;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.6rem 1.5rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+      transition: background-color 0.2s;
+      box-shadow: 0 2px 5px rgba(31, 59, 130, 0.2);
+    }
+
+    .btn-start-exam:hover {
+      background-color: var(--primary-light);
+    }
+
+    .cbt-option-card {
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--border-radius-md);
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 0.5rem;
+    }
+    
+    .cbt-option-card:hover {
+      border-color: var(--primary-light);
+      background-color: rgba(31, 59, 130, 0.02);
+    }
+    
+    .cbt-option-card.active {
+      border-color: var(--primary);
+      background-color: rgba(31, 59, 130, 0.04);
+    }
+
+    /* Print styling overrides */
+    @media print {
+      body {
+        background-color: white !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sticky Header Navigation -->
+  <header class="no-print">
+    <div class="container nav-bar">
+      <!-- Logo and branding on the left -->
+      <a href="../index.html" class="logo-container">
+        <div class="logo-icon-fallback" style="width: 44px; height: 44px; background-color: var(--primary); border: 2px solid var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; color: var(--accent); font-weight: bold; flex-shrink: 0;">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <div class="logo-text">
+          <span class="logo-title">DIMABIN</span>
+          <span class="logo-subtitle">Citadel of Learning</span>
+        </div>
+      </a>
+
+      <!-- Desktop Navigation Menu -->
+      <nav>
+        <ul class="nav-menu">
+          <li><a href="../index.html" class="nav-link">Home</a></li>
+          <li><a href="about.html" class="nav-link">About</a></li>
+          <li><a href="admissions.html" class="nav-link">Admissions</a></li>
+          <li class="dropdown">
+            <a href="#" class="nav-link dropdown-toggle active">Portal <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem;"></i></a>
+            <ul class="dropdown-menu">
+              <li><a href="student-portal.html" class="dropdown-item active">Student Portal</a></li>
+              <li><a href="lecturer-portal.html" class="dropdown-item">Lecturer Portal</a></li>
+              <li><a href="admin-portal.html" class="dropdown-item">Admin Portal</a></li>
+            </ul>
+          </li>
+          <li><a href="contact.html" class="nav-link">Contact</a></li>
+        </ul>
+      </nav>
+
+      <!-- Desktop Quick Apply CTA -->
+      <div class="flex-row" style="gap: 1rem;">
+        <a href="student-portal.html" class="btn btn-primary d-none-md">Exit Dashboard</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Anonymous State: Please login first -->
+  <div id="anonymousCbtView" class="no-print" style="display: none; padding: 6rem 1.5rem; text-align: center; background: white; min-height: 100vh;">
+    <div style="max-width: 500px; margin: 0 auto; border: 1px solid var(--border-color); padding: 3rem; border-radius: 8px; box-shadow: var(--shadow-sm);">
+      <i class="fa-solid fa-user-shield" style="font-size: 3.5rem; color: var(--primary); margin-bottom: 1.5rem;"></i>
+      <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 0.5rem;">Authentication Required</h2>
+      <p style="font-size: 0.92rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 2rem;">Please sign in to your main Student Portal account first to map and activate scheduled CBT Syllabus Examinations.</p>
+      <a href="student-portal.html" class="btn btn-primary" style="padding: 0.75rem 2rem; font-weight: 700; display: inline-block;">Go to Student Portal Login</a>
+    </div>
+  </div>
+
+  <!-- Authenticated CBT Dashboard State Container -->
+  <div id="authenticatedCbtView" style="display: none;">
+    
+    <!-- Hero Banner -->
+    <section class="portal-hero no-print">
+      <div class="container">
+        <h1 style="font-size: 1.8rem; font-weight: 800; color: white; margin: 0;">DIMABIN CBT PORTAL</h1>
+        <p style="color: var(--accent); margin: 0.4rem 0 0 0; font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Online Examination System</p>
+      </div>
+    </section>
+
+    <div class="dashboard-container">
+      
+      <!-- Student Profile Summary -->
+      <div class="profile-summary-card no-print">
+        <div class="profile-info">
+          <div class="profile-avatar">
+            <i class="fa-solid fa-user-graduate"></i>
+          </div>
+          <div class="profile-text">
+            <h2 id="studentNameDisplay">Loading...</h2>
+            <p id="studentEmailDisplay">Loading email...</p>
+          </div>
+        </div>
+        
+        <div class="profile-meta-grid">
+          <div class="meta-item">
+            <span>Student ID</span>
+            <div id="studentIdDisplay">STU/ID</div>
+          </div>
+          <div class="meta-item">
+            <span>Matric Number</span>
+            <div id="matricNumberDisplay">MATRIC/NO</div>
+          </div>
+          <div class="meta-item">
+            <span>Academic Session</span>
+            <div id="studentSessionDisplay">2026/2027</div>
+          </div>
+          <div class="meta-item">
+            <span>Portal Status</span>
+            <div id="studentStatusDisplay" style="color: #28a745; font-weight: 700;"><span style="height: 8px; width: 8px; background-color: #28a745; border-radius: 50%; display: inline-block; margin-right: 4px;"></span> Active</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CBT Layout View -->
+      <div id="cbtDashboardView" class="no-print">
+        
+        <!-- Safety notice banner -->
+        <div style="background-color: #e2f0d9; border: 1px solid #c5e1a5; color: #385723; padding: 1rem 1.25rem; border-radius: var(--border-radius-md); font-size: 0.88rem; display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem;">
+          <i class="fa-solid fa-shield-halved" style="font-size: 1.2rem;"></i>
+          <span><strong>Secure Assessment Environment:</strong> Do not refresh or exit the tab once you start an examination. Your response sequence and clock timer will synchronize with the cloud database in real-time.</span>
+        </div>
+
+        <!-- Section 1: Active/Published Examinations -->
+        <div class="dashboard-section">
+          <h3 class="section-title">
+            <i class="fa-solid fa-circle-play" style="color: #1F3B82;"></i> Active Examinations
+          </h3>
+          <div class="exam-grid" id="activeExamsContainer">
+            <!-- Dynamically injected active cards -->
+            <div style="text-align: center; padding: 2.5rem; color: var(--text-muted); width: 100%;">
+              <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary); margin-bottom: 0.5rem;"></i>
+              <p>Muting database listener and validating registered courses...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Completed Examinations -->
+        <div class="dashboard-section">
+          <h3 class="section-title">
+            <i class="fa-solid fa-circle-check" style="color: #28a745;"></i> Completed Examinations
+          </h3>
+          <div class="exam-grid" id="completedExamsContainer">
+            <!-- Dynamically injected completed cards -->
+            <div style="padding: 1.5rem; text-align: center; width: 100%; color: var(--text-muted); font-size: 0.9rem;">
+              No completed examination logs.
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Upcoming Examinations -->
+        <div class="dashboard-section">
+          <h3 class="section-title">
+            <i class="fa-solid fa-circle-info" style="color: #F4B000;"></i> Upcoming Examinations
+          </h3>
+          <div class="exam-grid" id="upcomingExamsContainer">
+            <!-- Dynamically injected upcoming cards -->
+            <div style="padding: 1.5rem; text-align: center; width: 100%; color: var(--text-muted); font-size: 0.9rem;">
+              No upcoming examinations scheduled.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Active Exam Screen Container (Covering screen during exam taking) -->
+      <div id="cbtActiveExamScreen" style="display: none; background-color: var(--bg-white); min-height: 80vh; padding: 2rem; border-radius: var(--border-radius-lg); box-shadow: var(--shadow-md);">
+        
+        <!-- Exam Header Bar -->
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; background-color: var(--primary-dark); color: white; padding: 1.25rem 1.5rem; border-radius: var(--border-radius-md); margin-bottom: 1.5rem; gap: 1rem;">
+          <div>
+            <span id="activeExamCourseBadge" style="background-color: var(--accent); color: var(--primary-dark); padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 800; font-size: 0.75rem; margin-right: 0.5rem;">COURSE</span>
+            <h2 id="activeExamTitle" style="display: inline-block; font-size: 1.2rem; font-weight: 700; margin: 0; color: white;">Final Examination</h2>
+          </div>
+          
+          <!-- Countdown Timer Box -->
+          <div style="display: flex; align-items: center; gap: 0.75rem; background-color: rgba(255,255,255,0.1); padding: 0.5rem 1rem; border-radius: var(--border-radius-md); border: 1px dashed var(--accent);">
+            <i class="fa-solid fa-clock-rotate-left" style="color: var(--accent); font-size: 1.2rem;"></i>
+            <div style="text-align: right;">
+              <div style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.8;">Time Remaining</div>
+              <div id="cbtExamTimer" style="font-family: monospace; font-size: 1.25rem; font-weight: 800; color: var(--accent);">00:00:00</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Exam Content Layout (Left side Question, Right side Nav Matrix) -->
+        <div style="display: grid; grid-template-columns: 2.2fr 1fr; gap: 1.5rem;" id="cbtExamGrid">
+          
+          <!-- Left Column: The active question and choices -->
+          <div>
+            <div style="background: white; border: 1.5px solid var(--border-color); border-radius: var(--border-radius-lg); padding: 2rem; border-left: 5px solid var(--primary); min-height: 380px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow-sm);">
+              <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                  <span id="activeQuestionIndexText" style="font-weight: 800; color: var(--primary); font-size: 0.95rem;">Question 1 of 20</span>
+                  <span id="activeQuestionMarksText" style="font-size: 0.82rem; background-color: var(--bg-slate); color: var(--text-dark); padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 600;">1 Mark</span>
+                </div>
+
+                <!-- Question text -->
+                <p id="activeQuestionText" style="font-size: 1.15rem; font-weight: 600; color: var(--text-dark); line-height: 1.6; margin-bottom: 2rem;">Loading question text...</p>
+
+                <!-- Option cards -->
+                <div style="display: flex; flex-direction: column; gap: 1rem;" id="cbtOptionsContainer">
+                  <!-- Choices will be dynamically populated -->
+                </div>
+              </div>
+
+              <!-- Navigation Keys -->
+              <div style="display: flex; justify-content: space-between; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+                <button class="btn" id="btnCbtPrev" style="background-color: var(--bg-slate); color: var(--text-dark); border: 1px solid var(--border-color);"><i class="fa-solid fa-circle-arrow-left"></i> Previous</button>
+                <button class="btn" id="btnCbtFlag" style="background-color: #F4B000; color: var(--primary-dark); font-weight: 700;"><i class="fa-solid fa-flag"></i> Flag for Review</button>
+                <button class="btn" id="btnCbtNext" style="background-color: var(--primary); color: white;">Next <i class="fa-solid fa-circle-arrow-right"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Question matrix navigator and submission card -->
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Matrix Index Box -->
+            <div style="background: white; border: 1.5px solid var(--border-color); border-radius: var(--border-radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm);">
+              <h3 style="font-size: 0.9rem; font-weight: 800; color: var(--text-dark); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;"><i class="fa-solid fa-circle-nodes" style="color: var(--primary);"></i> Questions Grid</h3>
+              
+              <div id="cbtMatrixGrid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem;">
+                <!-- Dynamic grid elements -->
+              </div>
+
+              <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-color); font-size: 0.72rem; color: var(--text-muted);">
+                <div style="display: flex; align-items: center; gap: 0.25rem;"><span style="width: 12px; height: 12px; background-color: var(--primary); border-radius: 3px; display: inline-block;"></span> Answered</div>
+                <div style="display: flex; align-items: center; gap: 0.25rem;"><span style="width: 12px; height: 12px; background-color: #F4B000; border-radius: 3px; display: inline-block;"></span> Flagged</div>
+                <div style="display: flex; align-items: center; gap: 0.25rem;"><span style="width: 12px; height: 12px; background-color: var(--bg-slate); border: 1px solid var(--border-color); border-radius: 3px; display: inline-block;"></span> Unvisited</div>
+              </div>
+            </div>
+
+            <!-- Submit Exam Action Card -->
+            <div style="background: white; border: 1.5px solid var(--border-color); border-radius: var(--border-radius-lg); padding: 1.5rem; text-align: center; border-top: 4px solid var(--danger-color, #DC3545); box-shadow: var(--shadow-sm);">
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.5;">Ensure all questions have been reviewed thoroughly. You cannot alter answers once submitted.</p>
+              <button class="btn" id="btnCbtSubmitExam" style="background-color: var(--danger-color, #DC3545); color: white; width: 100%; font-weight: 700; border: none; padding: 0.75rem;"><i class="fa-solid fa-paper-plane"></i> Final Submit Exam</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- CBT Assessment Instructions Overlay (Modal) -->
+      <div id="cbtInstructionsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 5000; align-items: center; justify-content: center; padding: 1.5rem;">
+        <div style="background: white; border-radius: var(--border-radius-lg); max-width: 600px; width: 100%; padding: 2.25rem; max-height: 90vh; overflow-y: auto; border-top: 6px solid var(--accent); box-shadow: var(--shadow-lg);">
+          <div style="text-align: center; margin-bottom: 1.5rem;">
+            <i class="fa-solid fa-laptop-code" style="font-size: 3.5rem; color: var(--primary); margin-bottom: 1rem;"></i>
+            <h3 id="cbtModalTitle" style="font-size: 1.4rem; font-weight: 800; color: var(--primary); margin-bottom: 0.25rem;">DIMABIN Examination</h3>
+            <p id="cbtModalCourseCode" style="color: var(--accent); font-weight: 800; font-size: 0.9rem; text-transform: uppercase;">COURSE</p>
+          </div>
+
+          <div style="background-color: var(--bg-slate); padding: 1.25rem; border-radius: var(--border-radius-md); font-size: 0.88rem; color: var(--text-dark); margin-bottom: 1.5rem; border-left: 3px solid var(--primary);">
+            <h4 style="font-weight: 700; margin-bottom: 0.5rem; color: var(--primary);"><i class="fa-solid fa-shield-halved"></i> Essential Rules & Instructions:</h4>
+            <ul style="padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.4rem; line-height: 1.5;">
+              <li>This assessment is timed. Once started, the timer cannot be paused.</li>
+              <li>Do not reload this tab or navigate away. Doing so may invalidate your session coordinates.</li>
+              <li>The system auto-saves your progress to the secure cloud registry.</li>
+              <li>Only <strong>one attempt</strong> is permitted. Multiple submissions are automatically rejected.</li>
+              <li>Your grades will be automatically registered upon final submission.</li>
+            </ul>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.75rem; font-size: 0.85rem; color: var(--text-muted); background: white; border: 1.5px solid var(--border-color); padding: 0.85rem; border-radius: var(--border-radius-md);">
+            <div><i class="fa-solid fa-hourglass-half" style="color: var(--primary);"></i> <strong>Duration:</strong> <span id="cbtModalDuration">60 minutes</span></div>
+            <div><i class="fa-solid fa-circle-question" style="color: var(--primary);"></i> <strong>Total Questions:</strong> <span id="cbtModalQuestions">20 MCQ</span></div>
+          </div>
+
+          <div style="display: flex; gap: 1rem;">
+            <button class="btn" id="btnCbtCloseModal" style="flex: 1; background-color: var(--bg-slate); color: var(--text-dark); border: 1px solid var(--border-color); cursor: pointer; padding: 0.75rem 1rem;">Cancel</button>
+            <button class="btn" id="btnCbtConfirmStart" style="flex: 1; background-color: var(--primary); color: white; font-weight: 700; border: none; cursor: pointer; padding: 0.75rem 1rem;">I Agree & Start Test</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CBT Immediate Result Report Panel (Shown after exam complete) -->
+      <div id="cbtResultReportPanel" style="display: none; max-width: 650px; margin: 2rem auto; text-align: center;">
+        <div style="background: white; border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-md); padding: 3rem; border-top: 6px solid #28A745; position: relative; overflow: hidden;">
+          <!-- Graphic feedback seal -->
+          <div id="cbtResultSeal" style="position: absolute; top: -15px; right: -15px; width: 100px; height: 100px; background-color: rgba(40,167,69,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; transform: rotate(15deg);">
+            <i class="fa-solid fa-award" style="font-size: 3rem; color: #28a745; opacity: 0.25;"></i>
+          </div>
+
+          <i class="fa-solid fa-circle-check" style="font-size: 4rem; color: #28A745; margin-bottom: 1.5rem;"></i>
+          <h2 style="font-size: 1.75rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 0.25rem;">Assessment Logged Successfully!</h2>
+          <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem;">Your responses have been successfully committed to the DIMABIN Central Registry.</p>
+
+          <!-- Scoring Card -->
+          <div style="background-color: var(--bg-slate); border: 1.5px solid var(--border-color); padding: 2rem; border-radius: var(--border-radius-lg); margin-bottom: 2.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: center;">
+            <div style="border-right: 1px solid var(--border-color); padding-right: 1rem;">
+              <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Your Grade Score</span>
+              <div id="cbtResultGradeScore" style="font-size: 2.5rem; font-weight: 900; color: var(--primary); margin: 0.25rem 0;">18 / 20</div>
+              <span id="cbtResultPercent" style="font-size: 0.95rem; font-weight: 800; color: var(--accent);">90% Correct</span>
+            </div>
+            <div>
+              <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Performance Class</span>
+              <div id="cbtResultGradeChar" style="font-size: 2.5rem; font-weight: 900; color: var(--accent); margin: 0.25rem 0;">A</div>
+              <span id="cbtResultStatusBadge" style="display: inline-block; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 800; font-size: 0.75rem; background-color: #28A745; color: white;">EXCELLENT (PASS)</span>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 0.75rem; text-align: left; background-color: #fcf8e3; border: 1px solid #fbeed5; padding: 1rem; border-radius: var(--border-radius-md); font-size: 0.8rem; color: #c09853; line-height: 1.5; margin-bottom: 2rem;">
+            <div><i class="fa-solid fa-info-circle"></i> <strong>Note:</strong> Under active academic policy rules, this immediate assessment score is subject to final lecturer audit and general moderation parameters before appearing on official registration transcripts.</div>
+          </div>
+
+          <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <button class="btn" id="btnCbtResultPrint" style="background-color: #28A745; color: white; min-width: 180px; padding: 0.75rem 1.5rem; border: none; border-radius: 4px; font-weight: 700; cursor: pointer;"><i class="fa-solid fa-print"></i> Print Result Slip</button>
+            <button class="btn" id="btnCbtResultExit" style="background-color: var(--primary); color: white; min-width: 180px; padding: 0.75rem 1.5rem; border: none; border-radius: 4px; font-weight: 700; cursor: pointer;"><i class="fa-solid fa-house-user"></i> Exit to Dashboard</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast system wrapper for notifications -->
+  <div style="position: fixed; top: 100px; right: 24px; z-index: 2000; display: flex; flex-direction: column; gap: 0.75rem;" id="toastContainer" class="no-print"></div>
+
+  <!-- Footer -->
+  <footer class="no-print">
+    <div class="container">
+      <div class="grid-4 footer-top">
+        <!-- Logo & About Column -->
+        <div class="footer-col" style="grid-column: span 1.5;">
+          <div class="footer-logo-title">DIMABIN</div>
+          <div class="footer-logo-sub">Divine Mandate Bible Institute</div>
+          <p class="footer-about">
+            An Interdenominational Citadel of Learning built to raise equipped, biblically sound, and ethically outstanding Christian leaders.
+          </p>
+          <div class="footer-socials">
+            <a href="#" class="social-btn" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+            <a href="#" class="social-btn" aria-label="Twitter"><i class="fa-brands fa-twitter"></i></a>
+            <a href="#" class="social-btn" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#" class="social-btn" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+          </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="footer-col">
+          <h3>Quick Links</h3>
+          <ul class="footer-links">
+            <li><a href="../index.html">Home</a></li>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="admissions.html">Admissions</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+          </ul>
+        </div>
+
+        <!-- Portals Links -->
+        <div class="footer-col">
+          <h3>Institute Portals</h3>
+          <ul class="footer-links">
+            <li><a href="student-portal.html"><i class="fa-solid fa-user-graduate"></i> Student Portal</a></li>
+            <li><a href="lecturer-portal.html"><i class="fa-solid fa-chalkboard-user"></i> Lecturer Portal</a></li>
+            <li><a href="admin-portal.html"><i class="fa-solid fa-user-shield"></i> Admin Portal</a></li>
+          </ul>
+        </div>
+
+        <!-- Contact Column -->
+        <div class="footer-col">
+          <h3>Contact Us</h3>
+          <ul class="footer-contact-list">
+            <li>
+              <i class="fa-solid fa-location-dot"></i>
+              <span>Goshen 13, Kusimo Street, Kemta, Oke-Ola, Idi-Aba, Abeokuta, Ogun State, Nigeria.</span>
+            </li>
+            <li>
+              <i class="fa-solid fa-phone"></i>
+              <span>0803 819 4611<br>0806 218 6974<br>0803 728 2082</span>
+            </li>
+            <li>
+              <i class="fa-solid fa-envelope"></i>
+              <span>dimabin233@gmail.com<br>olalekan16650@gmail.com</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Copyright Area -->
+      <div class="footer-bottom">
+        <div class="footer-bottom-wrap">
+          <p>© 2026 Divine Mandate Bible Institute. All Rights Reserved. Designed to academic specifications.</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="../assets/js/main.js"></script>
+  <script type="module" src="../assets/js/student-cbt-dashboard.js"></script>
+</body>
+</html>
