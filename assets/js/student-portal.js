@@ -969,49 +969,74 @@ async function renderStudentCbtDashboard() {
   container.innerHTML = `
     <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
       <i class="fa-solid fa-spinner fa-spin" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem;"></i>
-      <p style="font-weight: 600;">Mapping curriculum course coordinates and checking scheduled CBT schedules...</p>
+      <p style="font-weight: 600;">Authenticating course registrations and mapping scheduled CBT schedules...</p>
     </div>
   `;
 
   try {
-    // 1. Fetch student's course registration slip for the current session/semester coordinates
-    const regDocId = `${currentStudentDoc.studentId.replace(/\//g, "-")}_${timelineSettings.session.replace(/\//g, "-")}`;
-    const regSnap = await getDoc(doc(db, "registrations", regDocId));
-
-    if (!regSnap.exists()) {
-      container.innerHTML = `
-        <div style="text-align: center; padding: 3.5rem; background: white; border: 1.5px solid var(--border-color); border-radius: var(--border-radius-lg); max-width: 550px; margin: 2rem auto;">
-          <i class="fa-solid fa-file-signature" style="font-size: 4rem; color: var(--accent); margin-bottom: 1.5rem;"></i>
-          <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 0.5rem;">Course Registration Required</h3>
-          <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.5rem;">You have not completed your official Course Registration slip for session <strong>${timelineSettings.session}</strong>, <strong>${timelineSettings.semester}</strong> yet.</p>
-          <button class="btn" onclick="const btn = document.querySelector('.sidebar-nav-btn[data-tab=\\'courses\\']'); if(btn) btn.click();" style="background-color: var(--primary); color: white;"><i class="fa-solid fa-pen-to-square"></i> Go to Course Registration</button>
-        </div>
-      `;
-      return;
-    }
-
-    const regData = regSnap.data();
-    const registeredCourses = regData.registeredCourses || [];
+    // 1. Fetch ALL registered courses for this student
+    const regQuery = query(collection(db, "registrations"), where("studentId", "==", currentStudentDoc.studentId));
+    const regSnap = await getDocs(regQuery);
+    
+    let registeredCourses = [];
+    regSnap.forEach(d => {
+      const data = d.data();
+      if (Array.isArray(data.registeredCourses)) {
+        data.registeredCourses.forEach(code => {
+          if (!registeredCourses.includes(code)) {
+            registeredCourses.push(code);
+          }
+        });
+      }
+    });
 
     if (registeredCourses.length === 0) {
       container.innerHTML = `
-        <div style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
-          <i class="fa-solid fa-triangle-exclamation" style="font-size: 2.5rem; margin-bottom: 1rem;"></i>
-          <p>No courses registered on your approved Course Slip. Please register courses first.</p>
+        <div style="text-align: center; padding: 4rem 2rem; color: var(--text-muted); background: white; border-radius: var(--border-radius-lg); border: 1.5px solid var(--border-color);">
+          <i class="fa-solid fa-calendar-xmark" style="font-size: 3.5rem; opacity: 0.3; display: block; margin-bottom: 1rem; color: var(--primary);"></i>
+          <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 0.25rem;">No CBT Assessments Scheduled</h3>
+          <p style="font-size: 0.88rem; max-width: 420px; margin: 0 auto; line-height: 1.5;">No CBT examination is currently available for your registered courses.</p>
         </div>
       `;
       return;
     }
 
-    // 2. Query all scheduled CBT examinations matching current session, semester, and published status
+    // Load courses for Course Title mapping
+    const coursesSnap = await getDocs(collection(db, "courses"));
+    const coursesMap = {};
+    coursesSnap.forEach(doc => {
+      const data = doc.data();
+      coursesMap[data.courseCode] = data.courseTitle || data.title || "";
+    });
+
+    // Load lecturers for Lecturer Name mapping
+    const lecturersSnap = await getDocs(collection(db, "lecturers"));
+    const lecturersMap = {};
+    lecturersSnap.forEach(doc => {
+      const data = doc.data();
+      lecturersMap[data.lecturerId] = data.fullName || data.name || "N/A";
+    });
+
+    // Load all cbtQuestions to pre-calculate total marks per exam
+    const questionsSnap = await getDocs(collection(db, "cbtQuestions"));
+    const examQuestionsMap = {}; // courseCode_session_semester -> array of questions
+    questionsSnap.forEach(doc => {
+      const q = doc.data();
+      const key = `${q.courseCode}_${q.academicSession}_${q.semester}`;
+      if (!examQuestionsMap[key]) {
+        examQuestionsMap[key] = [];
+      }
+      examQuestionsMap[key].push({ id: doc.id, ...q });
+    });
+
+    // 2. Query all published examinations from Firestore (Ignore unpublished examinations)
     const examSnap = await getDocs(query(
       collection(db, "cbtExams"), 
-      where("academicSession", "==", timelineSettings.session),
-      where("semester", "==", timelineSettings.semester)
+      where("status", "==", "Published")
     ));
 
     const rawExamsList = examSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-    // Filter down only to exams that match the student's registered courses, and are Published and currently active
+    // Filter down only to exams that match the student's registered courses
     studentCbtExamsList = rawExamsList.filter(ex => {
       return registeredCourses.includes(ex.courseCode);
     });
@@ -1021,7 +1046,7 @@ async function renderStudentCbtDashboard() {
         <div style="text-align: center; padding: 4rem 2rem; color: var(--text-muted); background: white; border-radius: var(--border-radius-lg); border: 1.5px solid var(--border-color);">
           <i class="fa-solid fa-calendar-xmark" style="font-size: 3.5rem; opacity: 0.3; display: block; margin-bottom: 1rem; color: var(--primary);"></i>
           <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 0.25rem;">No CBT Assessments Scheduled</h3>
-          <p style="font-size: 0.88rem; max-width: 420px; margin: 0 auto; line-height: 1.5;">There are no active or scheduled Computer-Based Tests configured for your registered course coordinates in this term.</p>
+          <p style="font-size: 0.88rem; max-width: 420px; margin: 0 auto; line-height: 1.5;">No CBT examination is currently available for your registered courses.</p>
         </div>
       `;
       return;
@@ -1046,68 +1071,132 @@ async function renderStudentCbtDashboard() {
       const isPast = now > endDate || ex.status === "Closed";
       const isOpen = !isUpcoming && !isPast && ex.status === "Published";
 
-      let statusBadge = "";
+      // Calculate total marks based on question bank
+      const examKey = `${ex.courseCode}_${ex.academicSession}_${ex.semester}`;
+      const examQs = examQuestionsMap[examKey] || [];
+      let totalMarks = 0;
+      if (examQs.length > 0) {
+        const limit = Math.min(ex.numQuestions, examQs.length);
+        for (let i = 0; i < limit; i++) {
+          totalMarks += (examQs[i].marks || 1);
+        }
+      } else {
+        totalMarks = ex.numQuestions * 1; // fallback
+      }
+
+      const courseTitle = coursesMap[ex.courseCode] || "Course Title Not Found";
+      const lecturerName = lecturersMap[ex.lecturerId] || "Lecturer Not Specified";
+
+      let statusLabel = "";
+      let statusColor = "";
+      let statusBg = "";
       let actionButtonHtml = "";
 
       if (hasCompleted) {
-        statusBadge = `<span class="status-badge cleared" style="background-color: rgba(40,167,69,0.1); color: #28a745; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> COMPLETED</span>`;
-        
-        let scoreDetails = "";
-        if (ex.showResultImmediately) {
-          scoreDetails = `<div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.5rem;">Grade Scored: <strong>${completedData.score} / ${completedData.totalQuestions} (${completedData.percentage}%) - Grade [${completedData.grade}]</strong></div>`;
-        } else {
-          scoreDetails = `<div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.5rem; font-style: italic;">Grade: Logged for faculty review.</div>`;
-        }
-
+        statusLabel = "Completed";
+        statusColor = "#28a745";
+        statusBg = "rgba(40,167,69,0.1)";
         actionButtonHtml = `
-          <div style="text-align: right;">
-            ${statusBadge}
-            ${scoreDetails}
-          </div>
-        `;
-      } else if (isUpcoming) {
-        statusBadge = `<span class="status-badge pending" style="background-color: rgba(244,176,0,0.1); color: #F4B000; font-weight: 700;"><i class="fa-solid fa-clock"></i> UPCOMING</span>`;
-        actionButtonHtml = `
-          <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 0.35rem;">
-            ${statusBadge}
-            <div style="font-size: 0.72rem; color: var(--text-muted);">Starts: ${new Date(ex.startDate).toLocaleString()}</div>
-            <button class="btn" disabled style="opacity: 0.5; background-color: var(--bg-slate); color: var(--text-muted); cursor: not-allowed; border: 1px solid var(--border-color); font-size: 0.8rem; padding: 0.4rem 0.85rem;"><i class="fa-solid fa-lock"></i> Locked</button>
-          </div>
+          <button class="btn" disabled style="opacity: 0.6; background-color: #28a745; color: white; cursor: not-allowed; font-weight: 700; font-size: 0.85rem; padding: 0.5rem 1rem; border: none; border-radius: 4px;">
+            <i class="fa-solid fa-circle-check"></i> Already Submitted
+          </button>
         `;
       } else if (isPast) {
-        statusBadge = `<span class="status-badge" style="background-color: rgba(220,53,69,0.1); color: #dc3545; font-weight: 700;"><i class="fa-solid fa-circle-xmark"></i> CLOSED</span>`;
+        statusLabel = "Closed";
+        statusColor = "#dc3545";
+        statusBg = "rgba(220,53,69,0.1)";
         actionButtonHtml = `
-          <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 0.35rem;">
-            ${statusBadge}
-            <div style="font-size: 0.72rem; color: var(--text-muted);">Ended: ${new Date(ex.endDate).toLocaleString()}</div>
-            <button class="btn" disabled style="opacity: 0.5; background-color: var(--bg-slate); color: var(--text-muted); cursor: not-allowed; border: 1px solid var(--border-color); font-size: 0.8rem; padding: 0.4rem 0.85rem;">Missed</button>
-          </div>
+          <button class="btn" disabled style="opacity: 0.6; background-color: #555; color: white; cursor: not-allowed; font-weight: 700; font-size: 0.85rem; padding: 0.5rem 1rem; border: none; border-radius: 4px;">
+            <i class="fa-solid fa-lock"></i> Examination Closed
+          </button>
+        `;
+      } else if (isUpcoming) {
+        statusLabel = "Upcoming";
+        statusColor = "#F4B000";
+        statusBg = "rgba(244,176,0,0.1)";
+        actionButtonHtml = `
+          <button class="btn" disabled style="opacity: 0.6; background-color: #777; color: white; cursor: not-allowed; font-weight: 700; font-size: 0.85rem; padding: 0.5rem 1rem; border: none; border-radius: 4px;">
+            <i class="fa-solid fa-clock"></i> Not Yet Available
+          </button>
         `;
       } else if (isOpen) {
-        statusBadge = `<span class="status-badge cleared" style="background-color: rgba(40,167,69,0.1); color: #28a745; font-weight: 700; animation: blink 1.5s infinite;"><i class="fa-solid fa-circle-dot"></i> OPEN & ACTIVE</span>`;
+        statusLabel = "Open";
+        statusColor = "#28a745";
+        statusBg = "rgba(40,167,69,0.1)";
         actionButtonHtml = `
-          <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 0.35rem;">
-            ${statusBadge}
-            <div style="font-size: 0.72rem; color: var(--text-muted);">Deadline: ${new Date(ex.endDate).toLocaleString()}</div>
-            <button class="btn btn-start-cbt-exam" data-id="${ex.id}" style="background-color: var(--primary); color: white; font-weight: 700; font-size: 0.85rem; padding: 0.45rem 1rem;"><i class="fa-solid fa-play"></i> Start Assessment</button>
-          </div>
+          <button class="btn btn-start-cbt-exam" data-id="${ex.id}" style="background-color: var(--primary); color: white; font-weight: 700; font-size: 0.85rem; padding: 0.5rem 1.25rem; cursor: pointer; border-radius: 4px; border: none; transition: background-color 0.2s;">
+            <i class="fa-solid fa-play"></i> Start Examination
+          </button>
         `;
       }
 
       html += `
-        <div class="portal-card" style="padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; border-left: 4px solid ${hasCompleted ? '#28a745' : (isOpen ? 'var(--primary)' : 'var(--border-color)')};">
-          <div style="flex-grow: 1;">
-            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
-              <span style="font-size: 0.75rem; font-weight: 800; color: var(--primary); background-color: var(--bg-slate); padding: 0.2rem 0.5rem; border-radius: 4px;">${ex.courseCode}</span>
-              <span style="font-size: 0.72rem; color: var(--text-muted);"><i class="fa-solid fa-hourglass-half"></i> ${ex.duration} Mins</span>
-              <span style="font-size: 0.72rem; color: var(--text-muted);"><i class="fa-solid fa-circle-question"></i> ${ex.numQuestions} Questions</span>
+        <div class="portal-card" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; border-left: 4px solid ${hasCompleted ? '#28a745' : (isOpen ? 'var(--primary)' : 'var(--border-color)')}; background: white; border-radius: var(--border-radius-md); box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-top: 1px solid var(--border-color); border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+          
+          <!-- Top Row: Course Code, Course Title, Status Badge -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+              <span style="font-size: 0.8rem; font-weight: 800; color: var(--primary); background-color: var(--bg-slate); padding: 0.25rem 0.6rem; border-radius: 4px; display: inline-block; margin-bottom: 0.25rem;">${ex.courseCode}</span>
+              <strong style="font-size: 1rem; color: var(--text-color); display: block;">${escapeHtml(courseTitle)}</strong>
             </div>
-            <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--primary-dark); margin: 0 0 0.25rem 0;">${escapeHtml(ex.title)}</h3>
-            <div style="font-size: 0.75rem; color: var(--text-muted);"><i class="fa-solid fa-calendar"></i> Period: ${new Date(ex.startDate).toLocaleDateString()} - ${new Date(ex.endDate).toLocaleDateString()}</div>
+            <span class="status-badge" style="background-color: ${statusBg}; color: ${statusColor}; font-weight: 700; font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 4px; border: 1px solid ${statusColor}44; display: inline-flex; align-items: center; gap: 0.25rem;">
+              <i class="fa-solid ${statusLabel === 'Completed' ? 'fa-circle-check' : (statusLabel === 'Upcoming' ? 'fa-clock' : (statusLabel === 'Closed' ? 'fa-circle-xmark' : 'fa-circle-dot'))}"></i> ${statusLabel.toUpperCase()}
+            </span>
           </div>
-          <div style="min-width: 160px; display: flex; justify-content: flex-end;">
-            ${actionButtonHtml}
+
+          <!-- Divider -->
+          <div style="border-bottom: 1px dashed var(--border-color); margin: 0.25rem 0;"></div>
+
+          <!-- Mid Section: Exam Title & Lecturer Name -->
+          <div>
+            <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary-dark); margin: 0 0 0.35rem 0;">${escapeHtml(ex.title)}</h3>
+            <div style="font-size: 0.82rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem;">
+              <i class="fa-solid fa-chalkboard-user" style="color: var(--primary);"></i> <span>Lecturer: <strong>${escapeHtml(lecturerName)}</strong></span>
+            </div>
           </div>
+
+          <!-- Info Grid: Duration, Questions, Total Marks, Scheduled Date -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; background-color: var(--bg-slate); padding: 0.85rem; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.8rem;">
+            <div>
+              <div style="color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; font-weight: 700;">Duration</div>
+              <div style="font-weight: 700; color: var(--primary-dark); margin-top: 0.15rem;"><i class="fa-solid fa-hourglass-half"></i> ${ex.duration} Mins</div>
+            </div>
+            <div>
+              <div style="color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; font-weight: 700;">No. of Questions</div>
+              <div style="font-weight: 700; color: var(--primary-dark); margin-top: 0.15rem;"><i class="fa-solid fa-circle-question"></i> ${ex.numQuestions} Questions</div>
+            </div>
+            <div>
+              <div style="color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; font-weight: 700;">Total Marks</div>
+              <div style="font-weight: 700; color: var(--primary-dark); margin-top: 0.15rem;"><i class="fa-solid fa-star"></i> ${totalMarks} Marks</div>
+            </div>
+            <div style="grid-column: span 2;">
+              <div style="color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; font-weight: 700;">Scheduled Date</div>
+              <div style="font-weight: 700; color: var(--primary-dark); margin-top: 0.15rem; font-size: 0.78rem;">
+                <i class="fa-solid fa-calendar-days"></i> ${new Date(ex.startDate).toLocaleString(undefined, {dateStyle: 'medium', timeStyle: 'short'})} 
+                <br>to ${new Date(ex.endDate).toLocaleString(undefined, {dateStyle: 'medium', timeStyle: 'short'})}
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Row: Action / Completion details -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+            <div>
+              ${hasCompleted ? `
+                <div style="font-size: 0.82rem; color: var(--text-muted); font-weight: 500;">
+                  <i class="fa-solid fa-info-circle"></i> Grade Scored: 
+                  <strong style="color: #28a745;">${completedData.score} / ${completedData.totalQuestions} (${completedData.percentage}%) [${completedData.grade}]</strong>
+                </div>
+              ` : `
+                <span style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">
+                  * Access is subject to single-attempt and secure environment rules.
+                </span>
+              `}
+            </div>
+            <div>
+              ${actionButtonHtml}
+            </div>
+          </div>
+
         </div>
       `;
     }
