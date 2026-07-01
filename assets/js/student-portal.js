@@ -686,6 +686,16 @@ async function loadResults() {
 
   if (!tbody) return;
 
+  // Initialize sub-tabs switching once
+  const subtabBtn = document.querySelector(".sub-tab-btn");
+  if (subtabBtn && !subtabBtn.dataset.listenerBound) {
+    setupResultsSubtabs();
+    subtabBtn.dataset.listenerBound = "true";
+  }
+
+  // Load CBT results in parallel
+  loadCbtPublishedResults();
+
   tbody.innerHTML = "<tr><td colspan='9' class='text-center py-4' style='color:var(--text-muted);'><i class='fa-solid fa-spinner fa-spin'></i> Compiling results rosters...</td></tr>";
 
   try {
@@ -1099,4 +1109,130 @@ onAuthStateChanged(auth, async (user) => {
     }
   }
 });
+
+function setupResultsSubtabs() {
+  const btns = document.querySelectorAll(".sub-tab-btn");
+  const panes = document.querySelectorAll(".results-subtab-pane");
+
+  btns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      // Deactivate all
+      btns.forEach(b => {
+        b.classList.remove("active");
+        b.style.color = "var(--text-muted)";
+        b.style.borderBottom = "none";
+      });
+      panes.forEach(p => p.style.display = "none");
+
+      // Activate clicked
+      btn.classList.add("active");
+      btn.style.color = "var(--primary)";
+      btn.style.borderBottom = "3px solid var(--primary)";
+
+      const targetId = `results-subtab-${btn.getAttribute("data-results-subtab")}`;
+      const targetPane = document.getElementById(targetId);
+      if (targetPane) targetPane.style.display = "block";
+    });
+  });
+}
+
+async function loadCbtPublishedResults() {
+  const cbtTestBody = document.getElementById("cbtTestResultsTableBody");
+  const cbtExamBody = document.getElementById("cbtExamResultsTableBody");
+
+  if (!cbtTestBody || !cbtExamBody) return;
+
+  cbtTestBody.innerHTML = "<tr><td colspan='8' class='text-center py-3' style='color:var(--text-muted);'><i class='fa-solid fa-spinner fa-spin'></i> Loading CBT Test Results...</td></tr>";
+  cbtExamBody.innerHTML = "<tr><td colspan='8' class='text-center py-3' style='color:var(--text-muted);'><i class='fa-solid fa-spinner fa-spin'></i> Loading CBT Exam Results...</td></tr>";
+
+  try {
+    // 1. Fetch published CBT exams
+    const examsSnap = await getDocs(query(
+      collection(db, "cbtExams"),
+      where("resultsPublished", "==", true)
+    ));
+
+    const publishedExamsMap = {};
+    examsSnap.forEach(d => {
+      publishedExamsMap[d.id] = { id: d.id, ...d.data() };
+    });
+
+    // 2. Fetch specific student's CBT results
+    const resultsSnap = await getDocs(query(
+      collection(db, "cbtResults"),
+      where("studentId", "==", currentStudentDoc.studentId)
+    ));
+
+    const testRows = [];
+    const examRows = [];
+
+    resultsSnap.forEach(d => {
+      const res = d.data();
+      const exam = publishedExamsMap[res.examId];
+      if (exam) {
+        const item = {
+          courseCode: exam.courseCode,
+          courseTitle: exam.courseTitle || "Theological Subject",
+          examName: exam.title,
+          score: `${res.score} / ${res.totalQuestions || 100}`,
+          percentage: `${res.percentage}%`,
+          grade: res.grade || "F",
+          passed: res.passed,
+          dateTaken: res.submittedAt ? new Date(res.submittedAt).toLocaleDateString() : "-"
+        };
+
+        if (exam.assessmentType === "CBT Examination") {
+          examRows.push(item);
+        } else {
+          testRows.push(item);
+        }
+      }
+    });
+
+    // Render CBT Test Table
+    if (testRows.length === 0) {
+      cbtTestBody.innerHTML = `<tr><td colspan='8' style='text-align: center; padding: 2rem; color: var(--text-muted);'>No published CBT continuous assessment test results found.</td></tr>`;
+    } else {
+      cbtTestBody.innerHTML = testRows.map(r => `
+        <tr style="border-bottom: 1px solid var(--border-color);">
+          <td style="padding: 0.75rem; font-weight: 700;">${r.courseCode}</td>
+          <td style="padding: 0.75rem;">${r.courseTitle}</td>
+          <td style="padding: 0.75rem; font-weight: 600;">${r.examName}</td>
+          <td style="padding: 0.75rem; text-align: center; font-weight: 700; color: var(--primary);">${r.score}</td>
+          <td style="padding: 0.75rem; text-align: center; font-weight: 600;">${r.percentage}</td>
+          <td style="padding: 0.75rem; text-align: center; font-weight: 700;">${r.grade}</td>
+          <td style="padding: 0.75rem; text-align: center;">
+            <span class="status-badge ${r.passed ? 'cleared' : ''}" style="display:inline-block; font-size:0.7rem; font-weight:700; background-color: ${r.passed ? 'rgba(40,167,69,0.1)' : 'rgba(220,53,69,0.1)'}; color: ${r.passed ? '#28a745' : '#dc3545'}">${r.passed ? 'PASS' : 'FAIL'}</span>
+          </td>
+          <td style="padding: 0.75rem; text-align: center; font-size: 0.8rem; color: var(--text-muted);">${r.dateTaken}</td>
+        </tr>
+      `).join("");
+    }
+
+    // Render CBT Exam Table
+    if (examRows.length === 0) {
+      cbtExamBody.innerHTML = `<tr><td colspan='8' style='text-align: center; padding: 2rem; color: var(--text-muted);'>No published CBT final examination results found.</td></tr>`;
+    } else {
+      cbtExamBody.innerHTML = examRows.map(r => `
+        <tr style="border-bottom: 1px solid var(--border-color);">
+          <td style="padding: 0.75rem; font-weight: 700;">${r.courseCode}</td>
+          <td style="padding: 0.75rem;">${r.courseTitle}</td>
+          <td style="padding: 0.75rem; font-weight: 600;">${r.examName}</td>
+          <td style="padding: 0.75rem; text-align: center; font-weight: 700; color: var(--primary);">${r.score}</td>
+          <td style="padding: 0.75rem; text-align: center; font-weight: 600;">${r.percentage}</td>
+          <td style="padding: 0.75rem; text-align: center; font-weight: 700;">${r.grade}</td>
+          <td style="padding: 0.75rem; text-align: center;">
+            <span class="status-badge ${r.passed ? 'cleared' : ''}" style="display:inline-block; font-size:0.7rem; font-weight:700; background-color: ${r.passed ? 'rgba(40,167,69,0.1)' : 'rgba(220,53,69,0.1)'}; color: ${r.passed ? '#28a745' : '#dc3545'}">${r.passed ? 'PASS' : 'FAIL'}</span>
+          </td>
+          <td style="padding: 0.75rem; text-align: center; font-size: 0.8rem; color: var(--text-muted);">${r.dateTaken}</td>
+        </tr>
+      `).join("");
+    }
+
+  } catch (err) {
+    console.error("❌ Failed to load CBT results:", err);
+    cbtTestBody.innerHTML = "<tr><td colspan='8' class='text-center py-3' style='color:red;'>Failed to load CBT results.</td></tr>";
+    cbtExamBody.innerHTML = "<tr><td colspan='8' class='text-center py-3' style='color:red;'>Failed to load CBT results.</td></tr>";
+  }
+}
 

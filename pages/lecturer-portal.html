@@ -1731,7 +1731,9 @@
                       <th style="width: 100px; text-align: center;">Assignment (10%)</th>
                       <th style="width: 100px; text-align: center;">Test (10%)</th>
                       <th style="width: 100px; text-align: center;">Practical (Optional)</th>
-                      <th style="width: 100px; text-align: center;">Examination (70%)</th>
+                      <th style="width: 100px; text-align: center;">CBT Test (10%)</th>
+                      <th style="width: 100px; text-align: center;">CBT Exam (70%)</th>
+                      <th style="width: 100px; text-align: center;">Manual Exam (70%)</th>
                       <th style="width: 100px; text-align: center;">Total Score</th>
                       <th style="width: 70px; text-align: center;">Grade</th>
                       <th style="width: 70px; text-align: center;">GP</th>
@@ -1917,6 +1919,14 @@
                         <option value="Second Semester">Second Semester</option>
                       </select>
                     </div>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <label style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase;">Assessment Type</label>
+                    <select id="examAssessmentType" class="form-control" style="width: 100%; padding: 0.6rem; font-family:'Poppins'; border-radius:4px; border: 1.5px solid var(--border-color);" required>
+                      <option value="CBT Test">CBT Test</option>
+                      <option value="CBT Examination">CBT Examination</option>
+                    </select>
                   </div>
 
                   <div class="form-group" style="margin-bottom: 1.25rem;">
@@ -2134,6 +2144,7 @@
                     <thead>
                       <tr style="border-bottom: 2px solid var(--border-color); background-color: var(--bg-slate); color: var(--primary);">
                         <th style="padding: 0.75rem; font-weight: 700;">Course</th>
+                        <th style="padding: 0.75rem; font-weight: 700;">Type</th>
                         <th style="padding: 0.75rem; font-weight: 700;">Exam Title</th>
                         <th style="padding: 0.75rem; font-weight: 700;">Span Schedule</th>
                         <th style="padding: 0.75rem; font-weight: 700; text-align: center;">Duration</th>
@@ -2143,7 +2154,7 @@
                       </tr>
                     </thead>
                     <tbody id="scheduledExamsTableBody">
-                      <tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">Loading assessments registry...</td></tr>
+                      <tr><td colspan="8" style="text-align: center; padding: 2rem; color: var(--text-muted);">Loading assessments registry...</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -2220,6 +2231,12 @@
                     </select>
                   </div>
                   <button id="btnExportCbtResults" class="btn" title="Export to CSV" style="background-color: #28A745; color: white; border: none; padding: 0.6rem 1.25rem; border-radius: 4px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;" disabled><i class="fa-solid fa-file-excel"></i> Export CSV</button>
+                </div>
+                
+                <!-- Dynamic CBT Results Publishing Controls -->
+                <div id="cbtPublishControls" style="display: none; align-items: center; gap: 1rem; margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem; width: 100%; flex-wrap: wrap;">
+                  <span id="cbtPublishStatusBadge" class="status-badge" style="padding: 0.4rem 0.75rem; font-weight: 700; font-size: 0.8rem; border-radius: 4px;">Status: Loading...</span>
+                  <button id="btnPublishCbtResults" class="btn" style="border: none; padding: 0.6rem 1.25rem; border-radius: 4px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; color: white; background-color: var(--primary);"></button>
                 </div>
               </div>
 

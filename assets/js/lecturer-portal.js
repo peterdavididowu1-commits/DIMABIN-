@@ -1204,7 +1204,9 @@ async function renderResultUploadTab() {
         const asgVal = exist && exist.assignment !== undefined ? exist.assignment : "";
         const testVal = exist && exist.test !== undefined ? exist.test : "";
         const pracVal = exist && exist.practical !== undefined ? exist.practical : "";
-        const examVal = exist && exist.examScore !== undefined ? exist.examScore : (exist && exist.exam !== undefined ? exist.exam : "");
+        const cbtTestVal = exist && exist.cbtTest !== undefined ? exist.cbtTest : "";
+        const cbtExamVal = exist && exist.cbtExam !== undefined ? exist.cbtExam : "";
+        const manualExamVal = exist && exist.manualExam !== undefined ? exist.manualExam : "";
         const totalVal = exist && exist.total !== undefined ? exist.total : "-";
         const gradeVal = exist && exist.grade !== undefined ? exist.grade : "-";
         const gpVal = exist && exist.gp !== undefined ? exist.gp : "-";
@@ -1227,7 +1229,13 @@ async function renderResultUploadTab() {
               <input type="number" class="form-control prac-input" min="0" max="10" placeholder="Optional" value="${pracVal}" onfocus="this.select()" style="width: 100%; text-align: center; padding: 0.4rem; background-color: var(--bg-slate); border: 1px solid var(--border-color); border-radius: 4px;" ${isLocked ? 'disabled' : ''}>
             </td>
             <td>
-              <input type="number" class="form-control exam-input" min="0" max="70" placeholder="0-70" value="${examVal}" onfocus="this.select()" style="width: 100%; text-align: center; padding: 0.4rem; background-color: var(--bg-slate); border: 1px solid var(--border-color); border-radius: 4px;" ${isLocked ? 'disabled' : ''}>
+              <input type="number" class="form-control cbt-test-input" min="0" max="10" placeholder="0-10" value="${cbtTestVal}" onfocus="this.select()" style="width: 100%; text-align: center; padding: 0.4rem; background-color: var(--bg-slate); border: 1px solid var(--border-color); border-radius: 4px;" ${isLocked ? 'disabled' : ''}>
+            </td>
+            <td>
+              <input type="number" class="form-control cbt-exam-input" min="0" max="70" placeholder="0-70" value="${cbtExamVal}" onfocus="this.select()" style="width: 100%; text-align: center; padding: 0.4rem; background-color: var(--bg-slate); border: 1px solid var(--border-color); border-radius: 4px;" ${isLocked ? 'disabled' : ''}>
+            </td>
+            <td>
+              <input type="number" class="form-control manual-exam-input" min="0" max="70" placeholder="0-70" value="${manualExamVal}" onfocus="this.select()" style="width: 100%; text-align: center; padding: 0.4rem; background-color: var(--bg-slate); border: 1px solid var(--border-color); border-radius: 4px;" ${isLocked ? 'disabled' : ''}>
             </td>
             <td style="text-align: center; font-weight: 700; color: var(--primary);" class="row-total-score">${totalVal}</td>
             <td style="text-align: center;" class="row-grade">
@@ -1250,7 +1258,7 @@ async function renderResultUploadTab() {
   };
 }
 
-// Interactive Matrix calculation logic (Attendance, Assignment, Test, Practical, Exam)
+// Interactive Matrix calculation logic (Attendance, Assignment, Test, Practical, CBT, Exam)
 function setupGradingCalculationTriggers() {
   const tbody = document.getElementById("gradingWorkspaceTableBody");
   const rows = tbody.querySelectorAll("tr[data-student-id]");
@@ -1260,7 +1268,9 @@ function setupGradingCalculationTriggers() {
     const asgInput = row.querySelector(".asg-input");
     const testInput = row.querySelector(".test-input");
     const pracInput = row.querySelector(".prac-input");
-    const examInput = row.querySelector(".exam-input");
+    const cbtTestInput = row.querySelector(".cbt-test-input");
+    const cbtExamInput = row.querySelector(".cbt-exam-input");
+    const manualExamInput = row.querySelector(".manual-exam-input");
     const totalScoreCell = row.querySelector(".row-total-score");
     const gradeCell = row.querySelector(".row-grade");
     const gpCell = row.querySelector(".row-gp");
@@ -1271,7 +1281,9 @@ function setupGradingCalculationTriggers() {
       let asg = parseFloat(asgInput.value) || 0;
       let test = parseFloat(testInput.value) || 0;
       let prac = parseFloat(pracInput.value) || 0;
-      let exam = parseFloat(examInput.value) || 0;
+      let cbtTest = parseFloat(cbtTestInput.value) || 0;
+      let cbtExam = parseFloat(cbtExamInput.value) || 0;
+      let manualExam = parseFloat(manualExamInput.value) || 0;
 
       // Ensure valid boundaries
       if (attInput.value !== "" && (att < 0 || att > 10)) {
@@ -1294,13 +1306,26 @@ function setupGradingCalculationTriggers() {
         prac = Math.max(0, Math.min(10, prac));
         pracInput.value = prac;
       }
-      if (examInput.value !== "" && (exam < 0 || exam > 70)) {
-        window.showToast("Semester Examination scores must range between 0 and 70.", "warning");
-        exam = Math.max(0, Math.min(70, exam));
-        examInput.value = exam;
+      if (cbtTestInput.value !== "" && (cbtTest < 0 || cbtTest > 10)) {
+        window.showToast("CBT Test scores must range between 0 and 10.", "warning");
+        cbtTest = Math.max(0, Math.min(10, cbtTest));
+        cbtTestInput.value = cbtTest;
+      }
+      if (cbtExamInput.value !== "" && (cbtExam < 0 || cbtExam > 70)) {
+        window.showToast("CBT Examination scores must range between 0 and 70.", "warning");
+        cbtExam = Math.max(0, Math.min(70, cbtExam));
+        cbtExamInput.value = cbtExam;
+      }
+      if (manualExamInput.value !== "" && (manualExam < 0 || manualExam > 70)) {
+        window.showToast("Manual Examination scores must range between 0 and 70.", "warning");
+        manualExam = Math.max(0, Math.min(70, manualExam));
+        manualExamInput.value = manualExam;
       }
 
-      if (attInput.value === "" && asgInput.value === "" && testInput.value === "" && examInput.value === "") {
+      // Final exam score calculation uses manualExam if entered, otherwise defaults to cbtExam
+      const examScore = manualExamInput.value !== "" ? manualExam : cbtExam;
+
+      if (attInput.value === "" && asgInput.value === "" && testInput.value === "" && manualExamInput.value === "" && cbtExamInput.value === "") {
         totalScoreCell.textContent = "-";
         gradeCell.innerHTML = `<span class="status-badge" style="padding: 0.2rem 0.6rem; font-size: 0.85rem; font-weight: 800;">-</span>`;
         gpCell.textContent = "-";
@@ -1308,7 +1333,7 @@ function setupGradingCalculationTriggers() {
         return;
       }
 
-      const total = Math.min(100, Math.round(att + asg + test + prac + exam));
+      const total = Math.min(100, Math.round(att + asg + test + prac + cbtTest + examScore));
       totalScoreCell.textContent = total;
 
       // Grade Determination (DIMABIN scale)
@@ -1341,7 +1366,9 @@ function setupGradingCalculationTriggers() {
     asgInput.addEventListener("input", calculate);
     testInput.addEventListener("input", calculate);
     pracInput.addEventListener("input", calculate);
-    examInput.addEventListener("input", calculate);
+    cbtTestInput.addEventListener("input", calculate);
+    cbtExamInput.addEventListener("input", calculate);
+    manualExamInput.addEventListener("input", calculate);
     
     // Initial compute on load
     calculate();
@@ -1387,24 +1414,57 @@ if (btnImportCbt) {
         collection(db, "cbtExams"),
         where("courseCode", "==", courseCode),
         where("academicSession", "==", timelineSettings.session),
-        where("semester", "==", timelineSettings.semester)
+        where("semester", "==", timelineSettings.semester),
+        where("resultsPublished", "==", true)
       ));
 
       if (examSnap.empty) {
-        window.showToast("No active scheduled CBT exams found for this course session.", "warning");
+        window.showToast("No published CBT assessments (Tests or Examinations) found for this course session.", "warning");
         return;
       }
 
-      const examIds = examSnap.docs.map(d => d.id);
+      // Group exams by type and find the LATEST by sorting by date
+      const testExams = [];
+      const examExams = [];
+
+      examSnap.forEach(d => {
+        const ex = { id: d.id, ...d.data() };
+        if (ex.assessmentType === "CBT Examination") {
+          examExams.push(ex);
+        } else {
+          testExams.push(ex);
+        }
+      });
+
+      // Sort both arrays descending by createdAt/updatedAt to find the absolute LATEST
+      testExams.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      examExams.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+      const latestTestExam = testExams[0];
+      const latestExamExam = examExams[0];
+
+      if (!latestTestExam && !latestExamExam) {
+        window.showToast("No published CBT Test or CBT Examination configurations found.", "warning");
+        return;
+      }
+
+      const testExamId = latestTestExam ? latestTestExam.id : null;
+      const examExamId = latestExamExam ? latestExamExam.id : null;
 
       // 2. Query CBT results committed by students
       const cbtResultsSnap = await getDocs(collection(db, "cbtResults"));
-      const cbtScoresMap = {};
+      const testScoresMap = {};
+      const examScoresMap = {};
 
       cbtResultsSnap.forEach(d => {
         const r = d.data();
-        if (examIds.includes(r.examId)) {
-          cbtScoresMap[r.studentId] = r.percentage;
+        if (testExamId && r.examId === testExamId) {
+          // Scale out of 10 marks for Test
+          testScoresMap[r.studentId] = Math.min(10, Math.round((r.score / (r.totalQuestions || 10)) * 10)) || Math.min(10, Math.round(r.percentage / 10));
+        }
+        if (examExamId && r.examId === examExamId) {
+          // Scale out of 70 marks for Exam
+          examScoresMap[r.studentId] = Math.min(70, Math.round((r.score / (r.totalQuestions || 50)) * 70)) || Math.min(70, Math.round(r.percentage * 0.7));
         }
       });
 
@@ -1415,19 +1475,40 @@ if (btnImportCbt) {
 
       rows.forEach(row => {
         const studentId = row.getAttribute("data-student-id");
-        const percentage = cbtScoresMap[studentId];
-        if (percentage !== undefined) {
-          const testInput = row.querySelector(".test-input");
-          if (testInput && !testInput.disabled) {
-            // Scale percentage out of 10 for Continuous Assessment Test field
-            testInput.value = Math.min(10, Math.round(percentage / 10));
-            testInput.dispatchEvent(new Event("input"));
-            count++;
+        
+        const cbtTestInput = row.querySelector(".cbt-test-input");
+        const cbtExamInput = row.querySelector(".cbt-exam-input");
+
+        let imported = false;
+
+        if (cbtTestInput && !cbtTestInput.disabled) {
+          const testScore = testScoresMap[studentId];
+          if (testScore !== undefined) {
+            cbtTestInput.value = testScore;
+            imported = true;
+          } else {
+            cbtTestInput.value = 0;
           }
+        }
+
+        if (cbtExamInput && !cbtExamInput.disabled) {
+          const examScore = examScoresMap[studentId];
+          if (examScore !== undefined) {
+            cbtExamInput.value = examScore;
+            imported = true;
+          } else {
+            cbtExamInput.value = 0;
+          }
+        }
+
+        if (imported) {
+          // Trigger input calculation
+          if (cbtTestInput) cbtTestInput.dispatchEvent(new Event("input"));
+          count++;
         }
       });
 
-      window.showToast(`Successfully imported ${count} CBT scores into Test column (scaled out of 10 marks).`, "success");
+      window.showToast(`Successfully scanned and imported CBT results for ${count} students.`, "success");
 
     } catch (err) {
       console.error("CBT results import failed:", err);
@@ -1477,8 +1558,12 @@ async function handleResultSubmissionFlow(targetStatus) {
       const asgVal = parseFloat(row.querySelector(".asg-input").value) || 0;
       const testVal = parseFloat(row.querySelector(".test-input").value) || 0;
       const pracVal = parseFloat(row.querySelector(".prac-input").value) || 0;
-      const examVal = parseFloat(row.querySelector(".exam-input").value) || 0;
-      const total = Math.min(100, Math.round(attVal + asgVal + testVal + pracVal + examVal));
+      const cbtTestVal = parseFloat(row.querySelector(".cbt-test-input").value) || 0;
+      const cbtExamVal = parseFloat(row.querySelector(".cbt-exam-input").value) || 0;
+      const manualExamVal = parseFloat(row.querySelector(".manual-exam-input").value) || 0;
+
+      const examScore = row.querySelector(".manual-exam-input").value !== "" ? manualExamVal : cbtExamVal;
+      const total = Math.min(100, Math.round(attVal + asgVal + testVal + pracVal + cbtTestVal + examScore));
 
       let grade = "F";
       let gp = 0;
@@ -1498,7 +1583,10 @@ async function handleResultSubmissionFlow(targetStatus) {
         assignment: asgVal,
         test: testVal,
         practical: pracVal,
-        examScore: examVal,
+        cbtTest: cbtTestVal,
+        cbtExam: cbtExamVal,
+        manualExam: manualExamVal,
+        examScore,
         total,
         grade,
         gp,
@@ -2650,6 +2738,7 @@ if (createExamForm) {
 
     const data = {
       courseCode: courseCode,
+      assessmentType: document.getElementById("examAssessmentType").value,
       academicSession: document.getElementById("examSession").value,
       semester: document.getElementById("examSemester").value,
       title: document.getElementById("examTitle").value.trim(),
@@ -2715,7 +2804,7 @@ function renderScheduledExamsList() {
   if (!tableBody) return;
 
   if (examinationsData.length === 0) {
-    tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2.5rem; color: var(--text-muted);"><i class="fa-solid fa-calendar-times" style="font-size: 2.5rem; opacity: 0.3; display: block; margin-bottom: 0.5rem;"></i> No assessment configurations found.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 2.5rem; color: var(--text-muted);"><i class="fa-solid fa-calendar-times" style="font-size: 2.5rem; opacity: 0.3; display: block; margin-bottom: 0.5rem;"></i> No assessment configurations found.</td></tr>`;
     return;
   }
 
@@ -2730,6 +2819,7 @@ function renderScheduledExamsList() {
     return `
       <tr style="border-bottom: 1px solid var(--border-color);">
         <td style="padding: 0.85rem; font-weight: 700; color: var(--primary);">${ex.courseCode}</td>
+        <td style="padding: 0.85rem; font-weight: 600; color: var(--accent);">${ex.assessmentType || "CBT Test"}</td>
         <td style="padding: 0.85rem; font-weight: 600;">${escapeHtml(ex.title)}</td>
         <td style="padding: 0.85rem; font-size: 0.78rem;">
           <div><strong>Start:</strong> ${formattedStart}</div>
@@ -2788,6 +2878,7 @@ function editExam(id) {
 
   document.getElementById("examId").value = ex.id;
   document.getElementById("examCourse").value = ex.courseCode;
+  document.getElementById("examAssessmentType").value = ex.assessmentType || "CBT Test";
   document.getElementById("examSession").value = ex.academicSession;
   document.getElementById("examSemester").value = ex.semester;
   document.getElementById("examTitle").value = ex.title;
@@ -2998,6 +3089,8 @@ async function loadSelectedExamResults(examId) {
   if (!examId) {
     tableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 2rem; color: var(--text-muted);">Please select an examination from the dropdown above.</td></tr>`;
     if (exportBtn) exportBtn.disabled = true;
+    const publishControls = document.getElementById("cbtPublishControls");
+    if (publishControls) publishControls.style.display = "none";
     resetCbtStatsCounters();
     return;
   }
@@ -3007,6 +3100,59 @@ async function loadSelectedExamResults(examId) {
   try {
     const rSnap = await getDocs(query(collection(db, "cbtResults"), where("examId", "==", examId)));
     activeResultsList = rSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // 1. Configure Publishing Controls based on examId
+    const exam = examinationsData.find(ex => ex.id === examId);
+    const publishControls = document.getElementById("cbtPublishControls");
+    const statusBadge = document.getElementById("cbtPublishStatusBadge");
+    const publishBtn = document.getElementById("btnPublishCbtResults");
+
+    if (exam && publishControls && statusBadge && publishBtn) {
+      publishControls.style.display = "flex";
+      const isPublished = exam.resultsPublished === true;
+      const type = exam.assessmentType || "CBT Test";
+
+      if (isPublished) {
+        statusBadge.className = "status-badge cleared";
+        statusBadge.style.backgroundColor = "rgba(40,167,69,0.1)";
+        statusBadge.style.color = "#28a745";
+        statusBadge.textContent = `Status: Results Published`;
+        publishBtn.innerHTML = `<i class="fa-solid fa-eye-slash"></i> Unpublish Results`;
+        publishBtn.style.backgroundColor = "#555";
+      } else {
+        statusBadge.className = "status-badge pending";
+        statusBadge.style.backgroundColor = "rgba(220,53,69,0.1)";
+        statusBadge.style.color = "#dc3545";
+        statusBadge.textContent = `Status: Results Unpublished`;
+        publishBtn.innerHTML = `<i class="fa-solid fa-globe"></i> Publish ${type} Results`;
+        publishBtn.style.backgroundColor = type === "CBT Examination" ? "#28A745" : "#1F3B82";
+      }
+
+      // Bind click handler
+      publishBtn.onclick = async () => {
+        try {
+          publishBtn.disabled = true;
+          const newPublishState = !isPublished;
+          
+          const examRef = doc(db, "cbtExams", examId);
+          await updateDoc(examRef, {
+            resultsPublished: newPublishState,
+            resultsPublishedAt: new Date().toISOString()
+          });
+
+          // Update examinationsData local array too
+          exam.resultsPublished = newPublishState;
+
+          window.showToast(`CBT results successfully ${newPublishState ? 'published' : 'unpublished'}!`, "success");
+          loadSelectedExamResults(examId);
+        } catch (err) {
+          console.error("CBT Publish state transition error:", err);
+          window.showToast("Failed to alter publish state: " + err.message, "error");
+        } finally {
+          publishBtn.disabled = false;
+        }
+      };
+    }
 
     if (activeResultsList.length === 0) {
       tableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 2.5rem; color: var(--text-muted);"><i class="fa-solid fa-graduation-cap" style="font-size: 2rem; opacity: 0.3; display: block; margin-bottom: 0.5rem;"></i> No students have submitted answers for this examination yet.</td></tr>`;
@@ -3023,10 +3169,13 @@ async function loadSelectedExamResults(examId) {
         <td style="padding: 0.75rem;">${res.studentId}</td>
         <td style="padding: 0.75rem; font-weight: 600;">${escapeHtml(res.studentName)}</td>
         <td style="padding: 0.75rem;">${res.studentMatric}</td>
-        <td style="padding: 0.75rem; text-align: center; font-weight: 700; color: var(--primary);">${res.score} / ${res.totalQuestions}</td>
-        <td style="padding: 0.75rem; text-align: center; font-weight: 600;">${res.percentage}%</td>
-        <td style="padding: 0.75rem; text-align: center; font-weight: 700;">${res.grade}</td>
         <td style="padding: 0.75rem; text-align: center;">
+          <input type="number" step="any" min="0" max="${res.totalQuestions || 100}" class="form-control edit-cbt-score-input" data-res-id="${res.id}" data-total-qs="${res.totalQuestions || 100}" value="${res.score}" style="width: 70px; text-align: center; padding: 0.25rem; font-weight: bold; border: 1.5px solid var(--border-color); border-radius: 4px; display: inline-block;">
+          <span style="font-size: 0.8rem; color: var(--text-muted);">/ ${res.totalQuestions || 100}</span>
+        </td>
+        <td style="padding: 0.75rem; text-align: center; font-weight: 600;" class="cbt-percentage-cell">${res.percentage}%</td>
+        <td style="padding: 0.75rem; text-align: center; font-weight: 700;" class="cbt-grade-cell">${res.grade}</td>
+        <td style="padding: 0.75rem; text-align: center;" class="cbt-standing-cell">
           <span class="status-badge ${res.passed ? 'cleared' : ''}" style="display:inline-block; font-size:0.7rem; font-weight:700; background-color: ${res.passed ? 'rgba(40,167,69,0.1)' : 'rgba(220,53,69,0.1)'}; color: ${res.passed ? '#28a745' : '#dc3545'}">${res.passed ? 'PASS' : 'FAIL'}</span>
         </td>
         <td style="padding: 0.75rem; text-align: center; font-size: 0.75rem; color: var(--text-muted);">${formatCbtDate(res.submittedAt)}</td>
@@ -3035,6 +3184,48 @@ async function loadSelectedExamResults(examId) {
         </td>
       </tr>
     `).join("");
+
+    // Bind edit actions
+    document.querySelectorAll(".edit-cbt-score-input").forEach(input => {
+      input.addEventListener("change", async (e) => {
+        const resId = e.target.getAttribute("data-res-id");
+        const totalQs = parseInt(e.target.getAttribute("data-total-qs")) || 100;
+        let newScore = parseFloat(e.target.value) || 0;
+
+        if (newScore < 0 || newScore > totalQs) {
+          window.showToast(`Score must be between 0 and ${totalQs}`, "warning");
+          newScore = Math.max(0, Math.min(totalQs, newScore));
+          e.target.value = newScore;
+        }
+
+        const percentage = Math.round((newScore / totalQs) * 100);
+        let grade = "F";
+        if (percentage >= 70) grade = "A";
+        else if (percentage >= 60) grade = "B";
+        else if (percentage >= 50) grade = "C";
+        else if (percentage >= 45) grade = "D";
+        else if (percentage >= 40) grade = "E";
+        const passed = percentage >= 40;
+
+        try {
+          const resRef = doc(db, "cbtResults", resId);
+          await updateDoc(resRef, {
+            score: newScore,
+            percentage: percentage,
+            grade: grade,
+            passed: passed,
+            lastEditedBy: currentLecturerDoc.fullName,
+            lastEditedAt: new Date().toISOString()
+          });
+
+          window.showToast("Student CBT score updated successfully.", "success");
+          loadSelectedExamResults(examId);
+        } catch (err) {
+          console.error("Failed to update CBT score:", err);
+          window.showToast("Failed to update score: " + err.message, "error");
+        }
+      });
+    });
 
     document.querySelectorAll(".btn-review-script").forEach(btn => {
       btn.addEventListener("click", () => {
