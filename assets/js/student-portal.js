@@ -886,13 +886,16 @@ function renderFilteredStudentResults() {
   // Dynamic show/hide of transcript placeholder alert based on results existence
   const placeholderAlert = document.getElementById("transcriptPlaceholderAlert");
   const printableTranscriptSection = document.getElementById("printableTranscriptSection");
+  const btnPrintTranscript = document.getElementById("btnPrintTranscript");
   if (placeholderAlert && printableTranscriptSection) {
     if (studentPublishedResultsList.length === 0) {
       placeholderAlert.style.display = "flex";
       printableTranscriptSection.style.display = "none";
+      if (btnPrintTranscript) btnPrintTranscript.style.display = "none";
     } else {
       placeholderAlert.style.display = "none";
       printableTranscriptSection.style.display = "block";
+      if (btnPrintTranscript) btnPrintTranscript.style.display = "inline-flex";
     }
   }
 
@@ -951,9 +954,16 @@ if (btnPrintTranscript) {
   });
 }
 
-const btnPrintSemesterPDF = document.getElementById("btnPrintSemesterPDF");
-if (btnPrintSemesterPDF) {
-  btnPrintSemesterPDF.addEventListener("click", () => {
+const btnPrintSemester = document.getElementById("btnPrintSemester");
+if (btnPrintSemester) {
+  btnPrintSemester.addEventListener("click", () => {
+    window.print();
+  });
+}
+
+const btnDownloadSemesterPDF = document.getElementById("btnDownloadSemesterPDF");
+if (btnDownloadSemesterPDF) {
+  btnDownloadSemesterPDF.addEventListener("click", () => {
     window.print();
   });
 }
@@ -1236,7 +1246,7 @@ async function loadCbtPublishedResults() {
 
     // Render CBT Test Table
     if (testRows.length === 0) {
-      cbtTestBody.innerHTML = `<tr><td colspan='9' style='text-align: center; padding: 2rem; color: var(--text-muted);'>No published CBT continuous assessment test results found.</td></tr>`;
+      cbtTestBody.innerHTML = `<tr><td colspan='9' style='text-align: center; padding: 2rem; color: var(--text-muted); font-weight: 500;'>No CBT Test Results Available.</td></tr>`;
     } else {
       cbtTestBody.innerHTML = testRows.map(r => `
         <tr style="border-bottom: 1px solid var(--border-color);">
@@ -1257,7 +1267,7 @@ async function loadCbtPublishedResults() {
 
     // Render CBT Exam Table
     if (examRows.length === 0) {
-      cbtExamBody.innerHTML = `<tr><td colspan='9' style='text-align: center; padding: 2rem; color: var(--text-muted);'>No published CBT final examination results found.</td></tr>`;
+      cbtExamBody.innerHTML = `<tr><td colspan='9' style='text-align: center; padding: 2rem; color: var(--text-muted); font-weight: 500;'>No CBT Examination Results Available.</td></tr>`;
     } else {
       cbtExamBody.innerHTML = examRows.map(r => `
         <tr style="border-bottom: 1px solid var(--border-color);">

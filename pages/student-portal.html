@@ -1601,7 +1601,7 @@
         </div>
 
         <!-- Tab: CBT Test Results -->
-        <div class="tab-content" id="tab-cbt-test-results" style="display: none;">
+        <div class="tab-content" id="tab-cbt-test-results">
           <div style="margin-bottom: 2rem;">
             <h2 class="font-display" style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem; font-weight: 800;">CBT Test Results</h2>
             <p style="color: var(--text-muted); margin-bottom: 0;">Official continuous assessment computer-based test results.</p>
@@ -1631,7 +1631,7 @@
         </div>
 
         <!-- Tab: CBT Examination Results -->
-        <div class="tab-content" id="tab-cbt-exam-results" style="display: none;">
+        <div class="tab-content" id="tab-cbt-exam-results">
           <div style="margin-bottom: 2rem;">
             <h2 class="font-display" style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem; font-weight: 800;">CBT Examination Results</h2>
             <p style="color: var(--text-muted); margin-bottom: 0;">Official computer-based final examination results.</p>
@@ -1661,13 +1661,16 @@
         </div>
 
         <!-- Tab: Semester Results -->
-        <div class="tab-content" id="tab-semester-results" style="display: none;">
+        <div class="tab-content" id="tab-semester-results">
           <div class="no-print" style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
             <div>
               <h2 class="font-display" style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem; font-weight: 800;">Semester Results</h2>
               <p style="color: var(--text-muted); margin-bottom: 0;">Official approved semester cumulative academic results.</p>
             </div>
-            <button type="button" class="btn no-print" id="btnPrintSemesterPDF" style="background-color: var(--primary); color: white; padding: 0.75rem 1.5rem; font-weight: 700; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; border-radius: var(--border-radius-md);"><i class="fa-solid fa-print"></i> Print Semester Results PDF</button>
+            <div style="display: flex; gap: 0.75rem;">
+              <button type="button" class="btn no-print" id="btnPrintSemester" style="background-color: var(--primary); color: white; padding: 0.75rem 1.25rem; font-weight: 700; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; border-radius: var(--border-radius-md);"><i class="fa-solid fa-print"></i> Print Result</button>
+              <button type="button" class="btn no-print" id="btnDownloadSemesterPDF" style="background-color: var(--success); color: white; padding: 0.75rem 1.25rem; font-weight: 700; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; border-radius: var(--border-radius-md);"><i class="fa-solid fa-file-pdf"></i> Download PDF</button>
+            </div>
           </div>
 
           <!-- Filter Controls -->
@@ -1751,13 +1754,13 @@
 
           <div id="resultsEmptyMessage" style="background-color: var(--bg-white); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); padding: 3rem; text-align: center; display: none;">
             <i class="fa-solid fa-graduation-cap" style="font-size: 3rem; color: var(--text-muted); opacity: 0.5; margin-bottom: 1rem;"></i>
-            <h4 class="font-display" style="color: var(--primary); margin-bottom: 0.5rem;">No Academic Results Available</h4>
-            <p style="color: var(--text-muted); margin-bottom: 0; font-size: 0.95rem;">Grading sheets for registered theological subjects are currently awaiting coordination by facilitating faculty members.</p>
+            <h4 class="font-display" style="color: var(--primary); margin-bottom: 0.5rem;">No Semester Results Available.</h4>
+            <p style="color: var(--text-muted); margin-bottom: 0; font-size: 0.95rem;">Official approved semester results are not yet available for display.</p>
           </div>
         </div>
 
         <!-- Tab: Transcript Placeholder & View -->
-        <div class="tab-content" id="tab-transcript" style="display: none;">
+        <div class="tab-content" id="tab-transcript">
           <div class="no-print" style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
             <div>
               <h2 class="font-display" style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem; font-weight: 800;">Academic Transcript</h2>
@@ -1767,12 +1770,15 @@
           </div>
 
           <!-- Transcript Placeholder Info Alert -->
-          <div id="transcriptPlaceholderAlert" style="background-color: #eef2ff; border: 1.5px solid #c7d2fe; color: #3730a3; padding: 1.5rem; border-radius: var(--border-radius-md); margin-bottom: 2rem; display: flex; align-items: flex-start; gap: 1rem;">
-            <i class="fa-solid fa-circle-info" style="font-size: 1.5rem; color: var(--primary); margin-top: 0.1rem;"></i>
-            <div>
-              <h4 style="margin: 0 0 0.25rem 0; font-weight: 700;">Transcript Availability Status</h4>
-              <p style="margin: 0; font-size: 0.9rem;">Transcript will become available after results have been approved for all completed semesters.</p>
-            </div>
+          <div id="transcriptPlaceholderAlert" style="background-color: var(--bg-white); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); padding: 4rem 2rem; text-align: center; margin-bottom: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;">
+            <i class="fa-solid fa-scroll" style="font-size: 3.5rem; color: var(--primary); opacity: 0.25; margin-bottom: 0.5rem;"></i>
+            <h4 style="margin: 0; font-weight: 800; color: var(--primary); font-size: 1.5rem;">Academic Transcript of Record</h4>
+            <p style="margin: 0 auto; font-size: 0.98rem; color: var(--text-muted); max-width: 500px; line-height: 1.6;">
+              Your official transcript will become available after approved semester results have been accumulated.
+            </p>
+            <button type="button" class="btn" disabled style="background-color: var(--border-color); color: var(--text-muted); padding: 0.75rem 1.75rem; font-weight: 700; border: none; cursor: not-allowed; display: inline-flex; align-items: center; gap: 0.5rem; border-radius: var(--border-radius-md); margin-top: 1rem;">
+              <i class="fa-solid fa-circle-minus"></i> Generate Transcript
+            </button>
           </div>
 
           <!-- Printable Landscape Transcript (Visible only during printing / dynamic generation) -->
