@@ -537,9 +537,14 @@ function renderStudentsTable() {
         <td>${stu.email || "N/A"}</td>
         <td><span class="status-badge approved">Active</span></td>
         <td>
-          <button class="btn btn-sm btn-outline-primary view-stu-credentials-btn" data-name="${stu.fullName}" data-stu-id="${stu.studentId}" data-matric="${stu.matricNumber}" data-pass="${stu.loginCredentials?.password || 'N/A'}" data-email="${stu.email || ''}" data-programme="${stu.programme || ''}" data-department="${stu.department || ''}" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
-            <i class="fa-solid fa-id-card"></i> View Credentials
-          </button>
+          <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: flex-start; flex-wrap: wrap;">
+            <button class="btn btn-sm btn-outline-primary view-stu-credentials-btn" data-name="${stu.fullName}" data-stu-id="${stu.studentId}" data-matric="${stu.matricNumber}" data-pass="${stu.loginCredentials?.password || 'N/A'}" data-email="${stu.email || ''}" data-programme="${stu.programme || ''}" data-department="${stu.department || ''}" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+              <i class="fa-solid fa-id-card"></i> View Credentials
+            </button>
+            <button class="btn btn-sm resend-admission-email-btn" data-matric="${stu.matricNumber}" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; background-color: var(--secondary); color: var(--text-dark); border: 1.5px solid var(--border-color);">
+              <i class="fa-solid fa-envelope"></i> Send Email Again
+            </button>
+          </div>
         </td>
       </tr>
     `;
@@ -556,6 +561,13 @@ function renderStudentsTable() {
         btn.getAttribute("data-programme"),
         btn.getAttribute("data-department")
       );
+    });
+  });
+
+  tbody.querySelectorAll(".resend-admission-email-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const matric = btn.getAttribute("data-matric");
+      await resendAdmissionEmail(matric, btn);
     });
   });
 }
@@ -845,58 +857,6 @@ async function processApproval(id) {
       target: "All"
     });
 
-    // 6. Dispatch EmailJS notification
-    let emailSent = false;
-    let emailErrorMsg = "";
-    try {
-      // 1. Before sending, retrieve the student's email from the approved admission record in Firestore
-      const studentDocRef = doc(db, "students", matricNumber.replace(/\//g, "-"));
-      const studentSnap = await getDoc(studentDocRef);
-      if (!studentSnap.exists()) {
-        throw new Error("Student record does not exist in Firestore.");
-      }
-      const student = studentSnap.data();
-
-      // 2. Verify that "student.email" exists and is not empty.
-      if (!student.email || String(student.email).trim() === "" || student.email === "N/A") {
-        // 5. If "student.email" is missing:
-        // - Do not call EmailJS.
-        // - Show: "Student email address is missing."
-        emailErrorMsg = "Student email address is missing.";
-        console.error("Student email address is missing.");
-        window.showToast("Student email address is missing.", "error");
-      } else {
-        const studentPortalLink = window.location.origin + "/pages/student-portal.html";
-        const currentSession = student.academicSession || "2026/2027";
-        const generatedPassword = tempPassword;
-
-        // 3. Build the EmailJS payload like this:
-        const templateParams = {
-          email: student.email,
-          student_name: student.fullName,
-          student_id: student.studentId,
-          matric_number: student.matricNumber,
-          programme: student.programme,
-          session: currentSession,
-          temporary_password: generatedPassword,
-          portal_link: studentPortalLink
-        };
-
-        // 4. Before calling "emailjs.send()", log:
-        console.log("EmailJS Payload:", templateParams);
-
-        const emailResult = await prepareAndLogEmail("admission", student.fullName, student.email, templateParams);
-        if (emailResult && emailResult.success) {
-          emailSent = true;
-        } else {
-          emailErrorMsg = emailResult ? emailResult.error : "Unknown dispatch error";
-        }
-      }
-    } catch (emailErr) {
-      console.error("❌ EmailJS sending error:", emailErr);
-      emailErrorMsg = emailErr.message;
-    }
-
     closeDetailsModal();
 
     // Show success credentials prompt to copy or print
@@ -907,17 +867,73 @@ async function processApproval(id) {
     await loadStudents();
     await loadStats();
 
-    if (emailSent) {
-      window.showToast("Admission approved successfully.", "success");
-      window.showToast("Admission confirmation email sent successfully.", "success");
-    } else {
-      if (emailErrorMsg && emailErrorMsg !== "Student email address is missing.") {
-        window.showToast(emailErrorMsg, "error");
-      }
-    }
+    window.showToast("Admission approved successfully.", "success");
 
   } catch (err) {
     window.showToast("Approval sequence failed: " + err.message, "error");
+  }
+}
+
+// Global/Module scope function to send/resend admission email
+async function resendAdmissionEmail(matric, btnRetry) {
+  if (btnRetry) {
+    btnRetry.disabled = true;
+    btnRetry.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Sending Email...`;
+  }
+  try {
+    // 1. Retrieve the latest student record directly from Firestore
+    const docId = matric.replace(/\//g, "-");
+    const studentDocRef = doc(db, "students", docId);
+    const studentSnap = await getDoc(studentDocRef);
+    if (!studentSnap.exists()) {
+      throw new Error("Student record does not exist in Firestore.");
+    }
+    const student = studentSnap.data();
+
+    // 2. Verify that "student.email" exists and is not empty.
+    if (!student.email || String(student.email).trim() === "" || student.email === "N/A") {
+      // 5. If "student.email" is missing:
+      // - Do not call EmailJS.
+      // - Show: "Student email address is missing."
+      console.error("Student email address is missing.");
+      window.showToast("Student email address is missing.", "error");
+      return;
+    }
+
+    const studentPortalLink = window.location.origin + "/pages/student-portal.html";
+    const currentSession = student.academicSession || "2026/2027";
+    const generatedPassword = student.loginCredentials?.password || "";
+
+    // 3. Build the EmailJS payload like this:
+    const templateParams = {
+      email: student.email,
+      student_name: student.fullName,
+      student_id: student.studentId,
+      matric_number: student.matricNumber,
+      programme: student.programme,
+      session: currentSession,
+      temporary_password: generatedPassword,
+      portal_link: studentPortalLink
+    };
+
+    // 4. Before calling "emailjs.send()", log:
+    console.log("EmailJS Payload:", templateParams);
+
+    const emailResult = await prepareAndLogEmail("admission", student.fullName, student.email, templateParams);
+    if (emailResult && emailResult.success) {
+      window.showToast("Admission confirmation email sent successfully.", "success");
+    } else {
+      const errMsg = emailResult ? emailResult.error : "Unknown dispatch error";
+      window.showToast(errMsg, "error");
+    }
+  } catch (err) {
+    console.error("Email dispatch failed:", err);
+    window.showToast(err.message, "error");
+  } finally {
+    if (btnRetry) {
+      btnRetry.disabled = false;
+      btnRetry.innerHTML = `<i class="fa-solid fa-envelope"></i> Send Email Again`;
+    }
   }
 }
 
@@ -1015,55 +1031,7 @@ function showCredentialsReceipt(name, studentId, matric, password, email, progra
   const btnRetry = document.getElementById("btnRetryEmailDispatch");
   if (btnRetry) {
     btnRetry.addEventListener("click", async () => {
-      btnRetry.disabled = true;
-      btnRetry.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Retrying Email...`;
-      try {
-        // Retrieve student's email from approved admission record in Firestore
-        const studentDocRef = doc(db, "students", matric.replace(/\//g, "-"));
-        const studentSnap = await getDoc(studentDocRef);
-        if (!studentSnap.exists()) {
-          throw new Error("Student record does not exist in Firestore.");
-        }
-        const student = studentSnap.data();
-
-        // Verify that "student.email" exists and is not empty.
-        if (!student.email || String(student.email).trim() === "" || student.email === "N/A") {
-          console.error("Student email address is missing.");
-          window.showToast("Student email address is missing.", "error");
-          return;
-        }
-
-        const studentPortalLink = window.location.origin + "/pages/student-portal.html";
-        const currentSession = student.academicSession || "2026/2027";
-        const generatedPassword = password;
-        const templateParams = {
-          email: student.email,
-          student_name: student.fullName,
-          student_id: student.studentId,
-          matric_number: student.matricNumber,
-          programme: student.programme,
-          session: currentSession,
-          temporary_password: generatedPassword,
-          portal_link: studentPortalLink
-        };
-
-        // Before calling "emailjs.send()", log:
-        console.log("EmailJS Payload:", templateParams);
-
-        const emailResult = await prepareAndLogEmail("admission", student.fullName, student.email, templateParams);
-        if (emailResult && emailResult.success) {
-          window.showToast("Admission confirmation email sent successfully.", "success");
-        } else {
-          const errMsg = emailResult ? emailResult.error : "Unknown dispatch error";
-          window.showToast(errMsg, "error");
-        }
-      } catch (err) {
-        console.error("Email dispatch retry failed:", err);
-        window.showToast(err.message, "error");
-      } finally {
-        btnRetry.disabled = false;
-        btnRetry.innerHTML = `<i class="fa-solid fa-envelope"></i> Send Email Again`;
-      }
+      await resendAdmissionEmail(matric, btnRetry);
     });
   }
 
