@@ -219,6 +219,13 @@ function enterDashboard(studentDoc) {
   document.getElementById("studentStatusDisplay").textContent = `Status: ${studentDoc.status || "Active"}`;
   document.getElementById("studentIdDisplay").textContent = `ID: ${studentDoc.studentId}`;
   document.getElementById("matricNumberDisplay").textContent = `Matric: ${studentDoc.matricNumber}`;
+  
+  const studyCentre = studentDoc.studyCentreName || "Unassigned";
+  const sidebarCentreEl = document.getElementById("sidebarStudyCentre");
+  if (sidebarCentreEl) sidebarCentreEl.textContent = `🏫 ${studyCentre}`;
+
+  const overviewCentreEl = document.getElementById("overviewStudyCentre");
+  if (overviewCentreEl) overviewCentreEl.textContent = studyCentre;
 
   // Reset inactive timers
   resetInactivityTimer();
@@ -399,6 +406,11 @@ function loadProfileTab(studentDoc) {
   document.getElementById("profileChurchName").textContent = studentDoc.churchName || "N/A";
   document.getElementById("profilePastorName").textContent = studentDoc.pastorsName || "N/A";
 
+  const elProfileCentre = document.getElementById("profileStudyCentre");
+  if (elProfileCentre) {
+    elProfileCentre.textContent = studentDoc.studyCentreName || "Unassigned";
+  }
+
   // Editable
   document.getElementById("editPhone").value = studentDoc.phone || "";
   document.getElementById("editEmail").value = studentDoc.email || "";
@@ -407,7 +419,7 @@ function loadProfileTab(studentDoc) {
   // Overview sub-bar details
   const subDetails = document.getElementById("stuNavDetails");
   if (subDetails) {
-    subDetails.textContent = `Student ID: ${studentDoc.studentId} | Matric: ${studentDoc.matricNumber} | Programme: ${studentDoc.programme} | Session: ${studentDoc.academicSession || "2026/2027"} (${studentDoc.semester || "First Semester"}) | Status: ${studentDoc.status || "Active"}`;
+    subDetails.textContent = `Student ID: ${studentDoc.studentId} | Matric: ${studentDoc.matricNumber} | Programme: ${studentDoc.programme} | Session: ${studentDoc.academicSession || "2026/2027"} (${studentDoc.semester || "First Semester"}) | Study Centre: ${studentDoc.studyCentreName || "Unassigned"} | Status: ${studentDoc.status || "Active"}`;
   }
 
   const welcomeMsg = document.getElementById("welcomeMessage");
