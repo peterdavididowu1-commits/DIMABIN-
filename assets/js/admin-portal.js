@@ -4116,11 +4116,11 @@ window.renderAnnouncementsTable = function() {
 
 // Filters listeners
 const filterSearch = document.getElementById("announceFilterSearch");
-const filterStatus = document.getElementById("announceFilterStatus");
+const filterAnnounceStatus = document.getElementById("announceFilterStatus");
 const filterPinned = document.getElementById("announceFilterPinned");
 
 if (filterSearch) filterSearch.addEventListener("input", () => renderAnnouncementsTable());
-if (filterStatus) filterStatus.addEventListener("change", () => renderAnnouncementsTable());
+if (filterAnnounceStatus) filterAnnounceStatus.addEventListener("change", () => renderAnnouncementsTable());
 if (filterPinned) filterPinned.addEventListener("change", () => renderAnnouncementsTable());
 
 // Open Modal for Creating
