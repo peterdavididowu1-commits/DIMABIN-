@@ -1110,6 +1110,16 @@
               </div>
             </div>
 
+            <div class="form-group" style="margin-top: 1rem;">
+              <label for="preferredStudyCentre">Preferred Study Centre <span style="color:var(--error); font-weight:700;">*</span></label>
+              <div class="input-with-icon">
+                <i class="fa-solid fa-hotel input-icon"></i>
+                <select id="preferredStudyCentre" class="form-control" required style="padding-left: 2.75rem;">
+                  <option value="" disabled selected>Loading Study Centres...</option>
+                </select>
+              </div>
+            </div>
+
             <div class="form-group">
               <label for="previousSchool">Previous School Attended</label>
               <div class="input-with-icon">
@@ -1512,6 +1522,33 @@
 
     // Load active timeline settings on start
     await loadTimelineSettings();
+
+    // Load active study centres
+    async function loadActiveStudyCentres() {
+      const selectEl = document.getElementById("preferredStudyCentre");
+      if (!selectEl) return;
+      try {
+        const q = query(collection(db, "study_centres"), where("status", "==", "Active"));
+        const snap = await getDocs(q);
+        let optionsHtml = '<option value="" disabled selected>Select Preferred Study Centre</option>';
+        if (snap.empty) {
+          optionsHtml += '<option value="default" data-name="Main Campus">Main Campus</option>';
+        } else {
+          snap.forEach(docSnap => {
+            const data = docSnap.data();
+            optionsHtml += `<option value="${docSnap.id}" data-name="${data.name}">${data.name} (${data.code})</option>`;
+          });
+        }
+        selectEl.innerHTML = optionsHtml;
+      } catch (err) {
+        console.warn("Failed to load study centres, using fallback:", err);
+        selectEl.innerHTML = `
+          <option value="" disabled>Select Preferred Study Centre</option>
+          <option value="default" data-name="Main Campus" selected>Main Campus (Default)</option>
+        `;
+      }
+    }
+    await loadActiveStudyCentres();
 
     // Draft Persistence Management
     function saveDraftData() {
@@ -2196,6 +2233,8 @@
 
           // Academic Information
           programme: "Diploma in Theology",
+          preferredStudyCentreId: document.getElementById('preferredStudyCentre')?.value || "default",
+          preferredStudyCentreName: (document.getElementById('preferredStudyCentre')?.selectedIndex >= 0 ? document.getElementById('preferredStudyCentre').options[document.getElementById('preferredStudyCentre').selectedIndex].getAttribute('data-name') : "") || "Main Campus",
           previousSchool: document.getElementById('previousSchool').value.trim(),
           highestQualification: document.getElementById('highestQualification').value,
           yearOfGraduation: parseInt(document.getElementById('yearOfGraduation').value, 10),

@@ -1200,6 +1200,9 @@
           <button class="sidebar-nav-btn" data-tab="courses-allocation">
             <i class="fa-solid fa-list-check"></i> Course Allocation
           </button>
+          <button class="sidebar-nav-btn" data-tab="study-centres">
+            <i class="fa-solid fa-hotel"></i> Study Centres
+          </button>
 
           <button class="sidebar-nav-btn" data-tab="result-approval">
             <i class="fa-solid fa-file-signature"></i> Result Approval
@@ -1275,6 +1278,45 @@
               Your terminal is synchronized securely with Firestore. Active timeline points to academic session <strong id="activeSessionDisplay">2026/2027</strong> under <strong id="activeSemesterDisplay">First Semester</strong>. If you need to roll over session markers, proceed to the <strong>EmailJS & Settings</strong> control module.
             </p>
           </div>
+
+          <!-- Study Centre Distribution Panel -->
+          <div style="background-color: var(--bg-white); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); padding: 2rem; margin-top: 1.5rem;" id="studyCentreStatsPanel">
+            <h3 class="font-display" style="color: var(--primary); font-size: 1.25rem; margin-bottom: 1rem;"><i class="fa-solid fa-hotel"></i> Regional Study Centres Distribution</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;" id="studyCentresStatsGrid">
+              <div class="stat-card" style="margin: 0; box-shadow: none; border: 1.5px solid var(--border-color);">
+                <div class="stat-card-info">
+                  <h5>Active Centres</h5>
+                  <div class="stat-value" id="statActiveCentres">0</div>
+                </div>
+                <div class="stat-card-icon green"><i class="fa-solid fa-circle-check"></i></div>
+              </div>
+              <div class="stat-card" style="margin: 0; box-shadow: none; border: 1.5px solid var(--border-color);">
+                <div class="stat-card-info">
+                  <h5>Inactive Centres</h5>
+                  <div class="stat-value" id="statInactiveCentres">0</div>
+                </div>
+                <div class="stat-card-icon red"><i class="fa-solid fa-circle-xmark"></i></div>
+              </div>
+            </div>
+            
+            <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin-bottom: 0.75rem;">Students & Lecturers Per Centre</h4>
+            <div class="table-container" style="border: 1.5px solid var(--border-color); border-radius: 6px; overflow-x: auto;">
+              <table class="custom-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                  <tr style="background-color: var(--bg-slate); text-align: left;">
+                    <th style="padding: 0.75rem;">Study Centre</th>
+                    <th style="padding: 0.75rem; text-align: center;">Students Enrolled</th>
+                    <th style="padding: 0.75rem; text-align: center;">Lecturers Assigned</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboardCentresTableBody">
+                  <tr>
+                    <td colspan="3" style="text-align: center; padding: 1.5rem; color: var(--text-muted);">No study centre metrics available.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
         <!-- Tab 2: Admissions Management -->
@@ -1295,6 +1337,9 @@
               <option value="Approved">Approved</option>
               <option value="Rejected">Rejected</option>
             </select>
+            <select class="filter-select" id="filterAppsStudyCentre">
+              <option value="all">All Study Centres</option>
+            </select>
           </div>
 
           <div class="table-container">
@@ -1304,6 +1349,7 @@
                   <th>App ID</th>
                   <th>Candidate Name</th>
                   <th>Programme</th>
+                  <th>Study Centre</th>
                   <th>Status</th>
                   <th>Submission Date</th>
                   <th>Actions</th>
@@ -1333,6 +1379,9 @@
               <i class="fa-solid fa-magnifying-glass"></i>
               <input type="text" id="searchStudentsInput" placeholder="Search directory by Student ID, Matric, Name, or Email...">
             </div>
+            <select class="filter-select" id="filterStudentsStudyCentre" style="max-width: 250px;">
+              <option value="all">All Study Centres</option>
+            </select>
           </div>
 
           <div class="table-container">
@@ -1343,6 +1392,7 @@
                   <th>Matric Number</th>
                   <th>Full Name</th>
                   <th>Email</th>
+                  <th>Study Centre</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -1453,6 +1503,9 @@
                   <option value="Active">Active</option>
                   <option value="Suspended">Suspended</option>
                 </select>
+                <select id="filterLecturersStudyCentre" class="form-control" style="width: auto; min-width: 160px; font-family: 'Poppins', sans-serif; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; padding: 0.5rem 0.75rem;">
+                  <option value="all">All Study Centres</option>
+                </select>
                 <select id="sortLecturerBy" class="form-control" style="width: auto; min-width: 160px; font-family: 'Poppins', sans-serif; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; padding: 0.5rem 0.75rem;">
                   <option value="name-asc">Sort: Name (A-Z)</option>
                   <option value="name-desc">Sort: Name (Z-A)</option>
@@ -1473,6 +1526,7 @@
                     <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Lecturer ID</th>
                     <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Name</th>
                     <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Department</th>
+                    <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Assigned Study Centre(s)</th>
                     <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Assigned Courses</th>
                     <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Status</th>
                     <th style="padding: 1rem; color: var(--primary); font-weight: 700; text-align: center;">Actions</th>
@@ -1587,6 +1641,15 @@
                   </div>
                 </div>
 
+                <!-- Assigned Study Centres Block -->
+                <div style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+                  <label style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.75rem;">Study Centre Assignment (Assign one or multiple)</label>
+                  <div id="studyCentreAllocationCheckboxes" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem; max-height: 150px; overflow-y: auto; padding: 1rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px;">
+                    <!-- Generated dynamically -->
+                    <div style="color: var(--text-muted); font-size: 0.9rem;"><i class="fa-solid fa-spinner fa-spin"></i> Loading regional study centres...</div>
+                  </div>
+                </div>
+
                 <!-- Submit Action (Icons Only!) -->
                 <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
                   <button type="submit" class="btn" title="Submit Registration" style="background-color: #1F3B82; color: white; border: none; width: 44px; height: 44px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.15rem; transition: background-color 0.2s;"><i class="fa-solid fa-floppy-disk"></i></button>
@@ -1647,6 +1710,9 @@
                   <option value="Active">Active</option>
                   <option value="Inactive">Inactive</option>
                 </select>
+                <select id="filterCoursesStudyCentre" class="form-control" style="width: auto; min-width: 160px; font-family: 'Poppins', sans-serif; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; padding: 0.5rem 0.75rem;">
+                  <option value="all">All Study Centres</option>
+                </select>
                 <select id="sortCourseBy" class="form-control" style="width: auto; min-width: 160px; font-family: 'Poppins', sans-serif; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; padding: 0.5rem 0.75rem;">
                   <option value="code-asc">Sort: Code (A-Z)</option>
                   <option value="code-desc">Sort: Code (Z-A)</option>
@@ -1668,6 +1734,7 @@
                     <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Semester</th>
                     <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Credits</th>
                     <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Department</th>
+                    <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Study Centre</th>
                     <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Status</th>
                     <th style="padding: 1rem; color: var(--primary); font-weight: 700; text-align: center;">Actions</th>
                   </tr>
@@ -1966,6 +2033,114 @@
           </div>
         </div>
 
+        <!-- Tab: Study Centres Management -->
+        <div class="tab-content" id="tab-study-centres" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <h2 class="font-display" style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem; font-weight: 800;">Study Centre Hub</h2>
+              <p style="color: var(--text-muted);">Manage regional learning locations, assign coordinators, and monitor regional metrics.</p>
+            </div>
+            <div style="display: flex; gap: 0.75rem;">
+              <button class="btn centre-sub-tab-btn active" data-subtab="list" title="Centres Directory" style="background-color: #1F3B82; color: white; width: 44px; height: 44px; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; transition: all 0.2s;"><i class="fa-solid fa-list-ul" style="font-size: 1.15rem;"></i></button>
+              <button class="btn centre-sub-tab-btn" data-subtab="create" title="Establish New Centre" style="background-color: #1F3B82; color: white; width: 44px; height: 44px; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; transition: all 0.2s;"><i class="fa-solid fa-plus" style="font-size: 1.15rem;"></i></button>
+            </div>
+          </div>
+
+          <!-- SUB-TAB 1: Centres Directory -->
+          <div class="centre-subtab-content" id="centre-subtab-list">
+            <!-- Search & Filter Controls -->
+            <div class="search-filter-bar" style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; background-color: var(--bg-white); padding: 1.25rem; border-radius: 6px; border: 1.5px solid var(--border-color);">
+              <div class="search-input-wrapper" style="flex: 1; min-width: 250px;">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchStudyCentresInput" placeholder="Search centres by code, name, coordinator..." style="width: 100%; border: none; outline: none; background: transparent; font-family: 'Poppins', sans-serif;">
+              </div>
+              <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <select id="filterStudyCentresStatus" class="form-control" style="width: auto; min-width: 150px; font-family: 'Poppins', sans-serif; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; padding: 0.5rem 0.75rem;">
+                  <option value="all">All Statuses</option>
+                  <option value="Active">Active Only</option>
+                  <option value="Inactive">Inactive Only</option>
+                </select>
+                <button id="btnResetCentreFilters" class="btn" title="Reset Filters" style="background-color: #1F3B82; color: white; width: 40px; height: 40px; border-radius: 6px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-rotate-left"></i></button>
+              </div>
+            </div>
+
+            <!-- Centres Table -->
+            <div class="table-container" style="background-color: var(--bg-white); border-radius: 6px; overflow-x: auto; border: 1.5px solid var(--border-color);">
+              <table class="custom-table" style="width: 100%; border-collapse: collapse; min-width: 900px;">
+                <thead>
+                  <tr style="background-color: var(--bg-slate); text-align: left; border-bottom: 1.5px solid var(--border-color);">
+                    <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Code</th>
+                    <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Centre Name</th>
+                    <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Address</th>
+                    <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Phone Number</th>
+                    <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Coordinator</th>
+                    <th style="padding: 1rem; color: var(--primary); font-weight: 700; text-align: center;">Students</th>
+                    <th style="padding: 1rem; color: var(--primary); font-weight: 700; text-align: center;">Lecturers</th>
+                    <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Status</th>
+                    <th style="padding: 1rem; color: var(--primary); font-weight: 700; text-align: center;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="studyCentresTableBody">
+                  <tr>
+                    <td colspan="9" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                      <i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.5rem;"></i> Loading study centres...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- SUB-TAB 2: Establish New Centre Form -->
+          <div class="centre-subtab-content" id="centre-subtab-create" style="display: none;">
+            <div class="portal-support-card" style="background-color: var(--bg-white); padding: 2rem; border-radius: 6px; border: 1.5px solid var(--border-color); margin-bottom: 2rem;">
+              <h3 class="font-display" style="color: var(--primary); font-size: 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 700;">
+                <i class="fa-solid fa-hotel" style="color: var(--accent);"></i> New Study Centre Profile
+              </h3>
+              
+              <form id="createCentreForm">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+                  
+                  <div class="form-group">
+                    <label for="addCentreName" style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.5rem;">Centre Name <span style="color: var(--error);">*</span></label>
+                    <input type="text" id="addCentreName" class="form-control" placeholder="e.g. Lagos Mainland Study Centre" style="width: 100%; padding: 0.75rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="addCentreCoordinator" style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.5rem;">Centre Coordinator <span style="color: var(--error);">*</span></label>
+                    <input type="text" id="addCentreCoordinator" class="form-control" placeholder="e.g. Pastor Samuel Akin" style="width: 100%; padding: 0.75rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="addCentrePhone" style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.5rem;">Phone Number <span style="color: var(--error);">*</span></label>
+                    <input type="tel" id="addCentrePhone" class="form-control" placeholder="e.g. +234 803 123 4567" style="width: 100%; padding: 0.75rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="addCentreStatus" style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.5rem;">Status</label>
+                    <select id="addCentreStatus" class="form-control" style="width: 100%; padding: 0.75rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group" style="grid-column: span 2;">
+                    <label for="addCentreAddress" style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.5rem;">Centre Address <span style="color: var(--error);">*</span></label>
+                    <textarea id="addCentreAddress" rows="2" class="form-control" placeholder="e.g. 15, Redemption Way, Ebute Metta, Lagos State, Nigeria" style="width: 100%; padding: 0.75rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif; resize: vertical;" required></textarea>
+                  </div>
+
+                </div>
+
+                <div style="display: flex; justify-content: flex-end;">
+                  <button type="submit" class="btn" style="background-color: var(--primary); color: white; padding: 0.75rem 1.5rem; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: background-color 0.2s;">
+                    <i class="fa-solid fa-hotel"></i> Establish Study Centre
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
         <!-- Tab: Result Approval -->
         <div class="tab-content" id="tab-result-approval">
           <div style="margin-bottom: 2rem;">
@@ -2000,6 +2175,12 @@
                 <label for="approvalFilterLecturer" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Lecturer Name</label>
                 <input type="text" id="approvalFilterLecturer" placeholder="e.g. Dr. Olalekan" class="form-control" style="width: 100%; font-family: 'Poppins', sans-serif; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; padding: 0.5rem 0.75rem;">
               </div>
+              <div class="form-group" style="margin: 0;">
+                <label for="filterResultsStudyCentre" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Study Centre</label>
+                <select id="filterResultsStudyCentre" class="form-control" style="width: 100%; font-family: 'Poppins', sans-serif; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; padding: 0.5rem 0.75rem;">
+                  <option value="all">All Study Centres</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -2009,6 +2190,7 @@
               <thead>
                 <tr style="background-color: var(--bg-slate); text-align: left; border-bottom: 1.5px solid var(--border-color);">
                   <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Course</th>
+                  <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Study Centre</th>
                   <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Session/Semester</th>
                   <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Lecturer</th>
                   <th style="padding: 1rem; color: var(--primary); font-weight: 700; text-align: center;">Registered</th>
@@ -2154,6 +2336,14 @@
             </div>
           </div>
 
+          <!-- Study Centres Selection inside Modal -->
+          <div style="margin-top: 1rem; margin-bottom: 1.5rem;">
+            <label style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.5rem;">Study Centre Assignment (Assign centres)</label>
+            <div id="editStudyCentreAllocationCheckboxes" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.5rem; max-height: 120px; overflow-y: auto; padding: 0.75rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px;">
+              <!-- Generated dynamically -->
+            </div>
+          </div>
+
           <!-- Action buttons inside modal - Icons Only! -->
           <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
             <button type="submit" class="btn" title="Save Changes" style="background-color: #1F3B82; color: white; border: none; width: 44px; height: 44px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.15rem; transition: background-color 0.2s;"><i class="fa-solid fa-floppy-disk"></i></button>
@@ -2227,6 +2417,63 @@
             <div class="form-group" style="grid-column: span 3;">
               <label for="editCourseDesc" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Course Description</label>
               <textarea id="editCourseDesc" rows="3" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif; resize: vertical;" required></textarea>
+            </div>
+
+          </div>
+
+          <!-- Action buttons inside modal - Icons Only! -->
+          <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+            <button type="submit" class="btn" title="Save Changes" style="background-color: #1F3B82; color: white; border: none; width: 44px; height: 44px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.15rem; transition: background-color 0.2s;"><i class="fa-solid fa-floppy-disk"></i></button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Study Centre Edit Modal -->
+  <div class="modal-overlay" id="studyCentreEditModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div class="modal-card" style="background-color: var(--bg-white); border-radius: 8px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.15); border: 2px solid var(--border-color);">
+      <div style="background-color: var(--primary); color: white; padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-top-left-radius: 6px; border-top-right-radius: 6px;">
+        <h3 class="font-display" style="margin: 0; font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-pen-to-square"></i> Modify Study Centre</h3>
+        <button id="btnCancelCentreEdit" class="btn" type="button" title="Close modal" style="background: transparent; border: none; color: white; font-size: 1.2rem; cursor: pointer; padding: 0; line-height: 1;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div style="padding: 1.5rem;">
+        <form id="editCentreForm">
+          <input type="hidden" id="editCentreId">
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+            
+            <div class="form-group">
+              <label for="editCentreCode" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Centre Code (Read-Only)</label>
+              <input type="text" id="editCentreCode" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" readonly disabled>
+            </div>
+
+            <div class="form-group" style="grid-column: span 2;">
+              <label for="editCentreName" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Centre Name</label>
+              <input type="text" id="editCentreName" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+            </div>
+
+            <div class="form-group">
+              <label for="editCentreCoordinator" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Coordinator</label>
+              <input type="text" id="editCentreCoordinator" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+            </div>
+
+            <div class="form-group">
+              <label for="editCentrePhone" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Phone Number</label>
+              <input type="tel" id="editCentrePhone" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+            </div>
+
+            <div class="form-group">
+              <label for="editCentreStatus" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Status</label>
+              <select id="editCentreStatus" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="grid-column: span 3;">
+              <label for="editCentreAddress" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Centre Address</label>
+              <textarea id="editCentreAddress" rows="2" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif; resize: vertical;" required></textarea>
             </div>
 
           </div>

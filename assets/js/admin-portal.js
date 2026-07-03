@@ -3,7 +3,7 @@ import { getEmailJSConfig, saveEmailJSConfig, DEFAULT_EMAILJS_CONFIG, prepareAnd
 
 // Import dynamic Firebase Auth and Firestore methods
 const {
-  collection, doc, getDoc, getDocs, setDoc, updateDoc, query, where, orderBy, limit
+  collection, doc, getDoc, getDocs, setDoc, updateDoc, query, where, orderBy, limit, addDoc, deleteDoc
 } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
 const {
   sendPasswordResetEmail,
@@ -20,6 +20,7 @@ let allApplications = [];
 let allStudents = [];
 let allLecturers = [];
 let allCourses = [];
+let allStudyCentres = [];
 let currentAdminDoc = null;
 
 // Global toggle password visibility
@@ -191,12 +192,14 @@ function enterDashboard(session) {
   document.getElementById("currentUserDisplay").textContent = session.fullName;
   document.getElementById("currentIdDisplay").textContent = session.adminId;
   
-  // Initialize systems
-  loadStats();
-  loadApplications();
-  loadStudents();
-  loadLecturers();
-  loadCourses();
+  // Initialize systems - load study centres first, then dependent collections
+  loadStudyCentres().then(() => {
+    loadStats();
+    loadApplications();
+    loadStudents();
+    loadLecturers();
+    loadCourses();
+  });
   loadSettings();
   resetInactivityTimer();
 }
@@ -374,6 +377,8 @@ document.querySelectorAll(".sidebar-nav-btn").forEach(btn => {
       initAdminCbtControl();
     } else if (targetTab === "result-approval") {
       initResultApprovalConsole();
+    } else if (targetTab === "study-centres") {
+      initStudyCentresTab();
     }
   });
 });
@@ -413,6 +418,37 @@ async function loadStats() {
     if (elApproved) elApproved.textContent = approved;
     if (elRejected) elRejected.textContent = rejected;
     if (elStudents) elStudents.textContent = totalStudents;
+
+    // Study Centres metrics
+    const activeCentres = allStudyCentres.filter(c => c.status === "Active").length;
+    const inactiveCentres = allStudyCentres.filter(c => c.status !== "Active").length;
+
+    const elActiveCentres = document.getElementById("statActiveCentres");
+    const elInactiveCentres = document.getElementById("statInactiveCentres");
+    if (elActiveCentres) elActiveCentres.textContent = activeCentres;
+    if (elInactiveCentres) elInactiveCentres.textContent = inactiveCentres;
+
+    // Render table
+    const dashboardCentresTableBody = document.getElementById("dashboardCentresTableBody");
+    if (dashboardCentresTableBody) {
+      if (allStudyCentres.length === 0) {
+        dashboardCentresTableBody.innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 1.5rem; color: var(--text-muted);">No study centre metrics available.</td></tr>`;
+      } else {
+        let tbodyHtml = "";
+        allStudyCentres.forEach(c => {
+          const totalStudentsInCentre = allStudents.filter(s => s.studyCentreId === c.id).length;
+          const totalLecturersInCentre = allLecturers.filter(l => l.assignedStudyCentreIds && l.assignedStudyCentreIds.includes(c.id)).length;
+          tbodyHtml += `
+            <tr style="border-bottom: 1.5px solid var(--border-color);">
+              <td style="padding: 0.75rem; font-weight: 600;">${c.name} (${c.code})</td>
+              <td style="padding: 0.75rem; text-align: center; font-weight: 700; color: var(--accent);">${totalStudentsInCentre}</td>
+              <td style="padding: 0.75rem; text-align: center; font-weight: 700; color: var(--accent);">${totalLecturersInCentre}</td>
+            </tr>
+          `;
+        });
+        dashboardCentresTableBody.innerHTML = tbodyHtml;
+      }
+    }
   } catch (err) {
     console.error("❌ Error loading stats:", err);
   }
@@ -438,11 +474,15 @@ function renderApplicationsTable() {
   if (!tbody) return;
   
   const filterVal = document.getElementById("filterStatus").value;
+  const filterCentre = document.getElementById("filterAppsStudyCentre")?.value || "all";
   const searchVal = document.getElementById("searchAppsInput").value.toLowerCase();
 
   let filtered = allApplications;
   if (filterVal !== "All") {
     filtered = filtered.filter(app => (app.admissionStatus || "Pending") === filterVal);
+  }
+  if (filterCentre !== "all") {
+    filtered = filtered.filter(app => app.preferredStudyCentreId === filterCentre);
   }
   if (searchVal) {
     filtered = filtered.filter(app => {
@@ -454,7 +494,7 @@ function renderApplicationsTable() {
   }
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">No matching candidate applications found.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-muted);">No matching candidate applications found.</td></tr>`;
     return;
   }
 
@@ -468,6 +508,7 @@ function renderApplicationsTable() {
         <td><strong>${app.applicationNumber || app.id.slice(0,8)}</strong></td>
         <td>${app.fullName || "N/A"}</td>
         <td>${app.programme || "Diploma in Theology"}</td>
+        <td>${app.preferredStudyCentreName || "Unassigned"}</td>
         <td><span class="status-badge ${badgeClass}">${status}</span></td>
         <td>${dateStr}</td>
         <td>
@@ -490,8 +531,10 @@ function renderApplicationsTable() {
 // Search and filter triggers
 const searchAppsInput = document.getElementById("searchAppsInput");
 const filterStatus = document.getElementById("filterStatus");
+const filterAppsStudyCentre = document.getElementById("filterAppsStudyCentre");
 if (searchAppsInput) searchAppsInput.addEventListener("input", renderApplicationsTable);
 if (filterStatus) filterStatus.addEventListener("change", renderApplicationsTable);
+if (filterAppsStudyCentre) filterAppsStudyCentre.addEventListener("change", renderApplicationsTable);
 
 // Fetch and load students
 async function loadStudents() {
@@ -512,19 +555,23 @@ function renderStudentsTable() {
   if (!tbody) return;
   
   const searchVal = document.getElementById("searchStudentsInput").value.toLowerCase();
+  const filterCentre = document.getElementById("filterStudentsStudyCentre")?.value || "all";
 
   let filtered = allStudents;
+  if (filterCentre !== "all") {
+    filtered = filtered.filter(stu => stu.studyCentreId === filterCentre);
+  }
   if (searchVal) {
     filtered = filtered.filter(stu => {
       return (stu.fullName || "").toLowerCase().includes(searchVal) ||
              (stu.matricNumber || "").toLowerCase().includes(searchVal) ||
              (stu.studentId || "").toLowerCase().includes(searchVal) ||
              (stu.email || "").toLowerCase().includes(searchVal);
-   });
+    });
   }
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">No student records registered.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-muted);">No student records registered.</td></tr>`;
     return;
   }
 
@@ -535,6 +582,7 @@ function renderStudentsTable() {
         <td>${stu.matricNumber}</td>
         <td>${stu.fullName}</td>
         <td>${stu.email || "N/A"}</td>
+        <td>${stu.studyCentreName || "Unassigned"}</td>
         <td><span class="status-badge approved">Active</span></td>
         <td>
           <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: flex-start; flex-wrap: wrap;">
@@ -573,7 +621,9 @@ function renderStudentsTable() {
 }
 
 const searchStudentsInput = document.getElementById("searchStudentsInput");
+const filterStudentsStudyCentre = document.getElementById("filterStudentsStudyCentre");
 if (searchStudentsInput) searchStudentsInput.addEventListener("input", renderStudentsTable);
+if (filterStudentsStudyCentre) filterStudentsStudyCentre.addEventListener("change", renderStudentsTable);
 
 // Fetch next Student IDs and Matric sequence from Firestore
 async function generateStudentIds() {
@@ -705,6 +755,16 @@ async function viewApplicationDetails(id) {
         <h4 style="color: var(--primary); margin: 0; font-size: 1.1rem;"><i class="fa-solid fa-shield-halved"></i> Registrar Review Decision Panel</h4>
         
         <div class="form-group">
+          <label for="modalPreferredStudyCentre" style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Assigned Study Centre</label>
+          <select id="modalPreferredStudyCentre" class="form-control" style="width:100%; padding:0.75rem; border-radius:var(--border-radius-md); border:1px solid var(--border-color); font-family:inherit; font-size:0.95rem;">
+            <option value="">-- No Assigned Centre --</option>
+            ${allStudyCentres.filter(c => c.status === "Active").map(c => `
+              <option value="${c.id}" ${c.id === app.preferredStudyCentreId ? 'selected' : ''}>${c.name} (${c.code})</option>
+            `).join('')}
+          </select>
+        </div>
+
+        <div class="form-group">
           <label for="modalRemarks" style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Administrative Remarks / Assessment Notes</label>
           <textarea id="modalRemarks" class="form-control" style="width:100%; height:80px; padding:0.75rem; border-radius:var(--border-radius-md); border:1px solid var(--border-color); font-family:inherit; font-size:0.95rem;" placeholder="Enter official evaluation notes or feedback for this candidate...">${app.remarks || ""}</textarea>
         </div>
@@ -789,6 +849,11 @@ async function processApproval(id) {
   window.showToast("Generating student portfolio credentials...", "info");
   const remarks = document.getElementById("modalRemarks").value;
   
+  const selectedCentreId = document.getElementById("modalPreferredStudyCentre")?.value || "";
+  const selectedCentre = allStudyCentres.find(c => c.id === selectedCentreId);
+  const studyCentreId = selectedCentre ? selectedCentre.id : "";
+  const studyCentreName = selectedCentre ? selectedCentre.name : "Unassigned";
+  
   try {
     // 1. Generate unique sequence IDs
     const { studentId, matricNumber } = await generateStudentIds();
@@ -805,6 +870,8 @@ async function processApproval(id) {
     await setDoc(doc(db, "students", matricNumber.replace(/\//g, "-")), {
       studentId,
       matricNumber,
+      studyCentreId,
+      studyCentreName,
       fullName: app.fullName || "N/A",
       gender: app.gender || "N/A",
       dateOfBirth: app.dateOfBirth || "N/A",
@@ -841,11 +908,13 @@ async function processApproval(id) {
       }
     });
 
-    // 4. Update the original application document status to Approved
+    // 4. Update the original application document status to Approved and update study centre details
     await updateDoc(doc(db, "applications", id), {
       admissionStatus: "Approved",
       remarks: remarks || "Approved and admitted.",
-      reviewedBy: "DIMABIN/ADM/2026/01"
+      reviewedBy: "DIMABIN/ADM/2026/01",
+      preferredStudyCentreId: studyCentreId,
+      preferredStudyCentreName: studyCentreName
     });
 
     // 5. Create a system notification record
@@ -1392,6 +1461,85 @@ function populateCourseCheckboxes() {
   if (editContainer) editContainer.innerHTML = editHtml;
 }
 
+function populateStudyCentreCheckboxes() {
+  const container = document.getElementById("studyCentreAllocationCheckboxes");
+  const editContainer = document.getElementById("editStudyCentreAllocationCheckboxes");
+  if (!container && !editContainer) return;
+
+  const sortedCentres = [...allStudyCentres].filter(c => c.status === "Active").sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
+  let html = "";
+  if (sortedCentres.length === 0) {
+    html = `<div style="color: var(--text-muted); font-size: 0.9rem; grid-column: 1/-1; text-align: center; padding: 1rem;">No active study centres available.</div>`;
+  } else {
+    sortedCentres.forEach(c => {
+      const cid = c.id;
+      const name = c.name;
+      const code = c.code || "";
+      html += `
+        <label style="display: flex; align-items: flex-start; gap: 0.6rem; background-color: var(--bg-white); padding: 0.6rem 0.8rem; border-radius: 6px; border: 1.5px solid var(--border-color); cursor: pointer; font-size: 0.85rem; transition: border-color 0.2s;">
+          <input type="checkbox" name="assignedStudyCentres" value="${cid}" style="margin-top: 0.2rem; accent-color: var(--primary);">
+          <span style="font-weight: 500;">${name} (${code})</span>
+        </label>
+      `;
+    });
+  }
+  if (container) container.innerHTML = html;
+
+  let editHtml = "";
+  if (sortedCentres.length === 0) {
+    editHtml = `<div style="color: var(--text-muted); font-size: 0.85rem; grid-column: 1/-1; text-align: center; padding: 1rem;">No active study centres available.</div>`;
+  } else {
+    sortedCentres.forEach(c => {
+      const cid = c.id;
+      const name = c.name;
+      const code = c.code || "";
+      editHtml += `
+        <label style="display: flex; align-items: flex-start; gap: 0.5rem; background-color: var(--bg-white); padding: 0.5rem 0.7rem; border-radius: 6px; border: 1.5px solid var(--border-color); cursor: pointer; font-size: 0.8rem; transition: border-color 0.2s;">
+          <input type="checkbox" name="editAssignedStudyCentres" value="${cid}" style="margin-top: 0.15rem; accent-color: var(--primary);">
+          <span style="font-weight: 500;">${name} (${code})</span>
+        </label>
+      `;
+    });
+  }
+  if (editContainer) editContainer.innerHTML = editHtml;
+}
+
+function populateStudyCentreFilterDropdowns() {
+  const dropdownIds = [
+    "filterAppsStudyCentre",
+    "filterStudentsStudyCentre",
+    "filterLecturersStudyCentre",
+    "filterCoursesStudyCentre",
+    "filterResultsStudyCentre"
+  ];
+  
+  dropdownIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    
+    // Save current selected value
+    const currentVal = el.value || "all";
+    
+    // Reset but keep "All Study Centres" option
+    el.innerHTML = '<option value="all">All Study Centres</option>';
+    
+    allStudyCentres.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c.id;
+      opt.textContent = `${c.name} (${c.code})`;
+      el.appendChild(opt);
+    });
+    
+    // Restore value if still exists
+    if ([...el.options].some(o => o.value === currentVal)) {
+      el.value = currentVal;
+    } else {
+      el.value = "all";
+    }
+  });
+}
+
 // Course Management Directory Renderer
 function renderCoursesDirectory() {
   const tbody = document.getElementById("coursesTableBody");
@@ -1400,6 +1548,7 @@ function renderCoursesDirectory() {
   const searchQuery = document.getElementById("searchCoursesInput") ? document.getElementById("searchCoursesInput").value.toLowerCase().trim() : "";
   const filterSemester = document.getElementById("filterCourseSemester") ? document.getElementById("filterCourseSemester").value : "all";
   const filterStatus = document.getElementById("filterCourseStatus") ? document.getElementById("filterCourseStatus").value : "all";
+  const filterCentre = document.getElementById("filterCoursesStudyCentre") ? document.getElementById("filterCoursesStudyCentre").value : "all";
   const sortBy = document.getElementById("sortCourseBy") ? document.getElementById("sortCourseBy").value : "code-asc";
 
   let filtered = allCourses.filter(c => {
@@ -1410,8 +1559,11 @@ function renderCoursesDirectory() {
     const matchesSearch = code.includes(searchQuery) || title.includes(searchQuery) || dept.includes(searchQuery);
     const matchesSemester = filterSemester === "all" || c.semester === filterSemester;
     const matchesStatus = filterStatus === "all" || c.status === filterStatus;
+    const matchesCentre = filterCentre === "all" || 
+                         (c.studyCentreId === filterCentre) || 
+                         (c.assignedStudyCentreIds && c.assignedStudyCentreIds.includes(filterCentre));
 
-    return matchesSearch && matchesSemester && matchesStatus;
+    return matchesSearch && matchesSemester && matchesStatus && matchesCentre;
   });
 
   // Sorting logic
@@ -1508,7 +1660,7 @@ document.querySelectorAll(".course-sub-tab-btn").forEach(btn => {
 });
 
 // Search & Filter event binders
-["searchCoursesInput", "filterCourseSemester", "filterCourseStatus", "sortCourseBy"].forEach(id => {
+["searchCoursesInput", "filterCourseSemester", "filterCourseStatus", "filterCoursesStudyCentre", "sortCourseBy"].forEach(id => {
   const el = document.getElementById(id);
   if (el) {
     el.addEventListener("input", renderCoursesDirectory);
@@ -1523,11 +1675,13 @@ if (btnResetCourseFilters) {
     const search = document.getElementById("searchCoursesInput");
     const sem = document.getElementById("filterCourseSemester");
     const stat = document.getElementById("filterCourseStatus");
+    const centre = document.getElementById("filterCoursesStudyCentre");
     const sort = document.getElementById("sortCourseBy");
 
     if (search) search.value = "";
     if (sem) sem.value = "all";
     if (stat) stat.value = "all";
+    if (centre) centre.value = "all";
     if (sort) sort.value = "code-asc";
 
     renderCoursesDirectory();
@@ -1981,6 +2135,7 @@ function renderLecturerDirectory() {
 
   const searchQuery = document.getElementById("searchLecturersInput") ? document.getElementById("searchLecturersInput").value.toLowerCase().trim() : "";
   const filterStatus = document.getElementById("filterLecturerStatus") ? document.getElementById("filterLecturerStatus").value : "all";
+  const filterCentre = document.getElementById("filterLecturersStudyCentre") ? document.getElementById("filterLecturersStudyCentre").value : "all";
   const sortBy = document.getElementById("sortLecturerBy") ? document.getElementById("sortLecturerBy").value : "name-asc";
 
   // Filter facilitators
@@ -1992,7 +2147,8 @@ function renderLecturerDirectory() {
       (lec.email || "").toLowerCase().includes(searchQuery);
 
     const matchesStatus = filterStatus === "all" || lec.status === filterStatus;
-    return matchesSearch && matchesStatus;
+    const matchesCentre = filterCentre === "all" || (lec.assignedStudyCentreIds && lec.assignedStudyCentreIds.includes(filterCentre));
+    return matchesSearch && matchesStatus && matchesCentre;
   });
 
   // Sort facilitators
@@ -2014,7 +2170,7 @@ function renderLecturerDirectory() {
   if (filtered.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" style="text-align: center; padding: 3.5rem; color: var(--text-muted);">
+        <td colspan="7" style="text-align: center; padding: 3.5rem; color: var(--text-muted);">
           <i class="fa-solid fa-folder-open" style="font-size: 2.2rem; display: block; margin-bottom: 0.75rem; color: var(--accent);"></i>
           No academic facilitators found in the active directory matching criteria.
         </td>
@@ -2027,6 +2183,15 @@ function renderLecturerDirectory() {
     const statusBg = lec.status === "Active" ? "rgba(40,167,69,0.1)" : "rgba(220,53,69,0.1)";
     const statusColor = lec.status === "Active" ? "#28A745" : "#DC3545";
     
+    // Assigned Study Centre(s) Names list
+    const assignedCentres = lec.assignedStudyCentreIds || [];
+    const centresHtml = assignedCentres.length > 0 
+      ? assignedCentres.map(cid => {
+          const centre = allStudyCentres.find(c => c.id === cid);
+          return centre ? `<span style="background-color: var(--accent); color: var(--primary); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.72rem; font-weight: 700; margin-right: 0.3rem; display: inline-block; margin-bottom: 0.25rem;">${centre.name}</span>` : "";
+        }).join("")
+      : `<span style="color: var(--text-muted); font-style: italic; font-size: 0.8rem;">None Assigned</span>`;
+
     // Fallback support for course codes
     const coursesList = lec.coursesAssigned || lec.assignedCourses || [];
     const coursesHtml = coursesList.length > 0 
@@ -2039,7 +2204,8 @@ function renderLecturerDirectory() {
         <td style="padding: 1rem; font-family: monospace; font-weight: 700; color: var(--primary); font-size: 0.92rem;">${lec.lecturerId || ""}</td>
         <td style="padding: 1rem; font-weight: 600; color: var(--primary-dark);">${lec.title || ""} ${lec.fullName || ""}</td>
         <td style="padding: 1rem; font-size: 0.88rem; font-weight: 500;">${lec.department || ""}</td>
-        <td style="padding: 1rem; max-width: 300px;">${coursesHtml}</td>
+        <td style="padding: 1rem; max-width: 250px;">${centresHtml}</td>
+        <td style="padding: 1rem; max-width: 200px;">${coursesHtml}</td>
         <td style="padding: 1rem;">
           <span style="background-color: ${statusBg}; color: ${statusColor}; padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.78rem; font-weight: 700; display: inline-block;">
             ${lec.status || "Active"}
@@ -2105,6 +2271,9 @@ if (searchLecInput) searchLecInput.addEventListener("input", renderLecturerDirec
 const filterLecStatus = document.getElementById("filterLecturerStatus");
 if (filterLecStatus) filterLecStatus.addEventListener("change", renderLecturerDirectory);
 
+const filterLecCentre = document.getElementById("filterLecturersStudyCentre");
+if (filterLecCentre) filterLecCentre.addEventListener("change", renderLecturerDirectory);
+
 const sortLecSelect = document.getElementById("sortLecturerBy");
 if (sortLecSelect) sortLecSelect.addEventListener("change", renderLecturerDirectory);
 
@@ -2113,6 +2282,7 @@ if (btnResetLecFilters) {
   btnResetLecFilters.addEventListener("click", () => {
     if (searchLecInput) searchLecInput.value = "";
     if (filterLecStatus) filterLecStatus.value = "all";
+    if (filterLecCentre) filterLecCentre.value = "all";
     if (sortLecSelect) sortLecSelect.value = "name-asc";
     renderLecturerDirectory();
   });
@@ -2146,6 +2316,12 @@ if (registerLecturerForm) {
     const checkedCourses = [];
     document.querySelectorAll('#courseAllocationCheckboxes input[name="assignedCourses"]:checked').forEach(cb => {
       checkedCourses.push(cb.value);
+    });
+
+    // Gather assigned study centres
+    const checkedCentres = [];
+    document.querySelectorAll('#studyCentreAllocationCheckboxes input[name="assignedStudyCentres"]:checked').forEach(cb => {
+      checkedCentres.push(cb.value);
     });
 
     try {
@@ -2214,6 +2390,7 @@ if (registerLecturerForm) {
         employmentDate,
         assignedCourses: checkedCourses,
         coursesAssigned: checkedCourses, // Dual field synchronization for portal integration
+        assignedStudyCentreIds: checkedCentres, // Multi study centre assignment support
         status: "Active",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -2248,6 +2425,7 @@ if (registerLecturerForm) {
       // Clear form inputs
       registerLecturerForm.reset();
       document.querySelectorAll('#courseAllocationCheckboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
+      document.querySelectorAll('#studyCentreAllocationCheckboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
       
     } catch (err) {
       console.error("❌ Facilitator registration failed:", err);
@@ -2296,6 +2474,12 @@ function openEditLecturerModal(docId) {
     cb.checked = assigned.includes(cb.value);
   });
 
+  // Match and check assigned study centre checkboxes
+  const assignedCentres = lec.assignedStudyCentreIds || [];
+  document.querySelectorAll('#editStudyCentreAllocationCheckboxes input[name="editAssignedStudyCentres"]').forEach(cb => {
+    cb.checked = assignedCentres.includes(cb.value);
+  });
+
   if (editLecModal) editLecModal.style.display = "flex";
 }
 
@@ -2323,6 +2507,11 @@ if (editLecForm) {
       checkedCourses.push(cb.value);
     });
 
+    const checkedCentres = [];
+    document.querySelectorAll('#editStudyCentreAllocationCheckboxes input[name="editAssignedStudyCentres"]:checked').forEach(cb => {
+      checkedCentres.push(cb.value);
+    });
+
     try {
       window.showToast("Securing profile coordinates...", "info");
 
@@ -2343,6 +2532,7 @@ if (editLecForm) {
         status,
         assignedCourses: checkedCourses,
         coursesAssigned: checkedCourses, // Synchronized fields
+        assignedStudyCentreIds: checkedCentres, // Multi study centre assignment support
         updatedAt: new Date().toISOString()
       });
 
@@ -2959,6 +3149,7 @@ async function initResultApprovalConsole() {
     const fSemester = document.getElementById("approvalFilterSemester");
     const fCourse = document.getElementById("approvalFilterCourse");
     const fLecturer = document.getElementById("approvalFilterLecturer");
+    const fCentre = document.getElementById("filterResultsStudyCentre");
 
     const filterHandler = () => {
       renderApprovalList(courseTitlesMap);
@@ -2968,6 +3159,7 @@ async function initResultApprovalConsole() {
     if (fSemester) fSemester.onchange = filterHandler;
     if (fCourse) fCourse.oninput = filterHandler;
     if (fLecturer) fLecturer.oninput = filterHandler;
+    if (fCentre) fCentre.onchange = filterHandler;
 
     // Bind close review modal trigger
     const btnCloseRevModal = document.getElementById("btnCloseReviewModal");
@@ -2991,17 +3183,19 @@ function renderApprovalList(courseTitlesMap) {
   const fSemester = document.getElementById("approvalFilterSemester")?.value || "all";
   const fCourse = document.getElementById("approvalFilterCourse")?.value.toLowerCase().trim() || "";
   const fLecturer = document.getElementById("approvalFilterLecturer")?.value.toLowerCase().trim() || "";
+  const fCentre = document.getElementById("filterResultsStudyCentre")?.value || "all";
 
   const filtered = approvalSubmissionsList.filter(item => {
     if (fSession !== "all" && item.academicSession !== fSession) return false;
     if (fSemester !== "all" && item.semester !== fSemester) return false;
     if (fCourse !== "" && !item.courseCode.toLowerCase().includes(fCourse)) return false;
     if (fLecturer !== "" && !item.lecturerName.toLowerCase().includes(fLecturer)) return false;
+    if (fCentre !== "all" && item.studyCentreId !== fCentre) return false;
     return true;
   });
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">No grading sheet submissions match your active filter criteria.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">No grading sheet submissions match your active filter criteria.</td></tr>`;
     return;
   }
 
@@ -3011,6 +3205,9 @@ function renderApprovalList(courseTitlesMap) {
     const stdCount = item.students ? item.students.length : 0;
     const formattedDate = item.lastUpdated ? new Date(item.lastUpdated).toLocaleString() : "-";
     
+    // Look up study centre name
+    const centreName = item.studyCentreName || allStudyCentres.find(c => c.id === item.studyCentreId)?.name || "General Study Centre";
+
     let badgeClass = "status-badge info";
     if (item.status === "Published") badgeClass = "status-badge cleared";
     else if (item.status === "Approved") badgeClass = "status-badge cleared";
@@ -3025,6 +3222,7 @@ function renderApprovalList(courseTitlesMap) {
         <strong>${item.courseCode}</strong><br>
         <span style="font-size: 0.8rem; color: var(--text-muted);">${title}</span>
       </td>
+      <td style="padding: 1rem; font-weight: 500; color: var(--primary);">${centreName}</td>
       <td style="padding: 1rem;">
         <code>${item.academicSession}</code><br>
         <span style="font-size: 0.8rem; color: var(--primary); font-weight: 500;">${item.semester}</span>
@@ -3402,4 +3600,312 @@ async function handleWorkflowAction(actionName) {
     console.error("Workflow action execution failed:", err);
     window.showToast("Workflow Error: " + err.message, "error");
   }
+}
+
+// ==========================================
+// STUDY CENTRE MANAGEMENT MODULE
+// ==========================================
+
+async function loadStudyCentres() {
+  try {
+    const qSnap = await getDocs(collection(db, "study_centres"));
+    allStudyCentres = [];
+    qSnap.forEach(d => {
+      allStudyCentres.push({ id: d.id, ...d.data() });
+    });
+    console.log(`🌟 [Study Centres] Loaded ${allStudyCentres.length} centers successfully!`);
+    
+    // Dynamic checkboxes for forms
+    populateStudyCentreCheckboxes();
+    // Dynamic dropdown filters
+    populateStudyCentreFilterDropdowns();
+  } catch (err) {
+    console.warn("⚠️ Failed to load study centres:", err);
+  }
+}
+
+function initStudyCentresTab() {
+  // Ensure we load the list of study centres
+  renderStudyCentresTable();
+
+  // Subtab switching inside Study Centres Tab
+  document.querySelectorAll(".centre-sub-tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const targetSub = btn.getAttribute("data-subtab");
+      document.querySelectorAll(".centre-sub-tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".centre-subtab-content").forEach(c => c.style.display = "none");
+
+      btn.classList.add("active");
+      const targetEl = document.getElementById(`centre-subtab-${targetSub}`);
+      if (targetEl) targetEl.style.display = "block";
+    });
+  });
+
+  // Search & Filter input triggers
+  const searchInput = document.getElementById("searchStudyCentresInput");
+  const filterStatus = document.getElementById("filterStudyCentresStatus");
+  if (searchInput) {
+    searchInput.removeEventListener("input", renderStudyCentresTable);
+    searchInput.addEventListener("input", renderStudyCentresTable);
+  }
+  if (filterStatus) {
+    filterStatus.removeEventListener("change", renderStudyCentresTable);
+    filterStatus.addEventListener("change", renderStudyCentresTable);
+  }
+
+  // Reset Button
+  const btnResetFilters = document.getElementById("btnResetCentreFilters");
+  if (btnResetFilters) {
+    btnResetFilters.addEventListener("click", () => {
+      if (searchInput) searchInput.value = "";
+      if (filterStatus) filterStatus.value = "all";
+      renderStudyCentresTable();
+    });
+  }
+}
+
+function renderStudyCentresTable() {
+  const tbody = document.getElementById("studyCentresTableBody");
+  if (!tbody) return;
+
+  const searchQuery = document.getElementById("searchStudyCentresInput") ? document.getElementById("searchStudyCentresInput").value.toLowerCase().trim() : "";
+  const filterStatus = document.getElementById("filterStudyCentresStatus") ? document.getElementById("filterStudyCentresStatus").value : "all";
+
+  const filtered = allStudyCentres.filter(c => {
+    const code = (c.code || "").toLowerCase();
+    const name = (c.name || "").toLowerCase();
+    const address = (c.address || "").toLowerCase();
+    const coordinator = (c.coordinator || "").toLowerCase();
+
+    const matchesSearch = code.includes(searchQuery) || name.includes(searchQuery) || address.includes(searchQuery) || coordinator.includes(searchQuery);
+    const matchesStatus = filterStatus === "all" || c.status === filterStatus;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 3rem; color: var(--text-muted);">No study centres matching selected parameters.</td></tr>`;
+    return;
+  }
+
+  let html = "";
+  filtered.forEach(c => {
+    const cid = c.id;
+    const name = c.name || "";
+    const code = c.code || "";
+    const address = c.address || "";
+    const phone = c.phone || "";
+    const coordinator = c.coordinator || "";
+    const status = c.status || "Active";
+
+    // Dynamic metrics calculation
+    const totalStudents = allStudents.filter(s => s.studyCentreId === cid).length;
+    const totalLecturers = allLecturers.filter(l => l.assignedStudyCentreIds && l.assignedStudyCentreIds.includes(cid)).length;
+
+    const statusBadgeColor = status === "Active" ? "rgba(40,167,69,0.12)" : "rgba(220,53,69,0.12)";
+    const statusTextColor = status === "Active" ? "#28A745" : "#DC3545";
+
+    html += `
+      <tr style="border-bottom: 1.5px solid var(--border-color); hover: background-color: var(--bg-slate);">
+        <td style="padding: 1rem; font-weight: 700; color: var(--primary); font-family: 'JetBrains Mono', monospace;">${code}</td>
+        <td style="padding: 1rem; font-weight: 600; color: var(--text-color);">${name}</td>
+        <td style="padding: 1rem; color: var(--text-muted); max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${address}">${address}</td>
+        <td style="padding: 1rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">${phone}</td>
+        <td style="padding: 1rem; font-weight: 500; color: var(--text-color);">${coordinator}</td>
+        <td style="padding: 1rem; text-align: center; font-weight: 700; color: var(--accent); font-family: 'JetBrains Mono', monospace;">${totalStudents}</td>
+        <td style="padding: 1rem; text-align: center; font-weight: 700; color: var(--accent); font-family: 'JetBrains Mono', monospace;">${totalLecturers}</td>
+        <td style="padding: 1rem;">
+          <span style="display: inline-block; padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; background-color: ${statusBadgeColor}; color: ${statusTextColor};">
+            ${status}
+          </span>
+        </td>
+        <td style="padding: 1rem; text-align: center;">
+          <div style="display: flex; gap: 0.5rem; justify-content: center;">
+            <button onclick="openEditCentreModal('${cid}')" class="btn" title="Edit Centre" style="background-color: var(--bg-slate); color: var(--primary); border: 1.5px solid var(--border-color); width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;"><i class="fa-solid fa-pen-to-square"></i></button>
+            <button onclick="toggleCentreStatus('${cid}', '${status}')" class="btn" title="${status === 'Active' ? 'Deactivate' : 'Activate'}" style="background-color: var(--bg-slate); color: ${status === 'Active' ? '#DC3545' : '#28A745'}; border: 1.5px solid var(--border-color); width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;"><i class="fa-solid ${status === 'Active' ? 'fa-toggle-on' : 'fa-toggle-off'}"></i></button>
+            <button onclick="deleteStudyCentre('${cid}')" class="btn" title="Delete Centre" style="background-color: var(--bg-slate); color: #DC3545; border: 1.5px solid var(--border-color); width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+}
+
+// Global scope bindings for inline onclicks
+window.openEditCentreModal = (id) => {
+  const c = allStudyCentres.find(item => item.id === id);
+  if (!c) {
+    window.showToast("Study centre record not found.", "error");
+    return;
+  }
+
+  document.getElementById("editCentreId").value = id;
+  document.getElementById("editCentreCode").value = c.code || "";
+  document.getElementById("editCentreName").value = c.name || "";
+  document.getElementById("editCentreCoordinator").value = c.coordinator || "";
+  document.getElementById("editCentrePhone").value = c.phone || "";
+  document.getElementById("editCentreStatus").value = c.status || "Active";
+  document.getElementById("editCentreAddress").value = c.address || "";
+
+  document.getElementById("studyCentreEditModal").style.display = "flex";
+};
+
+window.toggleCentreStatus = async (id, currentStatus) => {
+  const newStatus = currentStatus === "Active" ? "Inactive" : "Active";
+  const confirmed = await window.dimabinConfirm(`Are you sure you want to mark this study centre as ${newStatus}?`);
+  if (!confirmed) return;
+
+  try {
+    window.showToast("Transitioning centre state...", "info");
+    const docRef = doc(db, "study_centres", id);
+    await updateDoc(docRef, {
+      status: newStatus,
+      updatedAt: new Date().toISOString()
+    });
+
+    window.showToast(`Study centre marked as ${newStatus}!`, "success");
+    await loadStudyCentres();
+    renderStudyCentresTable();
+  } catch (err) {
+    console.error("Failed to toggle status:", err);
+    window.showToast("Failed: " + err.message, "error");
+  }
+};
+
+window.deleteStudyCentre = async (id) => {
+  const centre = allStudyCentres.find(item => item.id === id);
+  if (!centre) return;
+
+  // Check deletion blocks
+  const hasStudents = allStudents.some(s => s.studyCentreId === id);
+  const hasLecturers = allLecturers.some(l => l.assignedStudyCentreIds && l.assignedStudyCentreIds.includes(id));
+  const hasCourses = allCourses.some(c => c.studyCentreId === id || (c.assignedStudyCentreIds && c.assignedStudyCentreIds.includes(id)));
+
+  if (hasStudents || hasLecturers || hasCourses) {
+    window.showToast("Deletion Blocked: Students, facilitators, or courses are currently assigned to this study centre.", "error");
+    return;
+  }
+
+  const confirmed = await window.dimabinConfirm(`Are you absolutely sure you want to delete the study centre "${centre.name}"? This operation cannot be undone.`);
+  if (!confirmed) return;
+
+  try {
+    window.showToast("Deleting study centre from database...", "info");
+    await deleteDoc(doc(db, "study_centres", id));
+    window.showToast("Study centre deleted successfully!", "success");
+    await loadStudyCentres();
+    renderStudyCentresTable();
+  } catch (err) {
+    console.error("Failed to delete study centre:", err);
+    window.showToast("Failed: " + err.message, "error");
+  }
+};
+
+// Form submission for Establish New Centre
+const createCentreForm = document.getElementById("createCentreForm");
+if (createCentreForm) {
+  createCentreForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById("addCentreName").value.trim();
+    const coordinator = document.getElementById("addCentreCoordinator").value.trim();
+    const phone = document.getElementById("addCentrePhone").value.trim();
+    const status = document.getElementById("addCentreStatus").value;
+    const address = document.getElementById("addCentreAddress").value.trim();
+
+    try {
+      window.showToast("Generating secure centre parameters...", "info");
+
+      // Generate Incremental Code
+      let maxSeq = 0;
+      allStudyCentres.forEach(c => {
+        const codeVal = c.code || "";
+        const m = codeVal.match(/DIMABIN-CTR-(\d+)/);
+        if (m) {
+          const num = parseInt(m[1], 10);
+          if (num > maxSeq) maxSeq = num;
+        }
+      });
+      const nextSeq = maxSeq + 1;
+      const paddedSeq = String(nextSeq).padStart(3, "0");
+      const generatedCode = `DIMABIN-CTR-${paddedSeq}`;
+      const docId = `DIMABIN-CTR-${paddedSeq}`;
+
+      const centreData = {
+        name,
+        code: generatedCode,
+        coordinator,
+        phone,
+        status,
+        address,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      await setDoc(doc(db, "study_centres", docId), centreData);
+      window.showToast("Study centre established successfully!", "success");
+
+      createCentreForm.reset();
+      
+      // Load and switch back to list
+      await loadStudyCentres();
+      
+      // Auto-switch back to list subtab
+      const btnList = document.querySelector('.centre-sub-tab-btn[data-subtab="list"]');
+      if (btnList) btnList.click();
+
+      renderStudyCentresTable();
+    } catch (err) {
+      console.error("Establish centre failed:", err);
+      window.showToast("Failed to establish centre: " + err.message, "error");
+    }
+  });
+}
+
+// Form submission for edit centre modal
+const editCentreForm = document.getElementById("editCentreForm");
+if (editCentreForm) {
+  editCentreForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const id = document.getElementById("editCentreId").value;
+    const name = document.getElementById("editCentreName").value.trim();
+    const coordinator = document.getElementById("editCentreCoordinator").value.trim();
+    const phone = document.getElementById("editCentrePhone").value.trim();
+    const status = document.getElementById("editCentreStatus").value;
+    const address = document.getElementById("editCentreAddress").value.trim();
+
+    try {
+      window.showToast("Updating study centre profiles...", "info");
+
+      const docRef = doc(db, "study_centres", id);
+      await updateDoc(docRef, {
+        name,
+        coordinator,
+        phone,
+        status,
+        address,
+        updatedAt: new Date().toISOString()
+      });
+
+      window.showToast("Study centre profile updated successfully!", "success");
+      document.getElementById("studyCentreEditModal").style.display = "none";
+      
+      await loadStudyCentres();
+      renderStudyCentresTable();
+    } catch (err) {
+      console.error("Failed to update centre:", err);
+      window.showToast("Failed to update: " + err.message, "error");
+    }
+  });
+}
+
+// Cancel Buttons
+const btnCancelCentreEdit = document.getElementById("btnCancelCentreEdit");
+if (btnCancelCentreEdit) {
+  btnCancelCentreEdit.addEventListener("click", () => {
+    document.getElementById("studyCentreEditModal").style.display = "none";
+  });
 }
