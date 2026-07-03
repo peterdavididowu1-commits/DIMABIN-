@@ -1203,6 +1203,9 @@
           <button class="sidebar-nav-btn" data-tab="study-centres">
             <i class="fa-solid fa-hotel"></i> Study Centres
           </button>
+          <button class="sidebar-nav-btn" data-tab="announcements">
+            <i class="fa-solid fa-bullhorn"></i> Announcements
+          </button>
 
           <button class="sidebar-nav-btn" data-tab="result-approval">
             <i class="fa-solid fa-file-signature"></i> Result Approval
@@ -2149,6 +2152,96 @@
           </div>
         </div>
 
+        <!-- Tab: Announcements Management -->
+        <div class="tab-content" id="tab-announcements">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <h2 class="font-display" style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem; font-weight: 800;">Announcement Hub</h2>
+              <p style="color: var(--text-muted);">Publish, schedule, pin, and manage institutional broadcasts for students.</p>
+            </div>
+            <button onclick="openCreateAnnouncementModal()" class="btn" style="background-color: var(--primary); color: white; font-weight: 700; padding: 0.75rem 1.5rem; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: background-color 0.2s;">
+              <i class="fa-solid fa-plus"></i> Create Announcement
+            </button>
+          </div>
+
+          <!-- Statistics Grid -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="stat-card" style="margin: 0; box-shadow: none; border: 1.5px solid var(--border-color);">
+              <div class="stat-card-info">
+                <h5>Total Announcements</h5>
+                <div class="stat-value" id="statTotalAnnouncements">0</div>
+              </div>
+              <div class="stat-card-icon blue" style="background-color: rgba(31,59,130,0.12); color: #1F3B82; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-bullhorn"></i></div>
+            </div>
+            <div class="stat-card" style="margin: 0; box-shadow: none; border: 1.5px solid var(--border-color);">
+              <div class="stat-card-info">
+                <h5>Published Active</h5>
+                <div class="stat-value" id="statActiveAnnouncements">0</div>
+              </div>
+              <div class="stat-card-icon green" style="background-color: rgba(46,125,50,0.12); color: #2E7D32; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-circle-check"></i></div>
+            </div>
+            <div class="stat-card" style="margin: 0; box-shadow: none; border: 1.5px solid var(--border-color);">
+              <div class="stat-card-info">
+                <h5>Drafts & Scheduled</h5>
+                <div class="stat-value" id="statPendingAnnouncements">0</div>
+              </div>
+              <div class="stat-card-icon yellow" style="background-color: rgba(245,158,11,0.12); color: #D97706; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-clock"></i></div>
+            </div>
+          </div>
+
+          <!-- Filters -->
+          <div class="search-filter-bar" style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; background-color: var(--bg-white); padding: 1.25rem; border-radius: 6px; border: 1.5px solid var(--border-color);">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; width: 100%;">
+              <div class="form-group" style="margin: 0;">
+                <label for="announceFilterSearch" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Search Title / Body</label>
+                <input type="text" id="announceFilterSearch" class="form-control" placeholder="Search announcement content..." style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px;">
+              </div>
+              <div class="form-group" style="margin: 0;">
+                <label for="announceFilterStatus" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Status</label>
+                <select id="announceFilterStatus" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px;">
+                  <option value="all">All Statuses</option>
+                  <option value="Published">Published</option>
+                  <option value="Draft">Draft</option>
+                  <option value="Scheduled">Scheduled</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin: 0;">
+                <label for="announceFilterPinned" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Pin Status</label>
+                <select id="announceFilterPinned" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px;">
+                  <option value="all">All</option>
+                  <option value="pinned">Pinned Only</option>
+                  <option value="regular">Regular Only</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div style="background-color: var(--bg-white); border-radius: 6px; border: 1.5px solid var(--border-color); overflow-x: auto; box-shadow: var(--shadow-sm);">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+              <thead>
+                <tr style="background-color: var(--bg-slate); border-bottom: 1.5px solid var(--border-color);">
+                  <th style="padding: 1rem; color: var(--primary); font-weight: 700; width: 40px; text-align: center;">Pin</th>
+                  <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Announcement details</th>
+                  <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Publish Date</th>
+                  <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Expiry Date</th>
+                  <th style="padding: 1rem; color: var(--primary); font-weight: 700; text-align: center;">Status</th>
+                  <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Attachment</th>
+                  <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Created By</th>
+                  <th style="padding: 1rem; color: var(--primary); font-weight: 700; text-align: center;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="announcementsTableBody">
+                <tr>
+                  <td colspan="8" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                    <i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.5rem;"></i> Loading announcements...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         <!-- Tab: Result Approval -->
         <div class="tab-content" id="tab-result-approval">
           <div style="margin-bottom: 2rem;">
@@ -2489,6 +2582,85 @@
           <!-- Action buttons inside modal - Icons Only! -->
           <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
             <button type="submit" class="btn" title="Save Changes" style="background-color: #1F3B82; color: white; border: none; width: 44px; height: 44px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.15rem; transition: background-color 0.2s;"><i class="fa-solid fa-floppy-disk"></i></button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Announcement Create/Edit Modal -->
+  <div class="modal-overlay" id="announcementModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div class="modal-card" style="background-color: var(--bg-white); border-radius: 8px; width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.15); border: 2px solid var(--border-color);">
+      <div style="background-color: var(--primary); color: white; padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-top-left-radius: 6px; border-top-right-radius: 6px;">
+        <h3 class="font-display" style="margin: 0; font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;" id="announcementModalTitle"><i class="fa-solid fa-bullhorn"></i> New Announcement</h3>
+        <button id="btnCancelAnnouncement" class="btn" type="button" title="Close modal" style="background: transparent; border: none; color: white; font-size: 1.2rem; cursor: pointer; padding: 0; line-height: 1;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div style="padding: 1.5rem;">
+        <form id="announcementForm">
+          <input type="hidden" id="announceId">
+          
+          <div style="display: grid; grid-template-columns: 1fr; gap: 1.25rem; margin-bottom: 1.5rem;">
+            
+            <div class="form-group">
+              <label for="announceTitle" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Announcement Title <span style="color: var(--error);">*</span></label>
+              <input type="text" id="announceTitle" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required placeholder="e.g. Matriculation Ceremony 2026">
+            </div>
+
+            <div class="form-group">
+              <label for="announceBody" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Announcement Body <span style="color: var(--error);">*</span></label>
+              <textarea id="announceBody" rows="5" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif; resize: vertical;" required placeholder="Enter the official details of the announcement here..."></textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+              <div class="form-group">
+                <label for="announcePublishDate" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Publish Date <span style="color: var(--error);">*</span></label>
+                <input type="date" id="announcePublishDate" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+              </div>
+
+              <div class="form-group">
+                <label for="announceExpiryDate" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Expiry Date (Optional)</label>
+                <input type="date" id="announceExpiryDate" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;">
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: center;">
+              <div class="form-group">
+                <label for="announceStatus" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Status</label>
+                <select id="announceStatus" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                  <option value="Published">Published</option>
+                  <option value="Draft">Draft</option>
+                  <option value="Scheduled">Scheduled</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="announceCreatedBy" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Created By</label>
+                <input type="text" id="announceCreatedBy" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" placeholder="e.g. Institute Registrar" value="Institute Registrar">
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 1.5rem; align-items: center; padding: 0.5rem 0;">
+              <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 700; color: var(--primary); cursor: pointer; text-transform: uppercase;">
+                <input type="checkbox" id="announceIsPinned" style="width: 18px; height: 18px; cursor: pointer;"> Pin Important Announcement
+              </label>
+            </div>
+
+            <div class="form-group">
+              <label for="announceAttachment" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Optional Attachment (PDF or Image)</label>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <input type="file" id="announceAttachment" accept="image/*,application/pdf" class="form-control" style="width: 100%; padding: 0.5rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;">
+                <button type="button" id="btnClearAttachment" class="btn btn-outline" style="border-color: var(--error); color: var(--error); padding: 0.6rem;" title="Clear Attachment"><i class="fa-solid fa-trash-can"></i></button>
+              </div>
+              <div id="announceAttachmentPreview" style="font-size: 0.8rem; margin-top: 0.25rem; color: var(--text-muted); display: none;"></div>
+            </div>
+
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+            <button type="button" id="btnCancelAnnouncementForm" class="btn" style="background-color: #e5e7eb; color: #374151; padding: 0.75rem 1.5rem; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;">Cancel</button>
+            <button type="submit" id="btnSubmitAnnouncement" class="btn" style="background-color: var(--primary); color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fa-solid fa-floppy-disk"></i> Save Announcement
+            </button>
           </div>
         </form>
       </div>

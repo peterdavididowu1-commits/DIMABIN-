@@ -199,6 +199,7 @@ function enterDashboard(session) {
     loadStudents();
     loadLecturers();
     loadCourses();
+    loadAnnouncements().catch(err => console.warn("Failed initial announcements load:", err));
   });
   loadSettings();
   resetInactivityTimer();
@@ -379,6 +380,8 @@ document.querySelectorAll(".sidebar-nav-btn").forEach(btn => {
       initResultApprovalConsole();
     } else if (targetTab === "study-centres") {
       initStudyCentresTab();
+    } else if (targetTab === "announcements") {
+      initAnnouncementsTab();
     }
   });
 });
@@ -918,15 +921,6 @@ async function processApproval(id) {
       reviewedBy: "DIMABIN/ADM/2026/01",
       preferredStudyCentreId: studyCentreId,
       preferredStudyCentreName: studyCentreName
-    });
-
-    // 5. Create a system notification record
-    await setDoc(doc(db, "notifications", `notif-${Date.now()}`), {
-      title: "New Student Admitted",
-      message: `${app.fullName} has been approved and admitted with Matric Number: ${matricNumber}`,
-      createdAt: new Date().toISOString(),
-      type: "Admission",
-      target: "All"
     });
 
     closeDetailsModal();
@@ -3917,5 +3911,431 @@ const btnCancelCentreEdit = document.getElementById("btnCancelCentreEdit");
 if (btnCancelCentreEdit) {
   btnCancelCentreEdit.addEventListener("click", () => {
     document.getElementById("studyCentreEditModal").style.display = "none";
+  });
+}
+
+// ==========================================
+// ANNOUNCEMENT MANAGEMENT HUB SYSTEM
+// ==========================================
+
+let allAnnouncements = [];
+let selectedAttachmentData = "";
+let selectedAttachmentName = "";
+
+// Initialize Announcements Tab
+window.initAnnouncementsTab = async function() {
+  await loadAnnouncements();
+  renderAnnouncementsTable();
+};
+
+// Load announcements from Firestore
+window.loadAnnouncements = async function() {
+  try {
+    const qSnap = await getDocs(collection(db, "notifications"));
+    allAnnouncements = [];
+    qSnap.forEach(d => {
+      const data = d.data();
+      // Only treat it as our structured announcement if it doesn't look like an automatic admission log
+      if (data.type !== "Admission") {
+        allAnnouncements.push({ id: d.id, ...data });
+      }
+    });
+    
+    // Sort: Pinned first, then by publishDate descending, then by createdAt descending
+    allAnnouncements.sort((a, b) => {
+      const pinA = a.isPinned ? 1 : 0;
+      const pinB = b.isPinned ? 1 : 0;
+      if (pinB !== pinA) return pinB - pinA;
+      
+      const dateA = new Date(a.publishDate || a.createdAt || 0);
+      const dateB = new Date(b.publishDate || b.createdAt || 0);
+      return dateB - dateA;
+    });
+
+    console.log(`🌟 [Announcements] Loaded ${allAnnouncements.length} announcements successfully!`);
+    updateAnnouncementStats();
+  } catch (err) {
+    console.error("Failed to load announcements:", err);
+    window.showToast("Failed to load announcements: " + err.message, "error");
+  }
+};
+
+// Update Announcement Stat Cards
+function updateAnnouncementStats() {
+  const totalEl = document.getElementById("statTotalAnnouncements");
+  const activeEl = document.getElementById("statActiveAnnouncements");
+  const pendingEl = document.getElementById("statPendingAnnouncements");
+
+  if (!totalEl) return;
+
+  const total = allAnnouncements.length;
+  let active = 0;
+  let pending = 0;
+
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  allAnnouncements.forEach(a => {
+    const status = a.status || "Published";
+    const pubDate = a.publishDate || "";
+    const expDate = a.expiryDate || "";
+
+    const isPublished = status === "Published";
+    const isFuture = pubDate && pubDate > todayStr;
+    const isExpired = expDate && expDate < todayStr;
+
+    if (isPublished && !isFuture && !isExpired) {
+      active++;
+    } else {
+      pending++;
+    }
+  });
+
+  totalEl.textContent = total;
+  activeEl.textContent = active;
+  pendingEl.textContent = pending;
+}
+
+// Render Announcements Table
+window.renderAnnouncementsTable = function() {
+  const tbody = document.getElementById("announcementsTableBody");
+  if (!tbody) return;
+
+  const searchTerm = (document.getElementById("announceFilterSearch")?.value || "").toLowerCase().trim();
+  const filterStatus = document.getElementById("announceFilterStatus")?.value || "all";
+  const filterPinned = document.getElementById("announceFilterPinned")?.value || "all";
+
+  let filtered = allAnnouncements.filter(a => {
+    // Search Filter
+    const title = (a.title || "").toLowerCase();
+    const body = (a.body || a.message || "").toLowerCase();
+    const createdBy = (a.createdBy || "").toLowerCase();
+    if (searchTerm && !title.includes(searchTerm) && !body.includes(searchTerm) && !createdBy.includes(searchTerm)) {
+      return false;
+    }
+
+    // Status Filter
+    const status = a.status || "Published";
+    if (filterStatus !== "all") {
+      if (filterStatus === "Scheduled") {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const isFuture = a.publishDate && a.publishDate > todayStr;
+        if (status !== "Scheduled" && !isFuture) return false;
+      } else {
+        if (status !== filterStatus) return false;
+      }
+    }
+
+    // Pinned Filter
+    const isPinned = !!a.isPinned;
+    if (filterPinned !== "all") {
+      if (filterPinned === "pinned" && !isPinned) return false;
+      if (filterPinned === "regular" && isPinned) return false;
+    }
+
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="8" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+          <i class="fa-solid fa-folder-open" style="font-size: 2rem; display: block; margin-bottom: 0.5rem; opacity: 0.5;"></i>
+          No announcements found matching the criteria.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  tbody.innerHTML = filtered.map(a => {
+    const isPinned = !!a.isPinned;
+    const status = a.status || "Published";
+    const pubDate = a.publishDate || "N/A";
+    const expDate = a.expiryDate || "Never";
+
+    // Determine current effective status
+    let badgeClass = "blue";
+    let statusText = status;
+    if (status === "Published") {
+      if (a.publishDate && a.publishDate > todayStr) {
+        badgeClass = "yellow";
+        statusText = "Scheduled";
+      } else if (a.expiryDate && a.expiryDate < todayStr) {
+        badgeClass = "gray";
+        statusText = "Expired";
+      } else {
+        badgeClass = "green";
+        statusText = "Published";
+      }
+    } else if (status === "Draft") {
+      badgeClass = "red";
+      statusText = "Draft";
+    }
+
+    const pinIcon = isPinned ? 
+      `<button onclick="togglePinAnnouncement('${a.id}', true)" class="btn" title="Unpin" style="background: transparent; border: none; color: #f59e0b; cursor: pointer; padding: 0.25rem;"><i class="fa-solid fa-thumbtack"></i></button>` : 
+      `<button onclick="togglePinAnnouncement('${a.id}', false)" class="btn" title="Pin" style="background: transparent; border: none; color: var(--text-muted); opacity: 0.4; cursor: pointer; padding: 0.25rem;"><i class="fa-regular fa-thumbtack"></i></button>`;
+
+    const statusBadge = `<span class="status-badge ${badgeClass}" style="text-transform: uppercase; font-size: 0.72rem; font-weight: 700;">${statusText}</span>`;
+
+    const attachmentIndicator = a.attachmentName ? 
+      `<span style="color: var(--primary); font-weight: 500; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+         <i class="fa-solid fa-paperclip"></i> ${a.attachmentName.substring(0, 15)}${a.attachmentName.length > 15 ? '...' : ''}
+       </span>` : 
+      `<span style="color: var(--text-muted); font-size: 0.8rem; opacity: 0.6;">None</span>`;
+
+    const bodyPreview = (a.body || a.message || "").substring(0, 60) + ((a.body || a.message || "").length > 60 ? "..." : "");
+
+    return `
+      <tr style="border-bottom: 1px solid var(--border-color); vertical-align: middle;">
+        <td style="padding: 1rem; text-align: center;">${pinIcon}</td>
+        <td style="padding: 1rem;">
+          <div style="font-weight: 700; color: var(--primary); margin-bottom: 0.2rem;">${a.title}</div>
+          <div style="font-size: 0.82rem; color: var(--text-dark); opacity: 0.8;">${bodyPreview}</div>
+        </td>
+        <td style="padding: 1rem; font-size: 0.85rem; color: var(--text-dark);">${pubDate}</td>
+        <td style="padding: 1rem; font-size: 0.85rem; color: var(--text-dark);">${expDate}</td>
+        <td style="padding: 1rem; text-align: center;">${statusBadge}</td>
+        <td style="padding: 1rem;">${attachmentIndicator}</td>
+        <td style="padding: 1rem; font-size: 0.85rem; color: var(--text-dark); font-weight: 500;">${a.createdBy || "Admin"}</td>
+        <td style="padding: 1rem; text-align: center;">
+          <div style="display: flex; gap: 0.5rem; justify-content: center; align-items: center;">
+            <button onclick="openEditAnnouncementModal('${a.id}')" class="btn" title="Edit" style="background-color: var(--bg-slate); color: var(--primary); border: 1px solid var(--border-color); width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;"><i class="fa-solid fa-pen"></i></button>
+            <button onclick="togglePublishAnnouncement('${a.id}', '${status}')" class="btn" title="${status === 'Published' ? 'Switch to Draft' : 'Publish'}" style="background-color: var(--bg-slate); color: ${status === 'Published' ? '#dc3545' : '#28a745'}; border: 1px solid var(--border-color); width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+              <i class="fa-solid ${status === 'Published' ? 'fa-eye-slash' : 'fa-eye'}"></i>
+            </button>
+            <button onclick="deleteAnnouncement('${a.id}')" class="btn" title="Delete" style="background-color: var(--bg-slate); color: var(--error); border: 1px solid var(--border-color); width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+};
+
+// Filters listeners
+const filterSearch = document.getElementById("announceFilterSearch");
+const filterStatus = document.getElementById("announceFilterStatus");
+const filterPinned = document.getElementById("announceFilterPinned");
+
+if (filterSearch) filterSearch.addEventListener("input", () => renderAnnouncementsTable());
+if (filterStatus) filterStatus.addEventListener("change", () => renderAnnouncementsTable());
+if (filterPinned) filterPinned.addEventListener("change", () => renderAnnouncementsTable());
+
+// Open Modal for Creating
+window.openCreateAnnouncementModal = function() {
+  document.getElementById("announcementForm").reset();
+  document.getElementById("announceId").value = "";
+  document.getElementById("announcementModalTitle").innerHTML = `<i class="fa-solid fa-bullhorn"></i> New Announcement`;
+  
+  // Set default Publish Date to today
+  const todayStr = new Date().toISOString().split('T')[0];
+  document.getElementById("announcePublishDate").value = todayStr;
+  
+  selectedAttachmentData = "";
+  selectedAttachmentName = "";
+  const preview = document.getElementById("announceAttachmentPreview");
+  if (preview) preview.style.display = "none";
+
+  document.getElementById("announcementModal").style.display = "flex";
+};
+
+// Open Modal for Editing
+window.openEditAnnouncementModal = function(id) {
+  const a = allAnnouncements.find(item => item.id === id);
+  if (!a) return;
+
+  document.getElementById("announceId").value = a.id;
+  document.getElementById("announceTitle").value = a.title || "";
+  document.getElementById("announceBody").value = a.body || a.message || "";
+  document.getElementById("announcePublishDate").value = a.publishDate || "";
+  document.getElementById("announceExpiryDate").value = a.expiryDate || "";
+  document.getElementById("announceStatus").value = a.status || "Published";
+  document.getElementById("announceCreatedBy").value = a.createdBy || "Institute Registrar";
+  document.getElementById("announceIsPinned").checked = !!a.isPinned;
+
+  selectedAttachmentData = a.attachmentData || "";
+  selectedAttachmentName = a.attachmentName || "";
+
+  const preview = document.getElementById("announceAttachmentPreview");
+  if (preview) {
+    if (selectedAttachmentName) {
+      preview.textContent = `Current Attachment: ${selectedAttachmentName}`;
+      preview.style.display = "block";
+    } else {
+      preview.style.display = "none";
+    }
+  }
+
+  document.getElementById("announcementModalTitle").innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Edit Announcement`;
+  document.getElementById("announcementModal").style.display = "flex";
+};
+
+// Save Announcement Submit Handler
+const announcementForm = document.getElementById("announcementForm");
+if (announcementForm) {
+  announcementForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const id = document.getElementById("announceId").value;
+    const title = document.getElementById("announceTitle").value.trim();
+    const body = document.getElementById("announceBody").value.trim();
+    const publishDate = document.getElementById("announcePublishDate").value;
+    const expiryDate = document.getElementById("announceExpiryDate").value;
+    const status = document.getElementById("announceStatus").value;
+    const createdBy = document.getElementById("announceCreatedBy").value.trim();
+    const isPinned = document.getElementById("announceIsPinned").checked;
+
+    if (!title || !body || !publishDate) {
+      window.showToast("Title, Body, and Publish Date are required fields.", "error");
+      return;
+    }
+
+    // Validate dates
+    if (expiryDate && expiryDate < publishDate) {
+      window.showToast("Expiry Date cannot be earlier than Publish Date.", "error");
+      return;
+    }
+
+    try {
+      window.showToast("Saving announcement...", "info");
+
+      const payload = {
+        title,
+        body,
+        message: body, // backward compatibility
+        publishDate,
+        expiryDate,
+        status,
+        createdBy,
+        isPinned,
+        attachmentName: selectedAttachmentName,
+        attachmentData: selectedAttachmentData,
+        lastModified: new Date().toISOString()
+      };
+
+      if (id) {
+        // Update
+        await updateDoc(doc(db, "notifications", id), payload);
+        window.showToast("Announcement updated successfully!", "success");
+      } else {
+        // Create
+        payload.createdAt = new Date().toISOString();
+        payload.type = "Broadcast"; // specialized type
+        payload.target = "All";
+        await setDoc(doc(db, "notifications", `broadcast-${Date.now()}`), payload);
+        window.showToast("Announcement created successfully!", "success");
+      }
+
+      document.getElementById("announcementModal").style.display = "none";
+      await loadAnnouncements();
+      renderAnnouncementsTable();
+    } catch (err) {
+      console.error("Failed to save announcement:", err);
+      window.showToast("Failed to save announcement: " + err.message, "error");
+    }
+  });
+}
+
+// File input change handler for attachment loading
+const announceAttachment = document.getElementById("announceAttachment");
+if (announceAttachment) {
+  announceAttachment.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Optional size limit
+    if (file.size > 1500000) {
+      window.showToast("Attachment size exceeds 1.5MB limit. Please upload a smaller file.", "warning");
+      announceAttachment.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      selectedAttachmentData = evt.target.result;
+      selectedAttachmentName = file.name;
+      
+      const preview = document.getElementById("announceAttachmentPreview");
+      if (preview) {
+        preview.textContent = `Attachment Selected: ${file.name}`;
+        preview.style.display = "block";
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Clear attachment
+const btnClearAttachment = document.getElementById("btnClearAttachment");
+if (btnClearAttachment) {
+  btnClearAttachment.addEventListener("click", () => {
+    selectedAttachmentData = "";
+    selectedAttachmentName = "";
+    const fileInput = document.getElementById("announceAttachment");
+    if (fileInput) fileInput.value = "";
+    const preview = document.getElementById("announceAttachmentPreview");
+    if (preview) preview.style.display = "none";
+    window.showToast("Attachment cleared.", "info");
+  });
+}
+
+// Toggle Pin Status
+window.togglePinAnnouncement = async function(id, currentPin) {
+  try {
+    await updateDoc(doc(db, "notifications", id), {
+      isPinned: !currentPin,
+      lastModified: new Date().toISOString()
+    });
+    window.showToast(currentPin ? "Announcement unpinned." : "Announcement pinned successfully!", "success");
+    await loadAnnouncements();
+    renderAnnouncementsTable();
+  } catch (err) {
+    window.showToast("Failed to toggle pin: " + err.message, "error");
+  }
+};
+
+// Toggle Publish/Draft Status
+window.togglePublishAnnouncement = async function(id, currentStatus) {
+  try {
+    const nextStatus = currentStatus === "Published" ? "Draft" : "Published";
+    await updateDoc(doc(db, "notifications", id), {
+      status: nextStatus,
+      lastModified: new Date().toISOString()
+    });
+    window.showToast(`Announcement status updated to ${nextStatus}.`, "success");
+    await loadAnnouncements();
+    renderAnnouncementsTable();
+  } catch (err) {
+    window.showToast("Failed to toggle status: " + err.message, "error");
+  }
+};
+
+// Delete Announcement
+window.deleteAnnouncement = async function(id) {
+  if (!confirm("Are you sure you want to delete this announcement permanently? This cannot be undone.")) return;
+  try {
+    await deleteDoc(doc(db, "notifications", id));
+    window.showToast("Announcement deleted successfully.", "success");
+    await loadAnnouncements();
+    renderAnnouncementsTable();
+  } catch (err) {
+    window.showToast("Failed to delete announcement: " + err.message, "error");
+  }
+};
+
+// Cancel Modal Buttons
+const btnCancelAnnouncement = document.getElementById("btnCancelAnnouncement");
+const btnCancelAnnouncementForm = document.getElementById("btnCancelAnnouncementForm");
+
+if (btnCancelAnnouncement) {
+  btnCancelAnnouncement.addEventListener("click", () => {
+    document.getElementById("announcementModal").style.display = "none";
+  });
+}
+if (btnCancelAnnouncementForm) {
+  btnCancelAnnouncementForm.addEventListener("click", () => {
+    document.getElementById("announcementModal").style.display = "none";
   });
 }

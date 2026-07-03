@@ -989,72 +989,153 @@ async function loadNotifications() {
   feed.innerHTML = "<div class='text-center py-4' style='color:var(--text-muted);'><i class='fa-solid fa-spinner fa-spin'></i> Sourcing announcements...</div>";
 
   try {
-    const qNotifs = query(collection(db, "notifications"), orderBy("createdAt", "desc"));
-    const snapNotifs = await getDocs(qNotifs);
-
+    const snapNotifs = await getDocs(collection(db, "notifications"));
     const countBadge = document.getElementById("cardNotifCount");
 
-    if (snapNotifs.empty) {
-      feed.innerHTML = "";
-      if (emptyMsg) emptyMsg.style.display = "block";
-      if (countBadge) countBadge.textContent = "0";
+    let announcementsList = [];
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    snapNotifs.forEach(docSnap => {
+      const n = { id: docSnap.id, ...docSnap.data() };
+      
+      // Filter constraints:
+      // 1. Do not show Admission or Registration notification types
+      if (n.type === "Admission" || n.type === "Registration") {
+        return;
+      }
+
+      // 2. Status = Published
+      const status = n.status || "Published";
+      if (status !== "Published") {
+        return;
+      }
+
+      // 3. Publish Date is today or earlier
+      const pubDate = n.publishDate || "";
+      if (pubDate && pubDate > todayStr) {
+        return;
+      }
+
+      // 4. Expiry Date has not passed
+      const expDate = n.expiryDate || "";
+      if (expDate && expDate < todayStr) {
+        return;
+      }
+
+      // 5. Audience check: All or Students
+      const audience = (n.audience || n.target || "All").toLowerCase();
+      if (audience === "all" || audience === "students") {
+        announcementsList.push(n);
+      }
+    });
+
+    // Sort: Pinned first, then by publishDate (or createdAt) descending
+    announcementsList.sort((a, b) => {
+      const pinA = a.isPinned ? 1 : 0;
+      const pinB = b.isPinned ? 1 : 0;
+      if (pinB !== pinA) return pinB - pinA;
+
+      const dateA = new Date(a.publishDate || a.createdAt || 0);
+      const dateB = new Date(b.publishDate || b.createdAt || 0);
+      return dateB - dateA;
+    });
+
+    if (countBadge) {
+      countBadge.textContent = announcementsList.length.toString();
+    }
+
+    if (announcementsList.length === 0) {
+      feed.innerHTML = `
+        <div style="background-color: var(--bg-white); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); padding: 3rem; text-align: center; box-shadow: var(--shadow-sm);">
+          <i class="fa-solid fa-bullhorn" style="font-size: 3rem; color: var(--text-muted); opacity: 0.5; margin-bottom: 1.5rem; display: block; margin-left: auto; margin-right: auto;"></i>
+          <h4 class="font-display" style="color: var(--primary); margin-bottom: 0.75rem; font-weight: 700; font-size: 1.3rem;">📢 Official Announcements</h4>
+          <p style="color: var(--text-muted); margin-bottom: 0; font-size: 0.95rem; line-height: 1.7; max-width: 500px; margin-left: auto; margin-right: auto;">
+            There are currently no official announcements.<br><br>
+            Please check back later for updates from the Institute.
+          </p>
+        </div>
+      `;
+      if (emptyMsg) emptyMsg.style.display = "none";
       return;
     }
 
     if (emptyMsg) emptyMsg.style.display = "none";
-    
-    // Counter for dynamic unread badges or general overview
-    let count = 0;
     feed.innerHTML = "";
 
-    snapNotifs.forEach(docSnap => {
-      const n = docSnap.data();
-      const audience = (n.audience || n.target || "All").toLowerCase();
-      
-      // Filter appropriate audience target
-      if (audience === "all" || audience === "students") {
-        count++;
-        const formattedDate = new Date(n.createdAt).toLocaleDateString(undefined, {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        });
+    announcementsList.forEach(n => {
+      const createdTime = n.publishDate || n.createdAt;
+      const formattedDate = new Date(createdTime).toLocaleDateString(undefined, {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
 
-        // Determine badge style
-        let icon = "fa-bullhorn";
-        let color = "var(--primary)";
-        if (n.type === "Admission") {
-          icon = "fa-graduation-cap";
-          color = "#28a745";
-        } else if (n.type === "Exam") {
-          icon = "fa-file-signature";
-          color = "#dc3545";
-        }
+      // Pinned badge
+      let pinBadge = "";
+      let borderStyle = "1px solid var(--border-color)";
+      let backgroundStyle = "var(--bg-white)";
+      if (n.isPinned) {
+        borderStyle = "2px solid #fcd34d";
+        backgroundStyle = "#fffdf5";
+        pinBadge = `
+          <span style="background-color: #fef3c7; color: #d97706; padding: 0.25rem 0.6rem; border-radius: 12px; font-size: 0.72rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem; border: 1px solid #fcd34d;">
+            <i class="fa-solid fa-thumbtack"></i> PINNED
+          </span>
+        `;
+      }
 
-        const item = `
-          <div style="background-color:var(--bg-white); border-radius:var(--border-radius-lg); border:1px solid var(--border-color); padding:2rem; box-shadow:var(--shadow-sm); display:flex; gap:1.5rem; align-items:flex-start;">
-            <div style="width:48px; height:48px; border-radius:50%; background-color:rgba(31,59,130,0.06); color:${color}; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0;">
-              <i class="fa-solid ${icon}"></i>
-            </div>
-            <div style="flex-grow:1;">
-              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; margin-bottom:0.5rem;">
-                <h4 class="font-display" style="color:var(--primary); margin-bottom:0; font-size:1.1rem; font-weight:700;">${n.title}</h4>
-                <span style="font-size:0.78rem; color:var(--text-muted); font-weight:600;"><i class="fa-regular fa-clock"></i> ${formattedDate}</span>
+      // Attachment logic
+      let attachmentHTML = "";
+      if (n.attachmentName && n.attachmentData) {
+        const isImage = n.attachmentData.startsWith("data:image/") || /\.(jpg|jpeg|png|gif|webp)$/i.test(n.attachmentName);
+        if (isImage) {
+          attachmentHTML = `
+            <div style="margin-top: 1rem; border-top: 1.5px dashed var(--border-color); padding-top: 1rem;">
+              <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;"><i class="fa-solid fa-paperclip"></i> Attached Illustration</div>
+              <div style="max-width: 320px; border: 1.5px solid var(--border-color); border-radius: 6px; overflow: hidden; background-color: var(--bg-slate);">
+                <img src="${n.attachmentData}" style="width: 100%; display: block; max-height: 200px; object-fit: contain;" alt="${n.attachmentName}">
+                <div style="padding: 0.5rem; font-size: 0.78rem; font-weight: 600; color: var(--primary); display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color);">
+                  <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px;">${n.attachmentName}</span>
+                  <a href="${n.attachmentData}" download="${n.attachmentName}" style="color: var(--primary); text-decoration: none; font-weight: 700;"><i class="fa-solid fa-download"></i> Download</a>
+                </div>
               </div>
-              <p style="color:var(--text-dark); font-size:0.92rem; line-height:1.6; margin-bottom:0;">${n.message}</p>
+            </div>
+          `;
+        } else {
+          attachmentHTML = `
+            <div style="margin-top: 1rem; border-top: 1.5px dashed var(--border-color); padding-top: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Attachment:</span>
+              <a href="${n.attachmentData}" download="${n.attachmentName}" class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.4rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); color: var(--primary); border-radius: 4px; text-decoration: none; font-weight: 700; transition: all 0.2s;">
+                <i class="fa-solid fa-file-pdf" style="color: #dc3545; font-size: 0.9rem;"></i> ${n.attachmentName}
+              </a>
+            </div>
+          `;
+        }
+      }
+
+      const item = `
+        <div style="background-color:${backgroundStyle}; border-radius:var(--border-radius-lg); border:${borderStyle}; padding:2rem; box-shadow:var(--shadow-sm); display:flex; gap:1.5rem; align-items:flex-start;">
+          <div style="width:48px; height:48px; border-radius:50%; background-color:rgba(31,59,130,0.06); color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0;">
+            <i class="fa-solid fa-bullhorn"></i>
+          </div>
+          <div style="flex-grow:1;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+              <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                <h4 class="font-display" style="color:var(--primary); margin-bottom:0; font-size:1.2rem; font-weight:800;">${n.title}</h4>
+                ${pinBadge}
+              </div>
+              <span style="font-size:0.78rem; color:var(--text-muted); font-weight:600;"><i class="fa-regular fa-clock"></i> ${formattedDate}</span>
+            </div>
+            <p style="color:var(--text-dark); font-size:0.95rem; line-height:1.6; margin-bottom:0; white-space: pre-wrap;">${n.body || n.message}</p>
+            ${attachmentHTML}
+            <div style="margin-top: 0.75rem; font-size: 0.78rem; color: var(--text-muted); font-weight: 500;">
+              By: <strong>${n.createdBy || "Institute Registrar"}</strong>
             </div>
           </div>
-        `;
-        feed.insertAdjacentHTML("beforeend", item);
-      }
+        </div>
+      `;
+      feed.insertAdjacentHTML("beforeend", item);
     });
-
-    if (countBadge) countBadge.textContent = count;
-    if (count === 0) {
-      if (emptyMsg) emptyMsg.style.display = "block";
-    }
 
   } catch (err) {
     console.error("❌ Notifications failed:", err);
