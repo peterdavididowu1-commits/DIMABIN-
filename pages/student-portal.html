@@ -1233,9 +1233,6 @@
             <button class="sidebar-nav-btn" data-tab="semester-results">
               <i class="fa-solid fa-square-poll-vertical"></i> Semester Results
             </button>
-            <button class="sidebar-nav-btn" data-tab="transcript">
-              <i class="fa-solid fa-scroll"></i> Transcript
-            </button>
           </div>
 
           <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 0.5rem 0; padding-top: 0.5rem;">
@@ -1400,21 +1397,6 @@
               </div>
               <div class="control-card-footer">
                 <span>Open Semester Results</span>
-                <i class="fa-solid fa-chevron-right"></i>
-              </div>
-            </div>
-
-            <!-- Card 4: Transcript -->
-            <div class="control-card card-accent" id="btnTranscriptCard" style="cursor: pointer;">
-              <div>
-                <div class="control-card-icon-wrapper">
-                  <i class="fa-solid fa-scroll"></i>
-                </div>
-                <h4 class="control-card-title">Transcript</h4>
-                <p class="control-card-desc">Official academic transcript of record.</p>
-              </div>
-              <div class="control-card-footer">
-                <span>Open Transcript</span>
                 <i class="fa-solid fa-chevron-right"></i>
               </div>
             </div>
@@ -1796,102 +1778,6 @@
             <i class="fa-solid fa-graduation-cap" style="font-size: 3rem; color: var(--text-muted); opacity: 0.5; margin-bottom: 1rem;"></i>
             <h4 class="font-display" style="color: var(--primary); margin-bottom: 0.5rem;">No Semester Results Available.</h4>
             <p style="color: var(--text-muted); margin-bottom: 0; font-size: 0.95rem;">Official approved semester results are not yet available for display.</p>
-          </div>
-        </div>
-
-        <!-- Tab: Transcript Placeholder & View -->
-        <div class="tab-content" id="tab-transcript">
-          <div class="no-print" style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
-            <div>
-              <h2 class="font-display" style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem; font-weight: 800;">Academic Transcript</h2>
-              <p style="color: var(--text-muted); margin-bottom: 0;">Official institutional transcript compiled from approved cumulative semester standings.</p>
-            </div>
-            <button type="button" class="btn no-print" id="btnPrintTranscript" style="background-color: var(--primary); color: white; padding: 0.75rem 1.5rem; font-weight: 700; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; border-radius: var(--border-radius-md);"><i class="fa-solid fa-print"></i> Print Academic Transcript</button>
-          </div>
-
-          <!-- Transcript Placeholder Info Alert -->
-          <div id="transcriptPlaceholderAlert" style="background-color: var(--bg-white); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); padding: 4rem 2rem; text-align: center; margin-bottom: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;">
-            <i class="fa-solid fa-scroll" style="font-size: 3.5rem; color: var(--primary); opacity: 0.25; margin-bottom: 0.5rem;"></i>
-            <h4 style="margin: 0; font-weight: 800; color: var(--primary); font-size: 1.5rem;">Academic Transcript of Record</h4>
-            <p style="margin: 0 auto; font-size: 0.98rem; color: var(--text-muted); max-width: 500px; line-height: 1.6;">
-              Your official transcript will become available after approved semester results have been accumulated.
-            </p>
-            <button type="button" class="btn" disabled style="background-color: var(--border-color); color: var(--text-muted); padding: 0.75rem 1.75rem; font-weight: 700; border: none; cursor: not-allowed; display: inline-flex; align-items: center; gap: 0.5rem; border-radius: var(--border-radius-md); margin-top: 1rem;">
-              <i class="fa-solid fa-circle-minus"></i> Generate Transcript
-            </button>
-          </div>
-
-          <!-- Printable Landscape Transcript (Visible only during printing / dynamic generation) -->
-          <div id="printableTranscriptSection" style="background-color: #fff; padding: 3rem; border: 4px double var(--primary); border-radius: 4px; box-shadow: 0 0 10px rgba(0,0,0,0.05); margin-bottom: 2rem; color: #111;">
-            <div style="text-align: center; border-bottom: 2.5px solid var(--primary); padding-bottom: 1.25rem; margin-bottom: 1.75rem;">
-              <h1 class="font-display" style="color: var(--primary); font-size: 2.25rem; margin-bottom: 0.25rem; font-weight: 800; letter-spacing: 0.5px;">DIVINE MANDATE BIBLE INSTITUTE</h1>
-              <div style="color: var(--accent); font-weight: 800; font-size: 0.95rem; letter-spacing: 1.5px; text-transform: uppercase;">OFFICIAL ACADEMIC TRANSCRIPT OF RECORD</div>
-              <p style="margin: 0.25rem 0 0 0; font-size: 0.8rem; font-style: italic; color: #555;">Goshen 13, Kusimo Street, Idi-Aba, Abeokuta, Ogun State, Nigeria.</p>
-            </div>
-
-            <!-- Bio Parameters Grid -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; font-size: 0.88rem; margin-bottom: 1.75rem; background-color: #f9f9f9; padding: 1rem; border: 1px solid #ddd; border-radius: 4px;">
-              <div>
-                <div style="margin-bottom: 0.4rem;"><strong>Student Name:</strong> <span id="transFullname" style="text-transform: uppercase;">-</span></div>
-                <div style="margin-bottom: 0.4rem;"><strong>Matric Number:</strong> <span id="transMatric">-</span></div>
-                <div><strong>Theological Programme:</strong> <span id="transProgramme">-</span></div>
-              </div>
-              <div>
-                <div style="margin-bottom: 0.4rem;"><strong>Academic Session:</strong> <span id="transSession">-</span></div>
-                <div style="margin-bottom: 0.4rem;"><strong>Report Date:</strong> <span id="transReportDate">-</span></div>
-                <div><strong>Grading Status:</strong> <span style="color: green; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> COMMITTED & OFFICIAL</span></div>
-              </div>
-            </div>
-
-            <!-- Transcript Table -->
-            <div style="border: 1.5px solid #222; border-radius: 2px; margin-bottom: 2rem; overflow: hidden;">
-              <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left;">
-                <thead>
-                  <tr style="background-color: var(--primary); color: white; border-bottom: 2px solid #222;">
-                    <th style="padding: 0.75rem; font-weight: 700;">Course Code</th>
-                    <th style="padding: 0.75rem; font-weight: 700;">Course Title</th>
-                    <th style="padding: 0.75rem; font-weight: 700; text-align: center;">Units</th>
-                    <th style="padding: 0.75rem; font-weight: 700; text-align: center;">Semester</th>
-                    <th style="padding: 0.75rem; font-weight: 700; text-align: center;">Session</th>
-                    <th style="padding: 0.75rem; font-weight: 700; text-align: center;">Att</th>
-                    <th style="padding: 0.75rem; font-weight: 700; text-align: center;">Asg</th>
-                    <th style="padding: 0.75rem; font-weight: 700; text-align: center;">Test</th>
-                    <th style="padding: 0.75rem; font-weight: 700; text-align: center;">Prac</th>
-                    <th style="padding: 0.75rem; font-weight: 700; text-align: center;">Exam</th>
-                    <th style="padding: 0.75rem; font-weight: 700; text-align: center;">Total</th>
-                    <th style="padding: 0.75rem; font-weight: 700; text-align: center;">Grade</th>
-                    <th style="padding: 0.75rem; font-weight: 700; text-align: center;">GP</th>
-                    <th style="padding: 0.75rem; font-weight: 700; text-align: center;">Remark</th>
-                  </tr>
-                </thead>
-                <tbody id="printableTranscriptTableBody" style="background-color: #fff;">
-                  <!-- Dynamic rows -->
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Transcript Cumulative Stats Card -->
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; border: 1.5px solid #222; background-color: #f5f5f5; padding: 1rem; text-align: center; font-size: 0.9rem; font-weight: 700; margin-bottom: 2.5rem; border-radius: 4px;">
-              <div>Attempted Units: <span id="transMetaAttempted" style="color: var(--primary); font-weight: 800;">-</span></div>
-              <div>Passed Units: <span id="transMetaPassed" style="color: green; font-weight: 800;">-</span></div>
-              <div>Filtered GPA: <span id="transMetaGPA" style="color: var(--primary); font-weight: 800;">-</span></div>
-              <div>Cumulative CGPA: <span id="transMetaCGPA" style="color: var(--accent); font-weight: 800;">-</span></div>
-            </div>
-
-            <!-- Signatures and seal section -->
-            <div style="display: flex; justify-content: space-between; align-items: flex-end; padding: 1rem 0; flex-wrap: wrap; gap: 2rem;">
-              <div style="text-align: center; width: 220px;">
-                <div style="font-size: 0.85rem; font-style: italic; color: #555; margin-bottom: 3.5rem;">Signature certified securely</div>
-                <div style="border-top: 1.5px solid #222; padding-top: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--primary);">Registrar & Seal</div>
-              </div>
-              <div style="border: 2px solid var(--accent); border-radius: 50%; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--primary); font-weight: 900; font-size: 0.7rem; line-height: 1.2; letter-spacing: 0.5px; opacity: 0.85; border-style: dashed;">
-                DIMABIN<br>OFFICIAL<br>SEAL
-              </div>
-              <div style="text-align: center; width: 220px;">
-                <div style="font-size: 0.85rem; font-style: italic; color: #555; margin-bottom: 3.5rem;">Theological Coordinator Approved</div>
-                <div style="border-top: 1.5px solid #222; padding-top: 0.4rem; font-weight: 700; font-size: 0.85rem; color: var(--primary);">Director of Studies</div>
-              </div>
-            </div>
           </div>
         </div>
 
