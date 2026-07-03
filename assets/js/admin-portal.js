@@ -420,11 +420,14 @@ async function loadStats() {
     if (elStudents) elStudents.textContent = totalStudents;
 
     // Study Centres metrics
+    const totalCentres = allStudyCentres.length;
     const activeCentres = allStudyCentres.filter(c => c.status === "Active").length;
     const inactiveCentres = allStudyCentres.filter(c => c.status !== "Active").length;
 
+    const elTotalCentres = document.getElementById("statTotalCentres");
     const elActiveCentres = document.getElementById("statActiveCentres");
     const elInactiveCentres = document.getElementById("statInactiveCentres");
+    if (elTotalCentres) elTotalCentres.textContent = totalCentres;
     if (elActiveCentres) elActiveCentres.textContent = activeCentres;
     if (elInactiveCentres) elInactiveCentres.textContent = inactiveCentres;
 
@@ -3683,8 +3686,13 @@ function renderStudyCentresTable() {
     return matchesSearch && matchesStatus;
   });
 
+  if (allStudyCentres.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 3rem; color: var(--text-muted);">No Study Centres have been created yet.</td></tr>`;
+    return;
+  }
+
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 3rem; color: var(--text-muted);">No study centres matching selected parameters.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 3rem; color: var(--text-muted);">No study centres matching selected parameters.</td></tr>`;
     return;
   }
 
@@ -3697,6 +3705,7 @@ function renderStudyCentresTable() {
     const phone = c.phone || "";
     const coordinator = c.coordinator || "";
     const status = c.status || "Active";
+    const createdAt = c.createdAt ? new Date(c.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : "N/A";
 
     // Dynamic metrics calculation
     const totalStudents = allStudents.filter(s => s.studyCentreId === cid).length;
@@ -3719,6 +3728,7 @@ function renderStudyCentresTable() {
             ${status}
           </span>
         </td>
+        <td style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem;">${createdAt}</td>
         <td style="padding: 1rem; text-align: center;">
           <div style="display: flex; gap: 0.5rem; justify-content: center;">
             <button onclick="openEditCentreModal('${cid}')" class="btn" title="Edit Centre" style="background-color: var(--bg-slate); color: var(--primary); border: 1.5px solid var(--border-color); width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;"><i class="fa-solid fa-pen-to-square"></i></button>
@@ -3784,7 +3794,7 @@ window.deleteStudyCentre = async (id) => {
   const hasCourses = allCourses.some(c => c.studyCentreId === id || (c.assignedStudyCentreIds && c.assignedStudyCentreIds.includes(id)));
 
   if (hasStudents || hasLecturers || hasCourses) {
-    window.showToast("Deletion Blocked: Students, facilitators, or courses are currently assigned to this study centre.", "error");
+    window.showToast("This Study Centre cannot be deleted because records are attached to it.", "error");
     return;
   }
 

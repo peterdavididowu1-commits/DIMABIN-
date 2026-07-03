@@ -1285,6 +1285,13 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;" id="studyCentresStatsGrid">
               <div class="stat-card" style="margin: 0; box-shadow: none; border: 1.5px solid var(--border-color);">
                 <div class="stat-card-info">
+                  <h5>Total Centres</h5>
+                  <div class="stat-value" id="statTotalCentres">0</div>
+                </div>
+                <div class="stat-card-icon blue" style="background-color: rgba(31,59,130,0.12); color: #1F3B82; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-hotel"></i></div>
+              </div>
+              <div class="stat-card" style="margin: 0; box-shadow: none; border: 1.5px solid var(--border-color);">
+                <div class="stat-card-info">
                   <h5>Active Centres</h5>
                   <div class="stat-value" id="statActiveCentres">0</div>
                 </div>
@@ -2034,7 +2041,7 @@
         </div>
 
         <!-- Tab: Study Centres Management -->
-        <div class="tab-content" id="tab-study-centres" style="display: none;">
+        <div class="tab-content" id="tab-study-centres">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
             <div>
               <h2 class="font-display" style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem; font-weight: 800;">Study Centre Hub</h2>
@@ -2077,12 +2084,13 @@
                     <th style="padding: 1rem; color: var(--primary); font-weight: 700; text-align: center;">Students</th>
                     <th style="padding: 1rem; color: var(--primary); font-weight: 700; text-align: center;">Lecturers</th>
                     <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Status</th>
+                    <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Date Created</th>
                     <th style="padding: 1rem; color: var(--primary); font-weight: 700; text-align: center;">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="studyCentresTableBody">
                   <tr>
-                    <td colspan="9" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                    <td colspan="10" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
                       <i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.5rem;"></i> Loading study centres...
                     </td>
                   </tr>
