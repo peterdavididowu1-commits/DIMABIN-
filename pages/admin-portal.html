@@ -1248,56 +1248,96 @@
         </div>
 
         <nav class="sidebar-nav">
-          <button class="sidebar-nav-btn active" data-tab="overview">
-            <i class="fa-solid fa-chart-pie"></i> Stats Overview
-          </button>
-          <!-- Admissions Accordion -->
-          <div class="sidebar-accordion">
-            <div class="sidebar-accordion-header" id="admissionsAccordionHeader">
-              <span class="sidebar-accordion-header-left">
-                <i class="fa-solid fa-users-viewfinder"></i> Admissions
-              </span>
-              <i class="fa-solid fa-chevron-down accordion-arrow"></i>
+          <!-- Super Admin Sidebar -->
+          <div id="superAdminSidebarNav" style="display: block;">
+            <button class="sidebar-nav-btn active" data-tab="overview">
+              <i class="fa-solid fa-chart-pie"></i> Stats Overview
+            </button>
+            <!-- Admissions Accordion -->
+            <div class="sidebar-accordion">
+              <div class="sidebar-accordion-header" id="admissionsAccordionHeader">
+                <span class="sidebar-accordion-header-left">
+                  <i class="fa-solid fa-users-viewfinder"></i> Admissions
+                </span>
+                <i class="fa-solid fa-chevron-down accordion-arrow"></i>
+              </div>
+              <div class="sidebar-accordion-content" id="sidebarAdmissionsCentres">
+                <!-- Dynamically populated study centres -->
+              </div>
             </div>
-            <div class="sidebar-accordion-content" id="sidebarAdmissionsCentres">
-              <!-- Dynamically populated study centres -->
+
+            <!-- Student Directory Accordion -->
+            <div class="sidebar-accordion">
+              <div class="sidebar-accordion-header" id="studentsAccordionHeader">
+                <span class="sidebar-accordion-header-left">
+                  <i class="fa-solid fa-user-graduate"></i> Student Directory
+                </span>
+                <i class="fa-solid fa-chevron-down accordion-arrow"></i>
+              </div>
+              <div class="sidebar-accordion-content" id="sidebarStudentsCentres">
+                <!-- Dynamically populated study centres -->
+              </div>
             </div>
+            <button class="sidebar-nav-btn" data-tab="lecturer-management">
+              <i class="fa-solid fa-chalkboard-user"></i> Lecturer Management
+            </button>
+            <button class="sidebar-nav-btn" data-tab="courses-management">
+              <i class="fa-solid fa-book-bible"></i> Course Management
+            </button>
+            <button class="sidebar-nav-btn" data-tab="courses-allocation">
+              <i class="fa-solid fa-list-check"></i> Course Allocation
+            </button>
+            <button class="sidebar-nav-btn" data-tab="study-centres">
+              <i class="fa-solid fa-hotel"></i> Study Centres
+            </button>
+            <button class="sidebar-nav-btn" data-tab="announcements">
+              <i class="fa-solid fa-bullhorn"></i> Announcements
+            </button>
+
+            <button class="sidebar-nav-btn" data-tab="result-approval">
+              <i class="fa-solid fa-file-signature"></i> Result Approval
+            </button>
+            <button class="sidebar-nav-btn" data-tab="administration" id="sidebarBtnAdministration">
+              <i class="fa-solid fa-user-shield"></i> Administration
+            </button>
+            <button class="sidebar-nav-btn" data-tab="emailjs">
+              <i class="fa-solid fa-sliders"></i> EmailJS & Settings
+            </button>
           </div>
 
-          <!-- Student Directory Accordion -->
-          <div class="sidebar-accordion">
-            <div class="sidebar-accordion-header" id="studentsAccordionHeader">
-              <span class="sidebar-accordion-header-left">
-                <i class="fa-solid fa-user-graduate"></i> Student Directory
-              </span>
-              <i class="fa-solid fa-chevron-down accordion-arrow"></i>
-            </div>
-            <div class="sidebar-accordion-content" id="sidebarStudentsCentres">
-              <!-- Dynamically populated study centres -->
-            </div>
+          <!-- Centre Admin Sidebar -->
+          <div id="centreAdminSidebarNav" style="display: none;">
+            <button class="sidebar-nav-btn active" id="btnCentreDashboard">
+              <i class="fa-solid fa-chart-pie"></i> <span id="lblCentreDashboard">Centre Dashboard</span>
+            </button>
+            <button class="sidebar-nav-btn" id="btnCentreAdmissions">
+              <i class="fa-solid fa-users-viewfinder"></i> <span id="lblCentreAdmissions">Admissions</span>
+            </button>
+            <button class="sidebar-nav-btn" id="btnCentreStudents">
+              <i class="fa-solid fa-user-graduate"></i> <span id="lblCentreStudents">Student Registry</span>
+            </button>
+            <button class="sidebar-nav-btn" id="btnCentreLecturers">
+              <i class="fa-solid fa-chalkboard-user"></i> <span id="lblCentreLecturers">Lecturer Management</span>
+            </button>
+            <button class="sidebar-nav-btn" id="btnCentreCourses">
+              <i class="fa-solid fa-book-bible"></i> <span id="lblCentreCourses">Course Management</span>
+            </button>
+            <button class="sidebar-nav-btn" id="btnCentreAllocation">
+              <i class="fa-solid fa-list-check"></i> <span id="lblCentreAllocation">Course Allocation</span>
+            </button>
+            <button class="sidebar-nav-btn" id="btnCentreResults">
+              <i class="fa-solid fa-file-signature"></i> <span id="lblCentreResults">Results</span>
+            </button>
+            <button class="sidebar-nav-btn" id="btnCentreCbt">
+              <i class="fa-solid fa-laptop-code"></i> <span id="lblCentreCbt">CBT Control</span>
+            </button>
+            <button class="sidebar-nav-btn" id="btnCentreAnnouncements">
+              <i class="fa-solid fa-bullhorn"></i> <span id="lblCentreAnnouncements">Announcements</span>
+            </button>
+            <button class="sidebar-nav-btn" id="btnCentreReports">
+              <i class="fa-solid fa-chart-line"></i> <span id="lblCentreReports">Reports</span>
+            </button>
           </div>
-          <button class="sidebar-nav-btn" data-tab="lecturer-management">
-            <i class="fa-solid fa-chalkboard-user"></i> Lecturer Management
-          </button>
-          <button class="sidebar-nav-btn" data-tab="courses-management">
-            <i class="fa-solid fa-book-bible"></i> Course Management
-          </button>
-          <button class="sidebar-nav-btn" data-tab="courses-allocation">
-            <i class="fa-solid fa-list-check"></i> Course Allocation
-          </button>
-          <button class="sidebar-nav-btn" data-tab="study-centres">
-            <i class="fa-solid fa-hotel"></i> Study Centres
-          </button>
-          <button class="sidebar-nav-btn" data-tab="announcements">
-            <i class="fa-solid fa-bullhorn"></i> Announcements
-          </button>
-
-          <button class="sidebar-nav-btn" data-tab="result-approval">
-            <i class="fa-solid fa-file-signature"></i> Result Approval
-          </button>
-          <button class="sidebar-nav-btn" data-tab="emailjs">
-            <i class="fa-solid fa-sliders"></i> EmailJS & Settings
-          </button>
         </nav>
 
         <div style="flex-grow: 1;"></div>
@@ -1414,6 +1454,105 @@
           </div>
         </div>
 
+        <!-- Tab: Administration (Super Admin Only) -->
+        <div class="tab-content" id="tab-administration" style="display: none;">
+          <div style="margin-bottom: 2rem;">
+            <h2 class="font-display" style="color: var(--primary); font-size: 2.2rem; margin-bottom: 0.25rem; font-weight: 800;">Administration Console</h2>
+            <p style="color: var(--text-muted); font-size: 1.05rem;">Manage system-wide administrator directory, assign study centre managers, and maintain security parameters.</p>
+          </div>
+
+          <!-- Section Tabs -->
+          <div class="centre-menu-tabs" style="display: flex; gap: 0.5rem; border-bottom: 2px solid var(--border-color); margin-bottom: 2rem; overflow-x: auto; padding-bottom: 2px;">
+            <button class="centre-menu-tab-btn active" style="background: none; border: none; padding: 1rem 1.5rem; font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--primary); border-bottom: 3px solid var(--primary); cursor: pointer; display: flex; align-items: center; gap: 0.5rem; white-space: nowrap;">
+              <i class="fa-solid fa-user-shield"></i> Centre Administrators
+            </button>
+          </div>
+
+          <!-- Form and Directory Grid -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; align-items: start;">
+            
+            <!-- Create Administrator Form -->
+            <div class="portal-card" style="background-color: var(--bg-white); padding: 1.75rem; border-radius: 8px; border: 1.5px solid var(--border-color);">
+              <h3 class="font-display" style="color: var(--primary); font-size: 1.2rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 700;">
+                <i class="fa-solid fa-user-plus" style="color: var(--accent);"></i> Create Centre Administrator
+              </h3>
+              
+              <form id="createCentreAdminForm">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                  <label for="adminFormFullName" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Full Name</label>
+                  <input type="text" id="adminFormFullName" class="form-control" placeholder="e.g. Pastor David Adebayo" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                  <label for="adminFormId" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Administrator ID</label>
+                  <input type="text" id="adminFormId" class="form-control" placeholder="e.g. ADM/CTR/ODEDA01" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                  <small style="color: var(--text-muted); font-size: 0.72rem; display: block; margin-top: 0.2rem;">Must be unique. Format recommendation: ADM/CTR/CODE</small>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                  <label for="adminFormCentre" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Assigned Study Centre</label>
+                  <select id="adminFormCentre" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                    <!-- Dynamically populated -->
+                  </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                  <label for="adminFormPassword" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Temporary Password</label>
+                  <input type="password" id="adminFormPassword" class="form-control" placeholder="Minimum 6 characters" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                  <label for="adminFormPhone" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Phone Number</label>
+                  <input type="text" id="adminFormPhone" class="form-control" placeholder="e.g. 080XXXXXXXX" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                  <label for="adminFormStatus" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Status</label>
+                  <select id="adminFormStatus" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                    <option value="Active">Active</option>
+                    <option value="Deactivated">Deactivated</option>
+                  </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="btnCreateAdminSubmit" style="width: 100%; padding: 0.75rem; font-weight: 700;">
+                  <i class="fa-solid fa-user-plus"></i> Create Administrator
+                </button>
+              </form>
+            </div>
+
+            <!-- Administrators Directory -->
+            <div style="display: flex; flex-direction: column; gap: 1rem; grid-column: span 2;">
+              <div class="search-filter-bar" style="margin-bottom: 0;">
+                <div class="search-input-wrapper" style="flex-grow: 1;">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="searchAdminsInput" placeholder="Search administrators by name, ID...">
+                </div>
+              </div>
+
+              <div class="table-container" style="border: 1.5px solid var(--border-color); border-radius: 6px; overflow-x: auto; background-color: var(--bg-white);">
+                <table class="custom-table" style="width: 100%; border-collapse: collapse;">
+                  <thead>
+                    <tr style="background-color: var(--bg-slate); text-align: left; border-bottom: 1.5px solid var(--border-color);">
+                      <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Administrator ID</th>
+                      <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Name</th>
+                      <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Assigned Study Centre</th>
+                      <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Status</th>
+                      <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Date Created</th>
+                      <th style="padding: 1rem; color: var(--primary); font-weight: 700; text-align: center;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminsTableBody">
+                    <tr>
+                      <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">No administrators cataloged yet.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
         <!-- Tab: Dynamic Study Centre View -->
         <div class="tab-content" id="tab-study-centre-view">
           <div style="margin-bottom: 2rem;">
@@ -1435,14 +1574,23 @@
             <button class="centre-menu-tab-btn" data-subtab="Courses" style="background: none; border: none; padding: 1rem 1.5rem; font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--text-muted); border-bottom: 3px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; transition: var(--transition);">
               <i class="fa-solid fa-book-bible"></i> Courses
             </button>
+            <button class="centre-menu-tab-btn" data-subtab="Allocation" style="background: none; border: none; padding: 1rem 1.5rem; font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--text-muted); border-bottom: 3px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; transition: var(--transition);">
+              <i class="fa-solid fa-list-check"></i> Course Allocation
+            </button>
             <button class="centre-menu-tab-btn" data-subtab="Results" style="background: none; border: none; padding: 1rem 1.5rem; font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--text-muted); border-bottom: 3px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; transition: var(--transition);">
               <i class="fa-solid fa-file-signature"></i> Results
+            </button>
+            <button class="centre-menu-tab-btn" data-subtab="CBT" style="background: none; border: none; padding: 1rem 1.5rem; font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--text-muted); border-bottom: 3px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; transition: var(--transition);">
+              <i class="fa-solid fa-laptop-code"></i> CBT
             </button>
             <button class="centre-menu-tab-btn" data-subtab="Announcements" style="background: none; border: none; padding: 1rem 1.5rem; font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--text-muted); border-bottom: 3px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; transition: var(--transition);">
               <i class="fa-solid fa-bullhorn"></i> Announcements
             </button>
             <button class="centre-menu-tab-btn" data-subtab="Statistics" style="background: none; border: none; padding: 1rem 1.5rem; font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--text-muted); border-bottom: 3px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; transition: var(--transition);">
               <i class="fa-solid fa-chart-pie"></i> Statistics
+            </button>
+            <button class="centre-menu-tab-btn" data-subtab="Reports" style="background: none; border: none; padding: 1rem 1.5rem; font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--text-muted); border-bottom: 3px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; transition: var(--transition);">
+              <i class="fa-solid fa-chart-line"></i> Reports
             </button>
           </div>
 
@@ -1705,6 +1853,137 @@
                     No recent announcements posted.
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <!-- 8. Course Allocation Sub-Tab -->
+            <div class="centre-subtab-pane" id="centre-subtab-Allocation" style="display: none;">
+              <div class="search-filter-bar" style="margin-bottom: 1.5rem;">
+                <div class="search-input-wrapper" style="flex-grow: 1;">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="centreAllocationSearch" placeholder="Search course allocations in this study centre...">
+                </div>
+              </div>
+              <div class="table-container">
+                <table class="custom-table">
+                  <thead>
+                    <tr>
+                      <th>Course Code</th>
+                      <th>Course Title</th>
+                      <th>Level / Semester</th>
+                      <th>Assigned Facilitator(s)</th>
+                      <th style="text-align: center;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="centreAllocationTableBody">
+                    <tr>
+                      <td colspan="5" style="text-align: center; padding: 2.5rem; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Loading allocations...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 9. CBT Sub-Tab -->
+            <div class="centre-subtab-pane" id="centre-subtab-CBT" style="display: none;">
+              <!-- Mini CBT Stats Grid -->
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="portal-card" style="padding: 1rem; background: white; border-left: 4px solid var(--primary); display: flex; align-items: center; gap: 0.75rem; box-shadow: none; border: 1px solid var(--border-color); border-left-width: 4px;">
+                  <div style="font-size: 1.5rem; color: var(--primary);"><i class="fa-solid fa-file-signature"></i></div>
+                  <div>
+                    <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Total Exams</span>
+                    <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary-dark);" id="centreCbtTotalExams">0</div>
+                  </div>
+                </div>
+                <div class="portal-card" style="padding: 1rem; background: white; border-left: 4px solid #28a745; display: flex; align-items: center; gap: 0.75rem; box-shadow: none; border: 1px solid var(--border-color); border-left-width: 4px;">
+                  <div style="font-size: 1.5rem; color: #28a745;"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                  <div>
+                    <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Published</span>
+                    <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary-dark);" id="centreCbtPublishedExams">0</div>
+                  </div>
+                </div>
+                <div class="portal-card" style="padding: 1rem; background: white; border-left: 4px solid #F4B000; display: flex; align-items: center; gap: 0.75rem; box-shadow: none; border: 1px solid var(--border-color); border-left-width: 4px;">
+                  <div style="font-size: 1.5rem; color: #F4B000;"><i class="fa-solid fa-eye"></i></div>
+                  <div>
+                    <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Live Attempts</span>
+                    <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary-dark);" id="centreCbtLiveExams">0</div>
+                  </div>
+                </div>
+                <div class="portal-card" style="padding: 1rem; background: white; border-left: 4px solid #dc3545; display: flex; align-items: center; gap: 0.75rem; box-shadow: none; border: 1px solid var(--border-color); border-left-width: 4px;">
+                  <div style="font-size: 1.5rem; color: #dc3545;"><i class="fa-solid fa-graduation-cap"></i></div>
+                  <div>
+                    <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Submissions</span>
+                    <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary-dark);" id="centreCbtTotalSubmissions">0</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CBT Subtab Switchers -->
+              <div style="display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 1rem; gap: 1rem;">
+                <button class="subtab-btn active" id="btnCentreCbtExams" style="border: none; background: none; padding: 0.5rem; font-family: 'Poppins'; font-weight: 700; font-size: 0.85rem; color: var(--primary); border-bottom: 3px solid var(--primary); cursor: pointer;"><i class="fa-solid fa-file-lines"></i> Exams</button>
+                <button class="subtab-btn" id="btnCentreCbtSubmissions" style="border: none; background: none; padding: 0.5rem; font-family: 'Poppins'; font-weight: 600; font-size: 0.85rem; color: var(--text-muted); border-bottom: 3px solid transparent; cursor: pointer;"><i class="fa-solid fa-file-invoice"></i> Student Scripts</button>
+              </div>
+
+              <!-- Exams Table View -->
+              <div id="centreCbtExamsView">
+                <div class="table-container">
+                  <table class="custom-table">
+                    <thead>
+                      <tr>
+                        <th>Exam Code / Course</th>
+                        <th>Exam Title</th>
+                        <th>Questions</th>
+                        <th>Duration</th>
+                        <th>Date Range</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="centreCbtExamsTableBody">
+                      <tr>
+                        <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Loading exams...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Student Scripts Table View -->
+              <div id="centreCbtSubmissionsView" style="display: none;">
+                <div class="table-container">
+                  <table class="custom-table">
+                    <thead>
+                      <tr>
+                        <th>Matric No.</th>
+                        <th>Student Name</th>
+                        <th>Course</th>
+                        <th>Score</th>
+                        <th>Sub. Date</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="centreCbtSubmissionsTableBody">
+                      <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Loading scripts...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- 10. Reports Sub-Tab -->
+            <div class="centre-subtab-pane" id="centre-subtab-Reports" style="display: none;">
+              <div style="background-color: var(--bg-white); border-radius: 8px; border: 1px solid var(--border-color); padding: 1.5rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                  <h3 class="font-display" style="color: var(--primary); font-size: 1.25rem; margin: 0; font-weight: 700;"><i class="fa-solid fa-print"></i> Academic Standing Report</h3>
+                  <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0.25rem 0 0 0;">Official administrative overview and dossier download for the campus.</p>
+                </div>
+                <button class="btn btn-primary" onclick="window.print()" style="padding: 0.6rem 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;"><i class="fa-solid fa-download"></i> Print / Save Report</button>
+              </div>
+
+              <div id="centreReportsContainer">
+                <div style="text-align: center; padding: 3rem; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Generating report sheets...</div>
               </div>
             </div>
 
@@ -3108,6 +3387,85 @@
         <!-- Actions -->
         <div style="display: flex; gap: 0.75rem; justify-content: flex-end; flex-wrap: wrap; border-top: 1px solid var(--border-color); padding-top: 1.25rem;" id="adminReviewActionsRow">
           <!-- Populated by JS based on workflow status -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Centre Administrator Modal -->
+  <div class="modal-overlay" id="editCentreAdminModal" style="display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999;">
+    <div class="modal-box" style="max-width: 500px; width: 90%; background: white; border-radius: 8px; overflow: hidden; box-shadow: var(--shadow-lg);">
+      <div class="modal-header" style="background-color: var(--primary); color: white; padding: 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+        <h3 class="font-display" style="margin: 0; font-size: 1.2rem; font-weight: 700; color: white;"><i class="fa-solid fa-user-pen"></i> Edit Centre Administrator</h3>
+        <button class="modal-close-btn" id="btnCloseEditAdminModal" style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.25rem;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem;">
+        <form id="editCentreAdminForm">
+          <input type="hidden" id="editAdminDocId">
+          <input type="hidden" id="editAdminId">
+          
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label for="editAdminFullName" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Full Name</label>
+            <input type="text" id="editAdminFullName" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label for="editAdminPhone" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Phone Number</label>
+            <input type="text" id="editAdminPhone" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label for="editAdminCentre" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Transfer Study Centre</label>
+            <select id="editAdminCentre" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="editAdminStatus" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Status</label>
+            <select id="editAdminStatus" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+              <option value="Active">Active</option>
+              <option value="Deactivated">Deactivated</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700;">
+            <i class="fa-solid fa-floppy-disk"></i> Save Administrative Changes
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Course Allocation Management Modal -->
+  <div class="modal-overlay" id="centreAllocationModal" style="display: none; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999;">
+    <div class="modal-box" style="max-width: 550px; width: 90%; background: white; border-radius: 8px; overflow: hidden; box-shadow: var(--shadow-lg);">
+      <div class="modal-header" style="background-color: var(--primary); color: white; padding: 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+        <h3 class="font-display" style="margin: 0; font-size: 1.2rem; font-weight: 700; color: white;"><i class="fa-solid fa-list-check"></i> Course Allocation</h3>
+        <button class="modal-close-btn" id="btnCloseAllocationModal" style="border: none; background: transparent; color: white; cursor: pointer; font-size: 1.25rem;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem;">
+        <div style="background-color: var(--bg-slate); border: 1px solid var(--border-color); border-radius: 6px; padding: 1rem; margin-bottom: 1.5rem;">
+          <h4 style="margin: 0 0 0.25rem 0; color: var(--primary); font-size: 1.05rem;" id="allocModalCourseCode">N/A</h4>
+          <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;" id="allocModalCourseTitle">N/A</p>
+        </div>
+
+        <form id="centreAllocationForm" style="margin-bottom: 1.5rem;">
+          <input type="hidden" id="allocModalCourseId">
+          <label for="allocModalLecturerSelect" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Add Facilitator</label>
+          <div style="display: flex; gap: 0.5rem;">
+            <select id="allocModalLecturerSelect" class="form-control" style="flex-grow: 1; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+              <option value="">-- Select Lecturer --</option>
+            </select>
+            <button type="submit" class="btn btn-primary" style="padding: 0.6rem 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.25rem; white-space: nowrap;">
+              <i class="fa-solid fa-plus"></i> Allocate
+            </button>
+          </div>
+        </form>
+
+        <h5 style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 0.75rem;">Currently Assigned Facilitators</h5>
+        <div id="allocModalCurrentList" style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem;">
+          <!-- Loaded dynamically -->
         </div>
       </div>
     </div>

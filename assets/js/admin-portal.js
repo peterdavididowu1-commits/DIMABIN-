@@ -192,6 +192,22 @@ function enterDashboard(session) {
   document.getElementById("currentUserDisplay").textContent = session.fullName;
   document.getElementById("currentIdDisplay").textContent = session.adminId;
   
+  // Show/Hide role specific sidebars
+  const superSidebar = document.getElementById("superAdminSidebarNav");
+  const centreSidebar = document.getElementById("centreAdminSidebarNav");
+
+  if (currentAdminDoc.role === "Super Admin") {
+    if (superSidebar) superSidebar.style.display = "block";
+    if (centreSidebar) centreSidebar.style.display = "none";
+  } else if (currentAdminDoc.role === "Centre Admin") {
+    if (superSidebar) superSidebar.style.display = "none";
+    if (centreSidebar) {
+      centreSidebar.style.display = "block";
+      const lbl = document.getElementById("lblCentreDashboard");
+      if (lbl) lbl.textContent = `${currentAdminDoc.assignedStudyCentreName || "Centre"} Dashboard`;
+    }
+  }
+
   // Initialize systems - load study centres first, then dependent collections
   loadStudyCentres().then(() => {
     loadStats();
@@ -200,6 +216,14 @@ function enterDashboard(session) {
     loadLecturers();
     loadCourses();
     loadAnnouncements().catch(err => console.warn("Failed initial announcements load:", err));
+
+    if (currentAdminDoc.role === "Centre Admin") {
+      const centreId = currentAdminDoc.assignedStudyCentreId;
+      const centreName = currentAdminDoc.assignedStudyCentreName;
+      setupCentreAdminSidebar(centreId, centreName);
+      // Automatically redirect to the assigned Study Centre Dashboard tab on login
+      openStudyCentrePage(centreId, "Statistics");
+    }
   });
   loadSettings();
   resetInactivityTimer();
@@ -384,6 +408,9 @@ document.querySelectorAll(".sidebar-nav-btn").forEach(btn => {
       initStudyCentresTab();
     } else if (targetTab === "announcements") {
       initAnnouncementsTab();
+    } else if (targetTab === "administration") {
+      loadCentreAdministrators();
+      populateAdminCentresDropdowns();
     }
   });
 });
@@ -4974,3 +5001,834 @@ function renderCentreStatistics(centreId) {
     }
   }
 }
+
+// --- RENDER ALLOCATION SUB-TAB ---
+window.renderCentreAllocation = function(centreId) {
+  const tbody = document.getElementById("centreAllocationTableBody");
+  if (!tbody) return;
+
+  const searchQuery = (document.getElementById("centreAllocationSearch")?.value || "").toLowerCase().trim();
+
+  // Find courses belonging to this study centre
+  let filteredCourses = allCourses.filter(c => c.studyCentreId === centreId);
+
+  if (searchQuery) {
+    filteredCourses = filteredCourses.filter(c => {
+      return (c.courseCode || "").toLowerCase().includes(searchQuery) ||
+             (c.courseTitle || c.name || "").toLowerCase().includes(searchQuery);
+    });
+  }
+
+  if (filteredCourses.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 3rem; color: var(--text-muted);">No courses found inside this Study Centre. Create courses first.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filteredCourses.map(c => {
+    // Find lecturers assigned to this course
+    const facilitators = allLecturers.filter(l => {
+      const isAtCentre = l.assignedStudyCentreIds && l.assignedStudyCentreIds.includes(centreId);
+      const hasCourse = (l.coursesAssigned || l.assignedCourses || []).includes(c.courseCode || c.id);
+      return isAtCentre && hasCourse;
+    });
+
+    const facilitatorsHtml = facilitators.length > 0
+      ? facilitators.map(f => `<span style="background-color: var(--primary); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.72rem; font-weight: 600; margin-right: 0.3rem; display: inline-block; margin-bottom: 0.25rem;">${f.title || ""} ${f.fullName}</span>`).join("")
+      : `<span style="color: var(--text-muted); font-style: italic; font-size: 0.8rem;">None Allocated</span>`;
+
+    return `
+      <tr>
+        <td style="padding: 1rem; font-family: monospace; font-weight: 700; color: var(--primary);">${c.courseCode || c.id}</td>
+        <td style="padding: 1rem; font-weight: 600; color: var(--primary-dark);">${c.courseTitle || c.name}</td>
+        <td style="padding: 1rem;">Level ${c.level || "100"} / ${c.semester || "First Semester"}</td>
+        <td style="padding: 1rem;">${facilitatorsHtml}</td>
+        <td style="padding: 1rem; text-align: center;">
+          <button class="btn btn-sm btn-primary open-centre-alloc-btn" data-code="${c.courseCode || c.id}" data-title="${c.courseTitle || c.name}" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+            <i class="fa-solid fa-list-check"></i> Assign Facilitator
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  tbody.querySelectorAll(".open-centre-alloc-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      openCentreAllocationModal(btn.getAttribute("data-code"), btn.getAttribute("data-title"));
+    });
+  });
+};
+
+window.openCentreAllocationModal = function(courseCode, courseTitle) {
+  document.getElementById("allocModalCourseCode").textContent = courseCode;
+  document.getElementById("allocModalCourseTitle").textContent = courseTitle;
+  document.getElementById("allocModalCourseId").value = courseCode;
+
+  // Populate dropdown with lecturers assigned to current study centre
+  const select = document.getElementById("allocModalLecturerSelect");
+  if (select) {
+    const centreLecturers = allLecturers.filter(l => l.assignedStudyCentreIds && l.assignedStudyCentreIds.includes(currentSelectedStudyCentreId));
+    select.innerHTML = '<option value="">-- Select Lecturer --</option>' + 
+      centreLecturers.map(l => `<option value="${l.id}">${l.title || ""} ${l.fullName}</option>`).join("");
+  }
+
+  // Load current list
+  renderAllocationModalCurrentList(courseCode);
+
+  const modal = document.getElementById("centreAllocationModal");
+  if (modal) modal.style.display = "flex";
+};
+
+window.renderAllocationModalCurrentList = function(courseCode) {
+  const listContainer = document.getElementById("allocModalCurrentList");
+  if (!listContainer) return;
+
+  const facilitators = allLecturers.filter(l => {
+    const isAtCentre = l.assignedStudyCentreIds && l.assignedStudyCentreIds.includes(currentSelectedStudyCentreId);
+    const hasCourse = (l.coursesAssigned || l.assignedCourses || []).includes(courseCode);
+    return isAtCentre && hasCourse;
+  });
+
+  if (facilitators.length === 0) {
+    listContainer.innerHTML = `<div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 1rem;">No lecturers currently assigned to this syllabus course in this Study Centre.</div>`;
+    return;
+  }
+
+  listContainer.innerHTML = facilitators.map(f => `
+    <div style="display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-slate); padding: 0.5rem 0.75rem; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color);">
+      <span style="font-size: 0.85rem; font-weight: 600; color: var(--primary-dark);">${f.title || ""} ${f.fullName}</span>
+      <button class="btn btn-sm btn-outline-danger remove-alloc-btn" data-lec-id="${f.id}" data-course-code="${courseCode}" style="padding: 0.2rem 0.5rem; font-size: 0.72rem; border-color: rgba(220,53,69,0.3); color: var(--error);" title="De-allocate Course">
+        <i class="fa-solid fa-user-minus"></i> Remove
+      </button>
+    </div>
+  `).join("");
+
+  listContainer.querySelectorAll(".remove-alloc-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const lecId = btn.getAttribute("data-lec-id");
+      const code = btn.getAttribute("data-course-code");
+      
+      try {
+        const lec = allLecturers.find(l => l.id === lecId);
+        if (!lec) return;
+
+        let arr = lec.coursesAssigned || lec.assignedCourses || [];
+        arr = arr.filter(c => c !== code);
+
+        const docRef = doc(db, "lecturers", lecId);
+        await updateDoc(docRef, {
+          coursesAssigned: arr,
+          assignedCourses: arr,
+          updatedAt: new Date().toISOString()
+        });
+
+        window.showToast(`Successfully removed course allocation from ${lec.fullName}.`, "success");
+        await loadLecturers();
+        renderAllocationModalCurrentList(code);
+        renderCentreAllocation(currentSelectedStudyCentreId);
+      } catch (err) {
+        window.showToast("Failed to remove allocation: " + err.message, "error");
+      }
+    });
+  });
+};
+
+// --- RENDER CBT SUB-TAB ---
+window.renderCentreCbt = function(centreId) {
+  const examsRef = collection(db, "cbtExams");
+  const attemptsRef = collection(db, "cbtAttempts");
+  const resultsRef = collection(db, "cbtResults");
+
+  Promise.all([
+    getDocs(query(examsRef, where("studyCentreId", "==", centreId))),
+    getDocs(query(attemptsRef, where("studyCentreId", "==", centreId))),
+    getDocs(query(resultsRef, where("studyCentreId", "==", centreId)))
+  ]).then(([examsSnap, attemptsSnap, resultsSnap]) => {
+    const totalExams = examsSnap.size;
+    const publishedExams = examsSnap.docs.filter(d => d.data().status === "Active" || d.data().status === "Published").length;
+    const liveExams = attemptsSnap.docs.filter(d => d.data().status === "InProgress").length;
+    const totalSubmissions = resultsSnap.size;
+
+    document.getElementById("centreCbtTotalExams").textContent = totalExams;
+    document.getElementById("centreCbtPublishedExams").textContent = publishedExams;
+    document.getElementById("centreCbtLiveExams").textContent = liveExams;
+    document.getElementById("centreCbtTotalSubmissions").textContent = totalSubmissions;
+
+    // Render exams table
+    const examsTbody = document.getElementById("centreCbtExamsTableBody");
+    if (examsTbody) {
+      if (examsSnap.empty) {
+        examsTbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 1.5rem; color: var(--text-muted);">No CBT Examinations scheduled for this study centre.</td></tr>`;
+      } else {
+        examsTbody.innerHTML = examsSnap.docs.map(doc => {
+          const ex = doc.data();
+          const qCount = ex.questionsCount || (ex.questions ? ex.questions.length : 0);
+          const dateRange = `${ex.startDate || "N/A"} to ${ex.endDate || "N/A"}`;
+          const badgeClass = ex.status === "Active" ? "status-badge cleared" : "status-badge danger";
+          
+          return `
+            <tr>
+              <td style="padding: 0.85rem;"><strong>${ex.courseCode || doc.id}</strong></td>
+              <td style="padding: 0.85rem; font-weight: 600;">${ex.examTitle || ex.title || "N/A"}</td>
+              <td style="padding: 0.85rem;">${qCount} questions</td>
+              <td style="padding: 0.85rem;">${ex.duration || 60} mins</td>
+              <td style="padding: 0.85rem; font-size: 0.8rem;">${dateRange}</td>
+              <td style="padding: 0.85rem;"><span class="${badgeClass}" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">${ex.status || 'Active'}</span></td>
+              <td style="padding: 0.85rem; text-align: center;">
+                <button class="btn btn-sm btn-outline-danger delete-centre-exam-btn" data-id="${doc.id}" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;">
+                  <i class="fa-solid fa-trash-can"></i> Cancel
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join("");
+
+        examsTbody.querySelectorAll(".delete-centre-exam-btn").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            if (confirm("Are you sure you want to cancel and remove this CBT Examination?")) {
+              try {
+                await updateDoc(doc(db, "cbtExams", btn.getAttribute("data-id")), { status: "Cancelled" });
+                window.showToast("CBT exam status set to cancelled.", "success");
+                renderCentreCbt(centreId);
+              } catch (err) {
+                window.showToast("Operation failed: " + err.message, "error");
+              }
+            }
+          });
+        });
+      }
+    }
+
+    // Render submissions/scripts table
+    const subTbody = document.getElementById("centreCbtSubmissionsTableBody");
+    if (subTbody) {
+      if (resultsSnap.empty) {
+        subTbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 1.5rem; color: var(--text-muted);">No student CBT scripts completed.</td></tr>`;
+      } else {
+        subTbody.innerHTML = resultsSnap.docs.map(doc => {
+          const res = doc.data();
+          const dateStr = res.submittedAt ? new Date(res.submittedAt).toLocaleDateString() : "N/A";
+          
+          return `
+            <tr>
+              <td style="padding: 0.85rem; font-family: monospace;">${res.matricNumber || "N/A"}</td>
+              <td style="padding: 0.85rem; font-weight: 600;">${res.studentName || "N/A"}</td>
+              <td style="padding: 0.85rem;"><strong>${res.courseCode || "N/A"}</strong></td>
+              <td style="padding: 0.85rem; font-weight: 700; color: var(--primary);">${res.score || 0} / ${res.totalQuestions || 0}</td>
+              <td style="padding: 0.85rem;">${dateStr}</td>
+              <td style="padding: 0.85rem; text-align: center;">
+                <button class="btn btn-sm btn-outline-primary view-script-btn" data-id="${doc.id}" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;">
+                  <i class="fa-solid fa-eye"></i> View Details
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join("");
+
+        subTbody.querySelectorAll(".view-script-btn").forEach(btn => {
+          btn.addEventListener("click", () => {
+            window.showToast("Detailed CBT sheet review is stored securely in candidates results database.", "info");
+          });
+        });
+      }
+    }
+  }).catch(err => {
+    console.error("CBT loading failed:", err);
+  });
+};
+
+// --- RENDER REPORTS SUB-TAB ---
+window.renderCentreReports = function(centreId) {
+  const container = document.getElementById("centreReportsContainer");
+  if (!container) return;
+
+  const centre = allStudyCentres.find(c => c.id === centreId);
+  if (!centre) return;
+
+  const centreApps = allApplications.filter(app => app.preferredStudyCentreId === centreId);
+  const centreStudents = allStudents.filter(stu => stu.studyCentreId === centreId);
+  const centreLecturers = allLecturers.filter(l => l.assignedStudyCentreIds && l.assignedStudyCentreIds.includes(centreId));
+  const centreCourses = allCourses.filter(c => c.studyCentreId === centreId);
+
+  // Compile Result summaries
+  const resultsRef = collection(db, "results");
+  getDocs(query(resultsRef, where("studyCentreId", "==", centreId))).then(resultsSnap => {
+    const totalGradeSheets = resultsSnap.size;
+
+    container.innerHTML = `
+      <div style="background-color: var(--bg-white); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); padding: 2.5rem; box-shadow: var(--shadow-sm); font-family: 'Poppins', sans-serif;">
+        <!-- Header -->
+        <div style="text-align: center; border-bottom: 2.5px solid var(--primary); padding-bottom: 1.5rem; margin-bottom: 2rem;">
+          <h1 style="color: var(--primary); font-size: 1.8rem; font-weight: 800; margin: 0 0 0.25rem 0; font-family: 'Playfair Display', serif;">DIVINE MANDATE BIBLE INSTITUTE</h1>
+          <h2 style="color: var(--text-dark); font-size: 1.15rem; font-weight: 700; margin: 0 0 0.5rem 0;">${centre.name.toUpperCase()} REGIONAL CAMPUS</h2>
+          <span style="background-color: var(--accent); color: var(--primary); padding: 0.35rem 0.75rem; border-radius: 4px; font-weight: 800; font-size: 0.8rem; text-transform: uppercase;">Official Campus Audit Report</span>
+          <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0.75rem 0 0 0;">Report Generated On: ${new Date().toLocaleString()}</p>
+        </div>
+
+        <!-- Section 1: Demographics -->
+        <div style="margin-bottom: 2rem;">
+          <h3 style="color: var(--primary); border-bottom: 1.5px solid var(--border-color); padding-bottom: 0.4rem; margin-bottom: 1rem; font-weight: 700;"><i class="fa-solid fa-circle-nodes"></i> 1. Enrollment & Admissions Standing</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+            <div style="background-color: var(--bg-slate); padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Total Enrollment</span>
+              <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary);">${centreStudents.length} Active Students</div>
+            </div>
+            <div style="background-color: var(--bg-slate); padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Admissions Received</span>
+              <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary);">${centreApps.length} Candidates</div>
+            </div>
+            <div style="background-color: var(--bg-slate); padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color);">
+              <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Active Faculty</span>
+              <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary);">${centreLecturers.length} Facilitators</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Syllabus and Course Offerings -->
+        <div style="margin-bottom: 2rem;">
+          <h3 style="color: var(--primary); border-bottom: 1.5px solid var(--border-color); padding-bottom: 0.4rem; margin-bottom: 1rem; font-weight: 700;"><i class="fa-solid fa-book-bible"></i> 2. Campus Curriculum & Allocations</h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">Total of <strong>${centreCourses.length}</strong> courses are currently registered under this region:</p>
+          <div class="table-container" style="border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 1rem;">
+            <table class="custom-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+              <thead>
+                <tr style="background-color: var(--bg-slate); text-align: left;">
+                  <th style="padding: 0.5rem 0.75rem;">Code</th>
+                  <th style="padding: 0.5rem 0.75rem;">Title</th>
+                  <th style="padding: 0.5rem 0.75rem;">Level</th>
+                  <th style="padding: 0.5rem 0.75rem;">Facilitators Allocated</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${centreCourses.length === 0 ? `<tr><td colspan="4" style="text-align: center; padding: 1rem;">No curriculum courses cataloged.</td></tr>` : 
+                  centreCourses.map(c => {
+                    const facilitators = centreLecturers.filter(l => (l.coursesAssigned || l.assignedCourses || []).includes(c.courseCode || c.id));
+                    const facNames = facilitators.map(f => `${f.title || ""} ${f.fullName}`).join(", ") || "None Allocated";
+                    return `
+                      <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.5rem 0.75rem; font-family: monospace;">${c.courseCode || c.id}</td>
+                        <td style="padding: 0.5rem 0.75rem; font-weight: 600;">${c.courseTitle || c.name}</td>
+                        <td style="padding: 0.5rem 0.75rem;">Level ${c.level || "100"} / ${c.semester || "First Semester"}</td>
+                        <td style="padding: 0.5rem 0.75rem; color: var(--primary); font-weight: 500;">${facNames}</td>
+                      </tr>
+                    `;
+                  }).join("")
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Section 3: Lecturer Directory -->
+        <div style="margin-bottom: 2rem;">
+          <h3 style="color: var(--primary); border-bottom: 1.5px solid var(--border-color); padding-bottom: 0.4rem; margin-bottom: 1rem; font-weight: 700;"><i class="fa-solid fa-chalkboard-user"></i> 3. Assigned Regional Lecturers</h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">List of <strong>${centreLecturers.length}</strong> theological facilitators assigned to this study centre:</p>
+          <div class="table-container" style="border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 1rem;">
+            <table class="custom-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+              <thead>
+                <tr style="background-color: var(--bg-slate); text-align: left;">
+                  <th style="padding: 0.5rem 0.75rem;">Lec ID</th>
+                  <th style="padding: 0.5rem 0.75rem;">Name</th>
+                  <th style="padding: 0.5rem 0.75rem;">Department</th>
+                  <th style="padding: 0.5rem 0.75rem;">Assigned Courses</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${centreLecturers.length === 0 ? `<tr><td colspan="4" style="text-align: center; padding: 1rem;">No theological facilitators assigned.</td></tr>` : 
+                  centreLecturers.map(l => {
+                    const courses = l.coursesAssigned || l.assignedCourses || [];
+                    const coursesStr = courses.join(", ") || "No courses allocated";
+                    return `
+                      <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.5rem 0.75rem; font-family: monospace;">${l.lecturerId || l.id}</td>
+                        <td style="padding: 0.5rem 0.75rem; font-weight: 600;">${l.title || ""} ${l.fullName}</td>
+                        <td style="padding: 0.5rem 0.75rem;">${l.department || "Theology"}</td>
+                        <td style="padding: 0.5rem 0.75rem;">${coursesStr}</td>
+                      </tr>
+                    `;
+                  }).join("")
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Section 4: Result summary statistics -->
+        <div style="margin-bottom: 1rem;">
+          <h3 style="color: var(--primary); border-bottom: 1.5px solid var(--border-color); padding-bottom: 0.4rem; margin-bottom: 1rem; font-weight: 700;"><i class="fa-solid fa-file-signature"></i> 4. Regional Results Summaries</h3>
+          <p style="font-size: 0.85rem; color: var(--text-dark);">Total of <strong>${totalGradeSheets}</strong> grade sheets have been synchronized in this Study Centre.</p>
+        </div>
+
+        <!-- Footer stamp -->
+        <div style="display: flex; justify-content: space-between; margin-top: 3.5rem; border-top: 1px dashed var(--border-color); padding-top: 2rem; font-size: 0.85rem;">
+          <div style="text-align: center;">
+            <div style="width: 150px; border-bottom: 1px solid var(--text-dark); margin: 0 auto 0.5rem auto;"></div>
+            <p style="margin: 0; font-weight: 600;">Centre Administrator</p>
+            <p style="margin: 0; color: var(--text-muted); font-size: 0.75rem;">Regional Signature</p>
+          </div>
+          <div style="text-align: center;">
+            <div style="width: 150px; border-bottom: 1px solid var(--text-dark); margin: 0 auto 0.5rem auto;"></div>
+            <p style="margin: 0; font-weight: 600;">Super Admin Port</p>
+            <p style="margin: 0; color: var(--text-muted); font-size: 0.75rem;">Divine Mandate Bible Institute</p>
+          </div>
+        </div>
+      </div>
+    `;
+  }).catch(err => {
+    console.error("Failed compiling report metrics:", err);
+    container.innerHTML = `<div style="text-align: center; color: var(--error); padding: 2rem;">Error compiling reports: ${err.message}</div>`;
+  });
+};
+
+// --- CENTRE ADMINISTRATORS DIRECTORY (SUPER ADMIN) ---
+window.loadCentreAdministrators = async function() {
+  const tbody = document.getElementById("adminsTableBody");
+  if (!tbody) return;
+
+  try {
+    const q = query(collection(db, "admins"), where("role", "==", "Centre Admin"));
+    const snap = await getDocs(q);
+
+    const searchQuery = (document.getElementById("searchAdminsInput")?.value || "").toLowerCase().trim();
+
+    let list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    if (searchQuery) {
+      list = list.filter(adm => {
+        return (adm.fullName || "").toLowerCase().includes(searchQuery) ||
+               (adm.adminId || "").toLowerCase().includes(searchQuery) ||
+               (adm.assignedStudyCentreName || "").toLowerCase().includes(searchQuery);
+      });
+    }
+
+    if (list.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">No administrators found matching criteria.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = list.map(adm => {
+      const createdStr = adm.createdAt ? new Date(adm.createdAt).toLocaleDateString() : "N/A";
+      const badgeClass = adm.status === "Active" ? "status-badge cleared" : "status-badge danger";
+      const toggleActionLabel = adm.status === "Active" ? "Deactivate" : "Activate";
+      const toggleActionIcon = adm.status === "Active" ? "fa-user-slash" : "fa-user-check";
+
+      return `
+        <tr style="border-bottom: 1.5px solid var(--border-color);">
+          <td style="padding: 1rem; font-family: monospace; font-weight: 700; color: var(--primary);">${adm.adminId}</td>
+          <td style="padding: 1rem; font-weight: 600; color: var(--primary-dark);">${adm.fullName}</td>
+          <td style="padding: 1rem;"><span style="background-color: var(--accent); color: var(--primary); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: 700;">${adm.assignedStudyCentreName || "None"}</span></td>
+          <td style="padding: 1rem;"><span class="${badgeClass}" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; font-weight: 700;">${adm.status || 'Active'}</span></td>
+          <td style="padding: 1rem;">${createdStr}</td>
+          <td style="padding: 1rem; text-align: center;">
+            <div style="display: flex; gap: 0.35rem; justify-content: center; align-items: center; flex-wrap: wrap;">
+              <button class="btn btn-sm btn-outline-primary edit-admin-btn" data-id="${adm.id}" title="Edit Profile" style="padding: 0.35rem 0.6rem; font-size: 0.78rem;">
+                <i class="fa-solid fa-user-pen"></i> Edit
+              </button>
+              <button class="btn btn-sm reset-admin-pass-btn" data-id="${adm.id}" style="background-color: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 0.35rem 0.6rem; font-size: 0.78rem;" title="Reset Password">
+                <i class="fa-solid fa-key"></i> Key
+              </button>
+              <button class="btn btn-sm toggle-admin-status-btn" data-id="${adm.id}" data-status="${adm.status || 'Active'}" style="background-color: #fffbeb; color: #b45309; border: 1px solid #fef3c7; padding: 0.35rem 0.6rem; font-size: 0.78rem;" title="${toggleActionLabel}">
+                <i class="fa-solid ${toggleActionIcon}"></i> Toggle
+              </button>
+              <button class="btn btn-sm btn-outline-danger delete-admin-btn" data-id="${adm.id}" title="Delete Profile" style="padding: 0.35rem 0.6rem; font-size: 0.78rem;">
+                <i class="fa-solid fa-trash-can"></i> Del
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+    tbody.querySelectorAll(".edit-admin-btn").forEach(btn => btn.addEventListener("click", () => openEditCentreAdminModal(btn.getAttribute("data-id"))));
+    tbody.querySelectorAll(".reset-admin-pass-btn").forEach(btn => btn.addEventListener("click", () => resetCentreAdminPassword(btn.getAttribute("data-id"))));
+    tbody.querySelectorAll(".toggle-admin-status-btn").forEach(btn => btn.addEventListener("click", () => toggleCentreAdminStatus(btn.getAttribute("data-id"), btn.getAttribute("data-status"))));
+    tbody.querySelectorAll(".delete-admin-btn").forEach(btn => btn.addEventListener("click", () => deleteCentreAdminAccount(btn.getAttribute("data-id"))));
+
+  } catch (err) {
+    console.error("Failed loading administrators:", err);
+    window.showToast("Failed to load administrator directory: " + err.message, "error");
+  }
+};
+
+window.populateAdminCentresDropdowns = function() {
+  const adminFormCentre = document.getElementById("adminFormCentre");
+  const editAdminCentre = document.getElementById("editAdminCentre");
+
+  const opts = allStudyCentres.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+  if (adminFormCentre) adminFormCentre.innerHTML = `<option value="">-- Choose Centre --</option>` + opts;
+  if (editAdminCentre) editAdminCentre.innerHTML = `<option value="">-- Choose Centre --</option>` + opts;
+};
+
+// Form listeners for Centre Admin Console
+const createCentreAdminForm = document.getElementById("createCentreAdminForm");
+if (createCentreAdminForm) {
+  createCentreAdminForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    const fullName = document.getElementById("adminFormFullName").value.trim();
+    const adminId = document.getElementById("adminFormId").value.trim().toUpperCase();
+    const studyCentreId = document.getElementById("adminFormCentre").value;
+    const tempPassword = document.getElementById("adminFormPassword").value;
+    const phone = document.getElementById("adminFormPhone").value.trim();
+    const status = document.getElementById("adminFormStatus").value;
+
+    const submitBtn = document.getElementById("btnCreateAdminSubmit");
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Registering...`;
+
+    try {
+      // 1. Verify uniqueness
+      const existing = await findAdminRecord(adminId);
+      if (existing) {
+        window.showToast("An administrator profile with this ID already exists.", "error");
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Create Administrator`;
+        return;
+      }
+
+      // 2. Generate email
+      const email = `${adminId.toLowerCase().replace(/\//g, ".")}@dimabin.edu.ng`;
+
+      // 3. Provision Firebase Auth account via secondary instance
+      const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
+      const { getAuth, createUserWithEmailAndPassword, signOut } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js");
+      const firebaseConfig = (await import("./firebase-config-env.js")).default;
+
+      const secAppName = `secRegAdmin-${Date.now()}`;
+      const secApp = initializeApp(firebaseConfig, secAppName);
+      const secAuth = getAuth(secApp);
+
+      await createUserWithEmailAndPassword(secAuth, email, tempPassword);
+      await signOut(secAuth);
+      await secApp.delete();
+
+      // 4. Hash password
+      const hashedPass = await sha256(tempPassword);
+
+      // 5. Save to Firestore
+      const centre = allStudyCentres.find(c => c.id === studyCentreId);
+      const adminDocData = {
+        adminId,
+        fullName,
+        email,
+        assignedStudyCentreId: studyCentreId,
+        assignedStudyCentreName: centre ? centre.name : "",
+        password: tempPassword, // save for reset/onboarding lookup
+        passwordHash: hashedPass,
+        phone,
+        status,
+        role: "Centre Admin",
+        createdAt: new Date().toISOString()
+      };
+
+      // Firestore document ID
+      const firestoreDocId = adminId.replace(/\//g, "-");
+      await setDoc(doc(db, "admins", firestoreDocId), adminDocData);
+
+      window.showToast(`Administrator profile "${adminId}" created successfully!`, "success");
+      createCentreAdminForm.reset();
+      await loadCentreAdministrators();
+
+    } catch (err) {
+      console.error("Admin creation failed:", err);
+      window.showToast("Failed to create profile: " + err.message, "error");
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Create Administrator`;
+    }
+  });
+}
+
+window.resetCentreAdminPassword = async function(adminDocId) {
+  try {
+    const docRef = doc(db, "admins", adminDocId);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) return;
+
+    const adm = docSnap.data();
+    
+    if (confirm(`Are you sure you want to reset the login password for Administrator "${adm.fullName}"?`)) {
+      window.showToast("Resetting credentials...", "info");
+
+      const randHex = Math.random().toString(36).substring(2, 6).toUpperCase();
+      const newTempPassword = `Dimabin@2026${randHex}`;
+
+      // Auth reset via secondary Auth
+      let authReset = false;
+      try {
+        const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
+        const { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js");
+        const firebaseConfig = (await import("./firebase-config-env.js")).default;
+
+        const secAppName = `secResetAdmin-${Date.now()}`;
+        const secApp = initializeApp(firebaseConfig, secAppName);
+        const secAuth = getAuth(secApp);
+
+        // Delete old Auth profile
+        let deleted = false;
+        const prevPassword = adm.password || "";
+        if (prevPassword) {
+          try {
+            const userCred = await signInWithEmailAndPassword(secAuth, adm.email, prevPassword);
+            await userCred.user.delete();
+            deleted = true;
+          } catch (delErr) {
+            console.warn("Sign in deletion warning:", delErr.message);
+          }
+        }
+
+        // Re-create Auth profile
+        await createUserWithEmailAndPassword(secAuth, adm.email, newTempPassword);
+        await signOut(secAuth);
+        await secApp.delete();
+        authReset = true;
+      } catch (authErr) {
+        console.warn("Auth sync skipped:", authErr.message);
+      }
+
+      const hashedPass = await sha256(newTempPassword);
+      await updateDoc(docRef, {
+        password: newTempPassword,
+        passwordHash: hashedPass,
+        updatedAt: new Date().toISOString()
+      });
+
+      alert(`Success! The credentials for ${adm.fullName} have been updated.\n\nNew Temporary Password: ${newTempPassword}\nRegistered Email: ${adm.email}`);
+      window.showToast("Credentials successfully reset!", "success");
+      await loadCentreAdministrators();
+    }
+  } catch (err) {
+    window.showToast("Failed resetting password: " + err.message, "error");
+  }
+};
+
+window.toggleCentreAdminStatus = async function(adminDocId, currentStatus) {
+  try {
+    const newStatus = currentStatus === "Active" ? "Deactivated" : "Active";
+    await updateDoc(doc(db, "admins", adminDocId), { status: newStatus, updatedAt: new Date().toISOString() });
+    window.showToast(`Administrator status changed to ${newStatus}.`, "success");
+    await loadCentreAdministrators();
+  } catch (err) {
+    window.showToast("Status change failed: " + err.message, "error");
+  }
+};
+
+window.deleteCentreAdminAccount = async function(adminDocId) {
+  try {
+    const docRef = doc(db, "admins", adminDocId);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) return;
+
+    const adm = docSnap.data();
+
+    if (confirm(`CRITICAL WARNING: Are you sure you want to permanently delete the Administrator profile for "${adm.fullName}" (${adm.adminId})?\n\nThis action cannot be undone.`)) {
+      // 1. Delete Firebase Auth profile
+      try {
+        const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
+        const { getAuth, signInWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js");
+        const firebaseConfig = (await import("./firebase-config-env.js")).default;
+
+        const secAppName = `secDelAdmin-${Date.now()}`;
+        const secApp = initializeApp(firebaseConfig, secAppName);
+        const secAuth = getAuth(secApp);
+
+        try {
+          const userCred = await signInWithEmailAndPassword(secAuth, adm.email, adm.password);
+          await userCred.user.delete();
+        } catch (delErr) {
+          console.warn("Could not delete Auth credentials:", delErr.message);
+        }
+        await secApp.delete();
+      } catch (authErr) {
+        console.warn("Auth clean skipped:", authErr.message);
+      }
+
+      // 2. Delete Firestore Document
+      await deleteDoc(docRef);
+      window.showToast("Administrative profile permanently deleted.", "success");
+      await loadCentreAdministrators();
+    }
+  } catch (err) {
+    window.showToast("Deletion failed: " + err.message, "error");
+  }
+};
+
+window.openEditCentreAdminModal = async function(adminDocId) {
+  try {
+    const docSnap = await getDoc(doc(db, "admins", adminDocId));
+    if (!docSnap.exists()) return;
+
+    const adm = docSnap.data();
+    document.getElementById("editAdminDocId").value = adminDocId;
+    document.getElementById("editAdminId").value = adm.adminId;
+    document.getElementById("editAdminFullName").value = adm.fullName || "";
+    document.getElementById("editAdminPhone").value = adm.phone || "";
+    document.getElementById("editAdminStatus").value = adm.status || "Active";
+
+    // Populate dropdown
+    const select = document.getElementById("editAdminCentre");
+    if (select) {
+      select.value = adm.assignedStudyCentreId || "";
+    }
+
+    const modal = document.getElementById("editCentreAdminModal");
+    if (modal) modal.style.display = "flex";
+  } catch (err) {
+    window.showToast("Error retrieving admin details: " + err.message, "error");
+  }
+};
+
+const editCentreAdminForm = document.getElementById("editCentreAdminForm");
+if (editCentreAdminForm) {
+  editCentreAdminForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const docId = document.getElementById("editAdminDocId").value;
+    const fullName = document.getElementById("editAdminFullName").value.trim();
+    const phone = document.getElementById("editAdminPhone").value.trim();
+    const centreId = document.getElementById("editAdminCentre").value;
+    const status = document.getElementById("editAdminStatus").value;
+
+    try {
+      const centre = allStudyCentres.find(c => c.id === centreId);
+      await updateDoc(doc(db, "admins", docId), {
+        fullName,
+        phone,
+        assignedStudyCentreId: centreId,
+        assignedStudyCentreName: centre ? centre.name : "",
+        status,
+        updatedAt: new Date().toISOString()
+      });
+
+      window.showToast("Administrative profile successfully updated!", "success");
+      const modal = document.getElementById("editCentreAdminModal");
+      if (modal) modal.style.display = "none";
+      await loadCentreAdministrators();
+    } catch (err) {
+      window.showToast("Failed to save changes: " + err.message, "error");
+    }
+  });
+}
+
+const btnCloseEditAdminModal = document.getElementById("btnCloseEditAdminModal");
+if (btnCloseEditAdminModal) {
+  btnCloseEditAdminModal.addEventListener("click", () => {
+    const modal = document.getElementById("editCentreAdminModal");
+    if (modal) modal.style.display = "none";
+  });
+}
+
+const btnCloseAllocationModal = document.getElementById("btnCloseAllocationModal");
+if (btnCloseAllocationModal) {
+  btnCloseAllocationModal.addEventListener("click", () => {
+    const modal = document.getElementById("centreAllocationModal");
+    if (modal) modal.style.display = "none";
+  });
+}
+
+const centreAllocationForm = document.getElementById("centreAllocationForm");
+if (centreAllocationForm) {
+  centreAllocationForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const courseCode = document.getElementById("allocModalCourseId").value;
+    const lecId = document.getElementById("allocModalLecturerSelect").value;
+    if (!lecId) return;
+
+    try {
+      const lec = allLecturers.find(l => l.id === lecId);
+      if (!lec) return;
+
+      const currentAllocations = lec.coursesAssigned || lec.assignedCourses || [];
+      if (currentAllocations.includes(courseCode)) {
+        window.showToast("This lecturer is already assigned to this course.", "warning");
+        return;
+      }
+
+      currentAllocations.push(courseCode);
+
+      const docRef = doc(db, "lecturers", lecId);
+      await updateDoc(docRef, {
+        coursesAssigned: currentAllocations,
+        assignedCourses: currentAllocations,
+        updatedAt: new Date().toISOString()
+      });
+
+      window.showToast(`Facilitator ${lec.fullName} successfully assigned!`, "success");
+      document.getElementById("allocModalLecturerSelect").value = "";
+      await loadLecturers();
+      renderAllocationModalCurrentList(courseCode);
+      renderCentreAllocation(currentSelectedStudyCentreId);
+
+    } catch (err) {
+      window.showToast("Failed to assign facilitator: " + err.message, "error");
+    }
+  });
+}
+
+// Subtab buttons inside CBT
+const btnCentreCbtExams = document.getElementById("btnCentreCbtExams");
+const btnCentreCbtSubmissions = document.getElementById("btnCentreCbtSubmissions");
+
+if (btnCentreCbtExams && btnCentreCbtSubmissions) {
+  btnCentreCbtExams.addEventListener("click", () => {
+    btnCentreCbtExams.classList.add("active");
+    btnCentreCbtExams.style.color = "var(--primary)";
+    btnCentreCbtExams.style.borderBottomColor = "var(--primary)";
+
+    btnCentreCbtSubmissions.classList.remove("active");
+    btnCentreCbtSubmissions.style.color = "var(--text-muted)";
+    btnCentreCbtSubmissions.style.borderBottomColor = "transparent";
+
+    document.getElementById("centreCbtExamsView").style.display = "block";
+    document.getElementById("centreCbtSubmissionsView").style.display = "none";
+  });
+
+  btnCentreCbtSubmissions.addEventListener("click", () => {
+    btnCentreCbtSubmissions.classList.add("active");
+    btnCentreCbtSubmissions.style.color = "var(--primary)";
+    btnCentreCbtSubmissions.style.borderBottomColor = "var(--primary)";
+
+    btnCentreCbtExams.classList.remove("active");
+    btnCentreCbtExams.style.color = "var(--text-muted)";
+    btnCentreCbtExams.style.borderBottomColor = "transparent";
+
+    document.getElementById("centreCbtExamsView").style.display = "none";
+    document.getElementById("centreCbtSubmissionsView").style.display = "block";
+  });
+}
+
+const searchAdminsInput = document.getElementById("searchAdminsInput");
+if (searchAdminsInput) {
+  searchAdminsInput.addEventListener("input", () => {
+    loadCentreAdministrators();
+  });
+}
+
+window.setupCentreAdminSidebar = function(centreId, centreName) {
+  const btns = [
+    { id: "btnCentreDashboard", subtab: "Statistics" },
+    { id: "btnCentreAdmissions", subtab: "Applications" },
+    { id: "btnCentreStudents", subtab: "Students" },
+    { id: "btnCentreLecturers", subtab: "Lecturers" },
+    { id: "btnCentreCourses", subtab: "Courses" },
+    { id: "btnCentreAllocation", subtab: "Allocation" },
+    { id: "btnCentreResults", subtab: "Results" },
+    { id: "btnCentreCbt", subtab: "CBT" },
+    { id: "btnCentreAnnouncements", subtab: "Announcements" },
+    { id: "btnCentreReports", subtab: "Reports" }
+  ];
+
+  btns.forEach(b => {
+    const el = document.getElementById(b.id);
+    if (el) {
+      const newEl = el.cloneNode(true);
+      el.parentNode.replaceChild(newEl, el);
+      
+      newEl.addEventListener("click", () => {
+        document.querySelectorAll("#centreAdminSidebarNav .sidebar-nav-btn").forEach(btn => btn.classList.remove("active"));
+        newEl.classList.add("active");
+        openStudyCentrePage(centreId, b.subtab);
+      });
+    }
+  });
+};
+
