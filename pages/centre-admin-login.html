@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Centre Admin Sign In | DIMABIN</title>
+  
+  <meta name="description" content="Official portal of Divine Mandate Bible Institute (DIMABIN). Centre Administrator Sign In.">
+  <meta name="keywords" content="Divine Mandate Bible Institute, DIMABIN, Centre Admin, Bible Institute Nigeria">
+  
+  <link rel="canonical" href="https://ais-pre-ekckh44s3rnajaoptnewrq-954755939199.europe-west2.run.app/pages/centre-admin-login.html">
+  <link rel="manifest" href="../manifest.json">
+  
+  <!-- Preconnect external resources for performance -->
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+
+  <!-- Browser Favicon -->
+  <link rel="icon" type="image/jpeg" href="../assets/images/logo.jpg">
+  
+  <!-- FontAwesome Icons & Stylesheets -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <style>
+    :root {
+      --primary: #1F3B82; /* Deep Royal Blue */
+      --primary-light: #3058BF;
+      --primary-dark: #122452;
+      --primary-rgb: 31, 59, 130;
+      
+      --accent: #F4B000; /* Gold */
+      --accent-hover: #DDA000;
+      --accent-light: #FFFBF0;
+      --accent-rgb: 244, 176, 0;
+      
+      --bg-white: #FFFFFF;
+      --bg-slate: #F5F7FA;
+      --border-color: #E2E8F0;
+      --success: #28A745;
+      --success-hover: #218838;
+    }
+  </style>
+</head>
+<body style="min-height: 100vh; display: flex; flex-direction: column; background-color: var(--bg-slate); font-family: 'Poppins', sans-serif; color: var(--text-dark);">
+
+  <!-- Main Header Navigation -->
+  <header class="header shadow-sm" style="background-color: var(--bg-white); border-bottom: 2px solid var(--border-color); position: sticky; top: 0; z-index: 1000; transition: all 0.3s ease;">
+    <div class="container header-container" style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem;">
+      <a href="../index.html" class="logo-link flex-row" style="text-decoration: none; display: flex; align-items: center; gap: 0.75rem;">
+        <div class="logo-icon-fallback" style="width: 44px; height: 44px; background-color: var(--primary); border: 2px solid var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; color: var(--accent); font-weight: bold; flex-shrink: 0;">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <div class="logo-text">
+          <span class="logo-title" style="font-weight: 800; font-size: 1.25rem; color: var(--primary); display: block; line-height: 1.1;">DIMABIN</span>
+          <span class="logo-subtitle" style="font-size: 0.7rem; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; display: block;">Citadel of Learning</span>
+        </div>
+      </a>
+
+      <!-- Desktop Navigation Menu -->
+      <nav>
+        <ul class="nav-menu" style="display: flex; list-style: none; gap: 1.5rem; margin: 0; padding: 0;">
+          <li><a href="../index.html" class="nav-link" style="text-decoration: none; color: var(--primary); font-weight: 600; font-size: 0.95rem;">Home</a></li>
+          <li><a href="about.html" class="nav-link" style="text-decoration: none; color: var(--primary); font-weight: 600; font-size: 0.95rem;">About</a></li>
+          <li><a href="admissions.html" class="nav-link" style="text-decoration: none; color: var(--primary); font-weight: 600; font-size: 0.95rem;">Admissions</a></li>
+          <li class="dropdown" style="position: relative;">
+            <a href="#" class="nav-link dropdown-toggle active" style="text-decoration: none; color: var(--primary); font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 0.25rem;">Portal <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem;"></i></a>
+          </li>
+          <li><a href="contact.html" class="nav-link" style="text-decoration: none; color: var(--primary); font-weight: 600; font-size: 0.95rem;">Contact</a></li>
+        </ul>
+      </nav>
+
+      <div class="flex-row" style="gap: 1rem;">
+        <a href="admissions.html" class="btn btn-primary d-none-md" style="padding: 0.5rem 1.25rem; font-size: 0.9rem; font-weight: 600; border-radius: 6px;">Apply Now</a>
+      </div>
+    </div>
+  </header>
+
+  <main style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 3rem 1rem;">
+    <div style="width: 100%; max-width: 950px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 2rem; background: var(--bg-white); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); overflow: hidden; border: 1.5px solid var(--border-color);">
+      
+      <!-- Left Column: Sign In Form -->
+      <div style="padding: 3rem 2.5rem; display: flex; flex-direction: column; justify-content: center;">
+        <div style="text-align: center; margin-bottom: 2rem;">
+          <div style="width: 60px; height: 60px; background-color: var(--accent-light); border: 2px solid var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--primary); margin: 0 auto 1rem auto;">
+            <i class="fa-solid fa-hotel"></i>
+          </div>
+          <h2 style="font-weight: 800; color: var(--primary); margin-bottom: 0.5rem;">Centre Administrator</h2>
+          <p style="color: var(--text-muted); font-size: 0.88rem; margin: 0;">Sign in to manage your specific Study Centre operations</p>
+        </div>
+
+        <form id="centreAdminLoginForm">
+          <!-- Administrator ID Field -->
+          <div style="margin-bottom: 1.25rem;">
+            <label for="adminId" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: block;">Administrator ID</label>
+            <div style="position: relative;">
+              <i class="fa-solid fa-id-card" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--primary); opacity: 0.7;"></i>
+              <input type="text" id="adminId" style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.75rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 0.95rem;" placeholder="e.g. ADM/CTR/ODEDA01" required>
+            </div>
+          </div>
+
+          <!-- Password Field -->
+          <div style="margin-bottom: 1.25rem;">
+            <label for="password" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: block;">Password</label>
+            <div style="position: relative;">
+              <i class="fa-solid fa-lock" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--primary); opacity: 0.7;"></i>
+              <input type="password" id="password" style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.75rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 0.95rem;" placeholder="••••••••" required>
+            </div>
+          </div>
+
+          <!-- Options -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; font-size: 0.85rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="rememberMe" style="accent-color: var(--primary);">
+              <span>Remember Me</span>
+            </label>
+            <a href="admin-portal.html" style="color: var(--primary); font-weight: 600; text-decoration: none;">Are you a Super Admin?</a>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" id="btnCentreLoginSubmit" style="width: 100%; padding: 0.85rem; background-color: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: background-color 0.2s;">
+            <i class="fa-solid fa-shield-halved"></i> Sign In
+          </button>
+        </form>
+      </div>
+
+      <!-- Right Column: Security Panel Info -->
+      <div style="background-color: var(--primary-dark); color: white; padding: 3rem 2.5rem; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <h3 style="font-weight: 700; color: var(--accent); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fa-solid fa-circle-exclamation"></i> Security Warning
+          </h3>
+          <p style="font-size: 0.88rem; line-height: 1.6; opacity: 0.85; margin-bottom: 1.5rem;">
+            This session is reserved exclusively for registered DIMABIN Centre Administrators. All electronic transactions, access timestamps, and communication footprints are captured under security protocol.
+          </p>
+          <p style="font-size: 0.88rem; line-height: 1.6; opacity: 0.85; margin-bottom: 1.5rem;">
+            Login credentials are to be kept confidential. Any attempt to gain unauthorized entry or bypass verification triggers automatic system lock and IP reporting.
+          </p>
+        </div>
+
+        <div style="border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 1.5rem; font-size: 0.8rem;">
+          <p style="margin: 0; opacity: 0.7;">Require password recovery or configuration overrides?</p>
+          <p style="margin: 0.25rem 0 0 0; font-weight: 600; color: var(--accent);">Contact Super Admin Registry Officers</p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer style="background-color: var(--primary-dark); color: white; padding: 1.5rem; text-align: center; font-size: 0.8rem; border-top: 4px solid var(--accent);">
+    <p style="margin: 0;">© 2026 Divine Mandate Bible Institute (DIMABIN). All Rights Reserved.</p>
+  </footer>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
+
+  <!-- Custom Toast Utility (same as global) -->
+  <script>
+    window.showToast = function(message, type = "info") {
+      const container = document.getElementById("toastContainer");
+      if (!container) return;
+      
+      const toast = document.createElement("div");
+      toast.style.padding = "12px 20px";
+      toast.style.borderRadius = "6px";
+      toast.style.color = "white";
+      toast.style.fontWeight = "600";
+      toast.style.fontSize = "0.9rem";
+      toast.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
+      toast.style.display = "flex";
+      toast.style.alignItems = "center";
+      toast.style.gap = "8px";
+      toast.style.animation = "slideIn 0.3s ease";
+      
+      if (type === "success") {
+        toast.style.backgroundColor = "#2e7d32";
+        toast.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${message}`;
+      } else if (type === "error") {
+        toast.style.backgroundColor = "#c62828";
+        toast.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> ${message}`;
+      } else {
+        toast.style.backgroundColor = "#1565c0";
+        toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> ${message}`;
+      }
+      
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.animation = "slideOut 0.3s ease forwards";
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    };
+  </script>
+
+  <!-- Login Module -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, collection, query, where, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    import firebaseConfig from "../assets/js/firebase-config-env.js";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const SESSION_KEY = "dimabin_admin_session";
+
+    const form = document.getElementById("centreAdminLoginForm");
+    if (form) {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const adminId = document.getElementById("adminId").value.trim();
+        const password = document.getElementById("password").value;
+        const rememberMe = document.getElementById("rememberMe").checked;
+        
+        const submitBtn = document.getElementById("btnCentreLoginSubmit");
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Authenticating...`;
+        
+        try {
+          // 1. Search Firestore for the Administrator ID in 'centreAdministrators' collection
+          const cleanId = adminId.replace(/\//g, "-");
+          let docRef = doc(db, "centreAdministrators", cleanId);
+          let docSnap = await getDoc(docRef);
+          
+          let adminData = null;
+          let adminDocId = cleanId;
+          
+          if (docSnap.exists()) {
+            adminData = docSnap.data();
+          } else {
+            // Fallback search by administratorId field
+            const q = query(collection(db, "centreAdministrators"), where("administratorId", "==", adminId));
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+              adminData = snap.docs[0].data();
+              adminDocId = snap.docs[0].id;
+            } else {
+              // Check legacy admins collection for backward compatibility
+              const qLegacy = query(collection(db, "admins"), where("adminId", "==", adminId), where("role", "==", "Centre Admin"));
+              const snapLegacy = await getDocs(qLegacy);
+              if (!snapLegacy.empty) {
+                adminData = snapLegacy.docs[0].data();
+                adminDocId = snapLegacy.docs[0].id;
+              }
+            }
+          }
+          
+          if (!adminData) {
+            window.showToast("Invalid Administrator ID.", "error");
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<i class="fa-solid fa-shield-halved"></i> Sign In`;
+            return;
+          }
+          
+          // 2. If the account is inactive, deny login
+          if (adminData.status !== "Active") {
+            window.showToast("This administrative profile has been deactivated.", "error");
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<i class="fa-solid fa-shield-halved"></i> Sign In`;
+            return;
+          }
+          
+          // 3. Retrieve the hidden Firebase email
+          const email = adminData.hiddenEmail || adminData.email;
+          if (!email) {
+            window.showToast("No registered email found for this Administrator ID.", "error");
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<i class="fa-solid fa-shield-halved"></i> Sign In`;
+            return;
+          }
+          
+          // 4. Authenticate with Firebase using the hidden email and password
+          await signInWithEmailAndPassword(auth, email, password);
+          
+          // Update last login
+          const collName = adminData.hiddenEmail ? "centreAdministrators" : "admins";
+          await updateDoc(doc(db, collName, adminDocId), { lastLogin: new Date().toISOString() });
+          
+          // Save session
+          const session = {
+            adminId: adminData.administratorId || adminData.adminId,
+            fullName: adminData.fullName,
+            role: "Centre Admin"
+          };
+          
+          if (rememberMe) {
+            localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+          } else {
+            sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+          }
+          
+          window.showToast("Access Authorized! Welcome to your Centre Dashboard.", "success");
+          
+          // Redirect the administrator to ONLY his/her assigned Study Centre dashboard
+          setTimeout(() => {
+            window.location.href = "admin-portal.html";
+          }, 1000);
+          
+        } catch (err) {
+          console.error("❌ Centre Login error:", err);
+          let errorMsg = err.message;
+          if (err.code === "auth/invalid-credential" || err.code === "auth/user-not-found" || err.code === "auth/wrong-password") {
+            errorMsg = "Access Denied. Invalid password credentials.";
+          }
+          window.showToast(errorMsg, "error");
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `<i class="fa-solid fa-shield-halved"></i> Sign In`;
+        }
+      });
+    }
+  </script>
+</body>
+</html>

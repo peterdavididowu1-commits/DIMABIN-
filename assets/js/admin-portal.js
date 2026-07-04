@@ -131,7 +131,7 @@ function checkActiveSession() {
       console.log("👤 [Admin Portal] Firebase Auth detected signed-in user:", user.email);
       
       try {
-        // Query matching admin document in Firestore by email
+        // Query matching admin document in Firestore by email in admins first
         const q = query(collection(db, "admins"), where("email", "==", user.email));
         const snap = await getDocs(q);
         
@@ -139,6 +139,22 @@ function checkActiveSession() {
         if (!snap.empty) {
           adminDoc = { id: snap.docs[0].id, data: snap.docs[0].data() };
         } else {
+          // Check centreAdministrators collection
+          const q2 = query(collection(db, "centreAdministrators"), where("hiddenEmail", "==", user.email));
+          const snap2 = await getDocs(q2);
+          if (!snap2.empty) {
+            adminDoc = { id: snap2.docs[0].id, data: snap2.docs[0].data() };
+          } else {
+            // Also check legacy/fallback email in centreAdministrators
+            const q3 = query(collection(db, "centreAdministrators"), where("email", "==", user.email));
+            const snap3 = await getDocs(q3);
+            if (!snap3.empty) {
+              adminDoc = { id: snap3.docs[0].id, data: snap3.docs[0].data() };
+            }
+          }
+        }
+
+        if (!adminDoc) {
           // Fallback to checking cached session if any
           const cached = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
           if (cached) {
@@ -252,14 +268,21 @@ function handleLogout(message = "Logged out successfully.") {
 async function findAdminRecord(adminIdInput) {
   const trimmed = adminIdInput.trim();
   
-  // 1. Query by adminId field
+  // 1. Query by adminId field in admins
   const q = query(collection(db, "admins"), where("adminId", "==", trimmed));
   const qSnap = await getDocs(q);
   if (!qSnap.empty) {
     return { id: qSnap.docs[0].id, data: qSnap.docs[0].data() };
   }
+
+  // 1b. Query by administratorId field in centreAdministrators
+  const q2 = query(collection(db, "centreAdministrators"), where("administratorId", "==", trimmed));
+  const qSnap2 = await getDocs(q2);
+  if (!qSnap2.empty) {
+    return { id: qSnap2.docs[0].id, data: qSnap2.docs[0].data() };
+  }
   
-  // 2. Direct get by clean ID (replacing slashes with dashes)
+  // 2. Direct get by clean ID (replacing slashes with dashes) in admins
   const cleanId = trimmed.replace(/\//g, "-");
   const refClean = doc(db, "admins", cleanId);
   const snapClean = await getDoc(refClean);
@@ -267,13 +290,42 @@ async function findAdminRecord(adminIdInput) {
     return { id: snapClean.id, data: snapClean.data() };
   }
 
-  // 3. Direct get by raw ID
+  // 2b. Direct get by clean ID in centreAdministrators
+  const refClean2 = doc(db, "centreAdministrators", cleanId);
+  const snapClean2 = await getDoc(refClean2);
+  if (snapClean2.exists()) {
+    return { id: snapClean2.id, data: snapClean2.data() };
+  }
+  
+  // 3. Direct get by raw ID in admins
   const refRaw = doc(db, "admins", trimmed);
   const snapRaw = await getDoc(refRaw);
   if (snapRaw.exists()) {
     return { id: snapRaw.id, data: snapRaw.data() };
   }
 
+  // 3b. Direct get by raw ID in centreAdministrators
+  const refRaw2 = doc(db, "centreAdministrators", trimmed);
+  const snapRaw2 = await getDoc(refRaw2);
+  if (snapRaw2.exists()) {
+    return { id: snapRaw2.id, data: snapRaw2.data() };
+  }
+
+  return null;
+}
+
+// Helper to retrieve document reference, data, and collection name for an administrator
+async function getAdminDocAndRef(adminDocId) {
+  const ref1 = doc(db, "centreAdministrators", adminDocId);
+  const snap1 = await getDoc(ref1);
+  if (snap1.exists()) {
+    return { ref: ref1, snap: snap1, collection: "centreAdministrators" };
+  }
+  const ref2 = doc(db, "admins", adminDocId);
+  const snap2 = await getDoc(ref2);
+  if (snap2.exists()) {
+    return { ref: ref2, snap: snap2, collection: "admins" };
+  }
   return null;
 }
 
@@ -5391,10 +5443,60 @@ window.loadCentreAdministrators = async function() {
   if (!tbody) return;
 
   try {
-    const q = query(collection(db, "admins"), where("role", "==", "Centre Admin"));
-    const snap = await getDocs(q);
+    // 1. Query legacy admins collection for Centre Admins
+    const q1 = query(collection(db, "admins"), where("role", "==", "Centre Admin"));
+    const snap1 = await getDocs(q1);
+    const legacyAdmins = snap1.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        adminId: data.adminId || data.administratorId || "",
+        fullName: data.fullName || "",
+        assignedStudyCentreName: data.assignedStudyCentreName || data.studyCentre || "",
+        phone: data.phone || data.phoneNumber || "",
+        email: data.email || data.hiddenEmail || "",
+        status: data.status || "Active",
+        createdAt: data.createdAt || data.createdDate || ""
+      };
+    });
 
-    allCentreAdmins = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // 2. Query new centreAdministrators collection
+    const q2 = query(collection(db, "centreAdministrators"));
+    const snap2 = await getDocs(q2);
+    const newAdmins = snap2.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        adminId: data.administratorId || data.adminId || "",
+        fullName: data.fullName || "",
+        assignedStudyCentreName: data.studyCentre || data.assignedStudyCentreName || "",
+        phone: data.phoneNumber || data.phone || "",
+        email: data.hiddenEmail || data.email || "",
+        status: data.status || "Active",
+        createdAt: data.createdAt || data.createdDate || ""
+      };
+    });
+
+    // 3. Combine both lists, ensuring uniqueness by adminId
+    const seenIds = new Set();
+    allCentreAdmins = [];
+    
+    // Prioritize new collection
+    for (const adm of newAdmins) {
+      if (adm.adminId && !seenIds.has(adm.adminId)) {
+        seenIds.add(adm.adminId);
+        allCentreAdmins.push(adm);
+      }
+    }
+    
+    for (const adm of legacyAdmins) {
+      if (adm.adminId && !seenIds.has(adm.adminId)) {
+        seenIds.add(adm.adminId);
+        allCentreAdmins.push(adm);
+      }
+    }
 
     const searchQuery = (document.getElementById("searchAdminsInput")?.value || "").toLowerCase().trim();
 
@@ -5497,26 +5599,46 @@ window.populateAdminCentresDropdowns = function() {
   if (editAdminCentre) editAdminCentre.innerHTML = `<option value="">-- Choose Centre --</option>` + opts;
 };
 
-window.generateUniqueAdminEmail = async function() {
-  const q = query(collection(db, "admins"));
-  const snap = await getDocs(q);
-  const emails = snap.docs.map(doc => (doc.data().email || "").toLowerCase().trim());
+window.generateUniqueAdminEmail = async function(studyCentreId, centreCode, adminId) {
+  let code = centreCode;
+  if (!code && studyCentreId) {
+    const centre = allStudyCentres.find(c => c.id === studyCentreId);
+    code = centre ? (centre.code || centre.id) : "ctr";
+  }
+  if (!code) code = "ctr";
   
-  let maxNum = 0;
-  const pattern = /^admctr(\d+)@dimabin\.local$/;
-  for (const email of emails) {
-    const match = email.match(pattern);
-    if (match) {
-      const num = parseInt(match[1], 10);
-      if (num > maxNum) {
-        maxNum = num;
-      }
+  let cleanCentre = code.toLowerCase().replace(/[^a-z0-9]/g, "").trim();
+  if (!cleanCentre) cleanCentre = "ctr";
+  
+  // Extract numeric suffix from the adminId, e.g. ADM/CTR/ODEDA01 -> "01" -> 1 -> "001"
+  let match = adminId.match(/(\d+)$/);
+  let numStr = match ? match[1] : "1";
+  let num = parseInt(numStr, 10) || 1;
+  let paddedSuffix = String(num).padStart(3, "0");
+  
+  let email = `admin.${cleanCentre}.${paddedSuffix}@dimabin.local`;
+  
+  // Let's ensure uniqueness by checking in Firestore if it already exists
+  let isUnique = false;
+  let attempt = num;
+  while (!isUnique) {
+    let checkEmail = `admin.${cleanCentre}.${String(attempt).padStart(3, "0")}@dimabin.local`;
+    
+    const check1 = query(collection(db, "admins"), where("email", "==", checkEmail));
+    const snap1 = await getDocs(check1);
+    
+    const check2 = query(collection(db, "centreAdministrators"), where("hiddenEmail", "==", checkEmail));
+    const snap2 = await getDocs(check2);
+    
+    if (snap1.empty && snap2.empty) {
+      email = checkEmail;
+      isUnique = true;
+    } else {
+      attempt++;
     }
   }
   
-  const nextNum = maxNum + 1;
-  const padded = String(nextNum).padStart(4, "0");
-  return `ADMCTR${padded}@dimabin.local`;
+  return email;
 };
 
 // Form listeners for Centre Admin Console
@@ -5546,15 +5668,23 @@ if (createCentreAdminForm) {
         return;
       }
 
-      // 2. Validate one active administrator per centre
+      // 2. Validate one active administrator per centre in both collections
       if (status === "Active") {
-        const activeAdminsQuery = query(
+        const activeAdminsQuery1 = query(
           collection(db, "admins"),
           where("assignedStudyCentreId", "==", studyCentreId),
           where("status", "==", "Active")
         );
-        const activeAdminsSnap = await getDocs(activeAdminsQuery);
-        if (!activeAdminsSnap.empty) {
+        const activeAdminsSnap1 = await getDocs(activeAdminsQuery1);
+        
+        const activeAdminsQuery2 = query(
+          collection(db, "centreAdministrators"),
+          where("assignedStudyCentreId", "==", studyCentreId),
+          where("status", "==", "Active")
+        );
+        const activeAdminsSnap2 = await getDocs(activeAdminsQuery2);
+        
+        if (!activeAdminsSnap1.empty || !activeAdminsSnap2.empty) {
           window.showToast("This Study Centre already has an active Administrator account.", "error");
           submitBtn.disabled = false;
           submitBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Create Administrator`;
@@ -5562,13 +5692,17 @@ if (createCentreAdminForm) {
         }
       }
 
-      // 3. Generate guaranteed unique hidden Firebase email
-      const email = await window.generateUniqueAdminEmail();
+      // 3. Generate guaranteed unique hidden Firebase email using study centre code and administrator ID
+      const email = await window.generateUniqueAdminEmail(studyCentreId, null, adminId);
 
-      // Double check Firebase email is unique in admins collection
-      const qEmail = query(collection(db, "admins"), where("email", "==", email));
-      const snapEmail = await getDocs(qEmail);
-      if (!snapEmail.empty) {
+      // Double check Firebase email is unique in both collections
+      const qEmail1 = query(collection(db, "admins"), where("email", "==", email));
+      const snapEmail1 = await getDocs(qEmail1);
+      
+      const qEmail2 = query(collection(db, "centreAdministrators"), where("hiddenEmail", "==", email));
+      const snapEmail2 = await getDocs(qEmail2);
+      
+      if (!snapEmail1.empty || !snapEmail2.empty) {
         window.showToast("Internal error: Email collision detected. Please try again.", "error");
         submitBtn.disabled = false;
         submitBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Create Administrator`;
@@ -5584,24 +5718,30 @@ if (createCentreAdminForm) {
       const secApp = initializeApp(firebaseConfig, secAppName);
       const secAuth = getAuth(secApp);
 
-      await createUserWithEmailAndPassword(secAuth, email, tempPassword);
+      const userCred = await createUserWithEmailAndPassword(secAuth, email, tempPassword);
+      const uid = userCred.user.uid;
       await signOut(secAuth);
       await secApp.delete();
 
       // 5. Hash password
       const hashedPass = await sha256(tempPassword);
 
-      // 6. Save to Firestore
+      // 6. Save to Firestore centreAdministrators collection
       const centre = allStudyCentres.find(c => c.id === studyCentreId);
       const adminDocData = {
-        adminId,
+        uid: uid,
+        administratorId: adminId,
+        adminId: adminId, // keep for compatibility
+        hiddenEmail: email,
+        email: email, // keep for compatibility
         fullName,
-        email,
+        studyCentre: centre ? centre.name : "",
         assignedStudyCentreId: studyCentreId,
         assignedStudyCentreName: centre ? centre.name : "",
         password: tempPassword, // save for reset/onboarding lookup
         passwordHash: hashedPass,
-        phone,
+        phoneNumber: phone,
+        phone, // keep for compatibility
         status,
         role: "Centre Admin",
         createdAt: new Date().toISOString(),
@@ -5611,7 +5751,7 @@ if (createCentreAdminForm) {
 
       // Firestore document ID
       const firestoreDocId = adminId.replace(/\//g, "-");
-      await setDoc(doc(db, "admins", firestoreDocId), adminDocData);
+      await setDoc(doc(db, "centreAdministrators", firestoreDocId), adminDocData);
 
       window.showToast(`Administrator profile "${adminId}" created successfully!`, "success");
       createCentreAdminForm.reset();
@@ -5629,11 +5769,15 @@ if (createCentreAdminForm) {
 
 window.resetCentreAdminPassword = async function(adminDocId) {
   try {
-    const docRef = doc(db, "admins", adminDocId);
-    const docSnap = await getDoc(docRef);
-    if (!docSnap.exists()) return;
+    const res = await getAdminDocAndRef(adminDocId);
+    if (!res) {
+      window.showToast("Administrator record not found.", "error");
+      return;
+    }
 
-    const adm = docSnap.data();
+    const adm = res.snap.data();
+    const adminEmail = adm.hiddenEmail || adm.email || "";
+    const adminPhone = adm.phoneNumber || adm.phone || "";
     
     if (confirm(`Are you sure you want to reset the login password for Administrator "${adm.fullName}"?`)) {
       window.showToast("Resetting credentials...", "info");
@@ -5655,14 +5799,14 @@ window.resetCentreAdminPassword = async function(adminDocId) {
         const prevPassword = adm.password || "";
         try {
           // Attempt to sign in and update password directly
-          const userCred = await signInWithEmailAndPassword(secAuth, adm.email, prevPassword);
+          const userCred = await signInWithEmailAndPassword(secAuth, adminEmail, prevPassword);
           await updatePassword(userCred.user, newTempPassword);
           authReset = true;
         } catch (signInErr) {
           console.warn("Direct password update failed, attempting re-creation:", signInErr.message);
           // If updatePassword fails or user not found, try recreating the Auth profile
           try {
-            await createUserWithEmailAndPassword(secAuth, adm.email, newTempPassword);
+            await createUserWithEmailAndPassword(secAuth, adminEmail, newTempPassword);
             authReset = true;
           } catch (createErr) {
             console.error("Re-creation of Auth user failed:", createErr);
@@ -5675,13 +5819,13 @@ window.resetCentreAdminPassword = async function(adminDocId) {
       }
 
       const hashedPass = await sha256(newTempPassword);
-      await updateDoc(docRef, {
+      await updateDoc(res.ref, {
         password: newTempPassword,
         passwordHash: hashedPass,
         updatedAt: new Date().toISOString()
       });
 
-      alert(`Success! The credentials for ${adm.fullName} have been updated.\n\nNew Temporary Password: ${newTempPassword}\nRegistered Email: ${adm.email}`);
+      alert(`Success! The credentials for ${adm.fullName} have been updated.\n\nNew Temporary Password: ${newTempPassword}\nRegistered Email: ${adminEmail}`);
       window.showToast("Credentials successfully reset!", "success");
       await loadCentreAdministrators();
     }
@@ -5692,27 +5836,40 @@ window.resetCentreAdminPassword = async function(adminDocId) {
 
 window.toggleCentreAdminStatus = async function(adminDocId, currentStatus) {
   try {
+    const res = await getAdminDocAndRef(adminDocId);
+    if (!res) {
+      window.showToast("Administrator record not found.", "error");
+      return;
+    }
+
     const newStatus = currentStatus === "Active" ? "Deactivated" : "Active";
+    const adm = res.snap.data();
+    const assignedStudyCentreId = adm.assignedStudyCentreId || adm.studyCentreId || "";
     
-    if (newStatus === "Active") {
-      const docSnap = await getDoc(doc(db, "admins", adminDocId));
-      if (docSnap.exists()) {
-        const adm = docSnap.data();
-        const activeAdminsQuery = query(
-          collection(db, "admins"),
-          where("assignedStudyCentreId", "==", adm.assignedStudyCentreId),
-          where("status", "==", "Active")
-        );
-        const activeAdminsSnap = await getDocs(activeAdminsQuery);
-        const otherActiveAdmins = activeAdminsSnap.docs.filter(d => d.id !== adminDocId);
-        if (otherActiveAdmins.length > 0) {
-          window.showToast("This Study Centre already has an active Administrator account. Deactivate it first.", "error");
-          return;
-        }
+    if (newStatus === "Active" && assignedStudyCentreId) {
+      const activeAdminsQuery1 = query(
+        collection(db, "admins"),
+        where("assignedStudyCentreId", "==", assignedStudyCentreId),
+        where("status", "==", "Active")
+      );
+      const activeAdminsSnap1 = await getDocs(activeAdminsQuery1);
+      const otherActiveAdmins1 = activeAdminsSnap1.docs.filter(d => d.id !== adminDocId);
+      
+      const activeAdminsQuery2 = query(
+        collection(db, "centreAdministrators"),
+        where("assignedStudyCentreId", "==", assignedStudyCentreId),
+        where("status", "==", "Active")
+      );
+      const activeAdminsSnap2 = await getDocs(activeAdminsQuery2);
+      const otherActiveAdmins2 = activeAdminsSnap2.docs.filter(d => d.id !== adminDocId);
+      
+      if (otherActiveAdmins1.length > 0 || otherActiveAdmins2.length > 0) {
+        window.showToast("This Study Centre already has an active Administrator account. Deactivate it first.", "error");
+        return;
       }
     }
 
-    await updateDoc(doc(db, "admins", adminDocId), { status: newStatus, updatedAt: new Date().toISOString() });
+    await updateDoc(res.ref, { status: newStatus, updatedAt: new Date().toISOString() });
     window.showToast(`Administrator status changed to ${newStatus}.`, "success");
     await loadCentreAdministrators();
   } catch (err) {
@@ -5722,13 +5879,16 @@ window.toggleCentreAdminStatus = async function(adminDocId, currentStatus) {
 
 window.deleteCentreAdminAccount = async function(adminDocId) {
   try {
-    const docRef = doc(db, "admins", adminDocId);
-    const docSnap = await getDoc(docRef);
-    if (!docSnap.exists()) return;
+    const res = await getAdminDocAndRef(adminDocId);
+    if (!res) {
+      window.showToast("Administrator record not found.", "error");
+      return;
+    }
 
-    const adm = docSnap.data();
+    const adm = res.snap.data();
+    const adminEmail = adm.hiddenEmail || adm.email || "";
 
-    if (confirm(`CRITICAL WARNING: Are you sure you want to permanently delete the Administrator profile for "${adm.fullName}" (${adm.adminId})?\n\nThis action cannot be undone.`)) {
+    if (confirm(`CRITICAL WARNING: Are you sure you want to permanently delete the Administrator profile for "${adm.fullName}" (${adm.adminId || adm.administratorId})?\n\nThis action cannot be undone.`)) {
       // 1. Delete Firebase Auth profile
       try {
         const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
@@ -5740,7 +5900,7 @@ window.deleteCentreAdminAccount = async function(adminDocId) {
         const secAuth = getAuth(secApp);
 
         try {
-          const userCred = await signInWithEmailAndPassword(secAuth, adm.email, adm.password);
+          const userCred = await signInWithEmailAndPassword(secAuth, adminEmail, adm.password);
           await userCred.user.delete();
         } catch (delErr) {
           console.warn("Could not delete Auth credentials:", delErr.message);
@@ -5751,7 +5911,7 @@ window.deleteCentreAdminAccount = async function(adminDocId) {
       }
 
       // 2. Delete Firestore Document
-      await deleteDoc(docRef);
+      await deleteDoc(res.ref);
       window.showToast("Administrative profile permanently deleted.", "success");
       await loadCentreAdministrators();
     }
@@ -5762,14 +5922,17 @@ window.deleteCentreAdminAccount = async function(adminDocId) {
 
 window.openEditCentreAdminModal = async function(adminDocId) {
   try {
-    const docSnap = await getDoc(doc(db, "admins", adminDocId));
-    if (!docSnap.exists()) return;
+    const res = await getAdminDocAndRef(adminDocId);
+    if (!res) {
+      window.showToast("Administrator record not found.", "error");
+      return;
+    }
 
-    const adm = docSnap.data();
+    const adm = res.snap.data();
     document.getElementById("editAdminDocId").value = adminDocId;
-    document.getElementById("editAdminId").value = adm.adminId;
+    document.getElementById("editAdminId").value = adm.administratorId || adm.adminId || "";
     document.getElementById("editAdminFullName").value = adm.fullName || "";
-    document.getElementById("editAdminPhone").value = adm.phone || "";
+    document.getElementById("editAdminPhone").value = adm.phoneNumber || adm.phone || "";
     document.getElementById("editAdminStatus").value = adm.status || "Active";
 
     // Populate dropdown
@@ -5797,27 +5960,44 @@ if (editCentreAdminForm) {
     const status = document.getElementById("editAdminStatus").value;
 
     try {
-      // Validate: only one active administrator per centre
+      const res = await getAdminDocAndRef(docId);
+      if (!res) {
+        window.showToast("Administrator record not found.", "error");
+        return;
+      }
+
+      // Validate: only one active administrator per centre in both collections
       if (status === "Active") {
-        const activeAdminsQuery = query(
+        const activeAdminsQuery1 = query(
           collection(db, "admins"),
           where("assignedStudyCentreId", "==", centreId),
           where("status", "==", "Active")
         );
-        const activeAdminsSnap = await getDocs(activeAdminsQuery);
-        const otherActiveAdmins = activeAdminsSnap.docs.filter(d => d.id !== docId);
-        if (otherActiveAdmins.length > 0) {
+        const activeAdminsSnap1 = await getDocs(activeAdminsQuery1);
+        const otherActiveAdmins1 = activeAdminsSnap1.docs.filter(d => d.id !== docId);
+        
+        const activeAdminsQuery2 = query(
+          collection(db, "centreAdministrators"),
+          where("assignedStudyCentreId", "==", centreId),
+          where("status", "==", "Active")
+        );
+        const activeAdminsSnap2 = await getDocs(activeAdminsQuery2);
+        const otherActiveAdmins2 = activeAdminsSnap2.docs.filter(d => d.id !== docId);
+        
+        if (otherActiveAdmins1.length > 0 || otherActiveAdmins2.length > 0) {
           window.showToast("This Study Centre already has an active Administrator account. Deactivate it first.", "error");
           return;
         }
       }
 
       const centre = allStudyCentres.find(c => c.id === centreId);
-      await updateDoc(doc(db, "admins", docId), {
+      await updateDoc(res.ref, {
         fullName,
-        phone,
+        phoneNumber: phone,
+        phone, // compatibility
         assignedStudyCentreId: centreId,
         assignedStudyCentreName: centre ? centre.name : "",
+        studyCentre: centre ? centre.name : "", // compatibility
         status,
         updatedAt: new Date().toISOString()
       });
