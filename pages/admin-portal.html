@@ -649,6 +649,72 @@
       background-color: var(--accent) !important;
     }
 
+    .sidebar-accordion {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .sidebar-accordion-header {
+      color: rgba(255, 255, 255, 0.85);
+      padding: 1rem 1.25rem;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: var(--border-radius-md);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: var(--transition);
+    }
+    .sidebar-accordion-header:hover {
+      background-color: rgba(255, 255, 255, 0.08);
+      color: var(--bg-white);
+    }
+    .sidebar-accordion-header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .sidebar-accordion-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      padding-left: 1.5rem;
+      transition: max-height 0.3s ease;
+    }
+    .sidebar-sub-btn {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.75);
+      padding: 0.65rem 1rem;
+      text-align: left;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 550;
+      border-radius: var(--border-radius-md);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+      transition: var(--transition);
+    }
+    .sidebar-sub-btn:hover, .sidebar-sub-btn.active {
+      color: var(--primary-dark) !important;
+      background-color: var(--accent) !important;
+    }
+    .accordion-arrow {
+      font-size: 0.75rem;
+      transition: transform 0.2s ease;
+    }
+    .sidebar-accordion.collapsed .sidebar-accordion-content {
+      display: none;
+    }
+    .sidebar-accordion.collapsed .accordion-arrow {
+      transform: rotate(-90deg);
+    }
+
     .dashboard-main {
       padding: 3rem;
       background-color: var(--bg-slate);
@@ -1185,12 +1251,31 @@
           <button class="sidebar-nav-btn active" data-tab="overview">
             <i class="fa-solid fa-chart-pie"></i> Stats Overview
           </button>
-          <button class="sidebar-nav-btn" data-tab="admissions">
-            <i class="fa-solid fa-users-viewfinder"></i> Admissions
-          </button>
-          <button class="sidebar-nav-btn" data-tab="students">
-            <i class="fa-solid fa-user-graduate"></i> Student Directory
-          </button>
+          <!-- Admissions Accordion -->
+          <div class="sidebar-accordion">
+            <div class="sidebar-accordion-header" id="admissionsAccordionHeader">
+              <span class="sidebar-accordion-header-left">
+                <i class="fa-solid fa-users-viewfinder"></i> Admissions
+              </span>
+              <i class="fa-solid fa-chevron-down accordion-arrow"></i>
+            </div>
+            <div class="sidebar-accordion-content" id="sidebarAdmissionsCentres">
+              <!-- Dynamically populated study centres -->
+            </div>
+          </div>
+
+          <!-- Student Directory Accordion -->
+          <div class="sidebar-accordion">
+            <div class="sidebar-accordion-header" id="studentsAccordionHeader">
+              <span class="sidebar-accordion-header-left">
+                <i class="fa-solid fa-user-graduate"></i> Student Directory
+              </span>
+              <i class="fa-solid fa-chevron-down accordion-arrow"></i>
+            </div>
+            <div class="sidebar-accordion-content" id="sidebarStudentsCentres">
+              <!-- Dynamically populated study centres -->
+            </div>
+          </div>
           <button class="sidebar-nav-btn" data-tab="lecturer-management">
             <i class="fa-solid fa-chalkboard-user"></i> Lecturer Management
           </button>
@@ -1326,6 +1411,303 @@
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+
+        <!-- Tab: Dynamic Study Centre View -->
+        <div class="tab-content" id="tab-study-centre-view">
+          <div style="margin-bottom: 2rem;">
+            <h2 class="font-display" id="centreViewTitle" style="color: var(--primary); font-size: 2.2rem; margin-bottom: 0.25rem; font-weight: 800;">[Study Centre Name]</h2>
+            <p style="color: var(--text-muted); font-size: 1.05rem;" id="centreViewSubtitle">[Study Centre Code] — Regional Campus Hub</p>
+          </div>
+
+          <!-- Centre Menu Tabs -->
+          <div class="centre-menu-tabs" style="display: flex; gap: 0.5rem; border-bottom: 2px solid var(--border-color); margin-bottom: 2rem; overflow-x: auto; padding-bottom: 2px;">
+            <button class="centre-menu-tab-btn active" data-subtab="Applications" style="background: none; border: none; padding: 1rem 1.5rem; font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--text-muted); border-bottom: 3px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; transition: var(--transition);">
+              <i class="fa-solid fa-users-viewfinder"></i> Applications
+            </button>
+            <button class="centre-menu-tab-btn" data-subtab="Students" style="background: none; border: none; padding: 1rem 1.5rem; font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--text-muted); border-bottom: 3px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; transition: var(--transition);">
+              <i class="fa-solid fa-user-graduate"></i> Students
+            </button>
+            <button class="centre-menu-tab-btn" data-subtab="Lecturers" style="background: none; border: none; padding: 1rem 1.5rem; font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--text-muted); border-bottom: 3px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; transition: var(--transition);">
+              <i class="fa-solid fa-chalkboard-user"></i> Lecturers
+            </button>
+            <button class="centre-menu-tab-btn" data-subtab="Courses" style="background: none; border: none; padding: 1rem 1.5rem; font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--text-muted); border-bottom: 3px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; transition: var(--transition);">
+              <i class="fa-solid fa-book-bible"></i> Courses
+            </button>
+            <button class="centre-menu-tab-btn" data-subtab="Results" style="background: none; border: none; padding: 1rem 1.5rem; font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--text-muted); border-bottom: 3px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; transition: var(--transition);">
+              <i class="fa-solid fa-file-signature"></i> Results
+            </button>
+            <button class="centre-menu-tab-btn" data-subtab="Announcements" style="background: none; border: none; padding: 1rem 1.5rem; font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--text-muted); border-bottom: 3px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; transition: var(--transition);">
+              <i class="fa-solid fa-bullhorn"></i> Announcements
+            </button>
+            <button class="centre-menu-tab-btn" data-subtab="Statistics" style="background: none; border: none; padding: 1rem 1.5rem; font-family: 'Poppins', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--text-muted); border-bottom: 3px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; transition: var(--transition);">
+              <i class="fa-solid fa-chart-pie"></i> Statistics
+            </button>
+          </div>
+
+          <!-- Dynamic Tab Contents -->
+          <div class="centre-subtab-contents">
+            
+            <!-- 1. Applications Sub-Tab -->
+            <div class="centre-subtab-pane" id="centre-subtab-Applications">
+              <div class="search-filter-bar" style="margin-bottom: 1.5rem;">
+                <div class="search-input-wrapper" style="flex-grow: 1;">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="centreAppsSearch" placeholder="Search applications inside this study centre...">
+                </div>
+                <select class="filter-select" id="centreAppsStatusFilter" style="max-width: 200px;">
+                  <option value="All">All Standings</option>
+                  <option value="Pending">Pending Review</option>
+                  <option value="Approved">Approved</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+              </div>
+              <div class="table-container">
+                <table class="custom-table">
+                  <thead>
+                    <tr>
+                      <th>App ID</th>
+                      <th>Candidate Name</th>
+                      <th>Programme</th>
+                      <th>Status</th>
+                      <th>Submission Date</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="centreApplicationsTableBody">
+                    <!-- Loaded dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 2. Students Sub-Tab -->
+            <div class="centre-subtab-pane" id="centre-subtab-Students" style="display: none;">
+              <div class="search-filter-bar" style="margin-bottom: 1.5rem;">
+                <div class="search-input-wrapper" style="flex-grow: 1;">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="centreStudentsSearch" placeholder="Search student directory inside this study centre...">
+                </div>
+              </div>
+              <div class="table-container">
+                <table class="custom-table">
+                  <thead>
+                    <tr>
+                      <th>Student ID</th>
+                      <th>Matric Number</th>
+                      <th>Full Name</th>
+                      <th>Email</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="centreStudentsTableBody">
+                    <!-- Loaded dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 3. Lecturers Sub-Tab -->
+            <div class="centre-subtab-pane" id="centre-subtab-Lecturers" style="display: none;">
+              <div class="search-filter-bar" style="margin-bottom: 1.5rem;">
+                <div class="search-input-wrapper" style="flex-grow: 1;">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="centreLecturersSearch" placeholder="Search assigned lecturers in this study centre...">
+                </div>
+              </div>
+              <div class="table-container">
+                <table class="custom-table">
+                  <thead>
+                    <tr style="background-color: var(--bg-slate); text-align: left; border-bottom: 1.5px solid var(--border-color);">
+                      <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Lecturer ID</th>
+                      <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Name</th>
+                      <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Department</th>
+                      <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Assigned Study Centre(s)</th>
+                      <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Assigned Courses</th>
+                      <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Status</th>
+                      <th style="padding: 1rem; color: var(--primary); font-weight: 700; text-align: center;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="centreLecturersTableBody">
+                    <!-- Loaded dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 4. Courses Sub-Tab -->
+            <div class="centre-subtab-pane" id="centre-subtab-Courses" style="display: none;">
+              <div class="search-filter-bar" style="margin-bottom: 1.5rem;">
+                <div class="search-input-wrapper" style="flex-grow: 1;">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="centreCoursesSearch" placeholder="Search courses inside this study centre...">
+                </div>
+              </div>
+              <div class="table-container">
+                <table class="custom-table">
+                  <thead>
+                    <tr>
+                      <th>Course Code</th>
+                      <th>Title</th>
+                      <th>Semester</th>
+                      <th>Credits</th>
+                      <th>Department</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="centreCoursesTableBody">
+                    <!-- Loaded dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 5. Results Sub-Tab -->
+            <div class="centre-subtab-pane" id="centre-subtab-Results" style="display: none;">
+              <div class="search-filter-bar" style="margin-bottom: 1.5rem;">
+                <div class="search-input-wrapper" style="flex-grow: 1;">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="centreResultsSearch" placeholder="Search result sheets inside this study centre...">
+                </div>
+              </div>
+              <div class="table-container">
+                <table class="custom-table">
+                  <thead>
+                    <tr>
+                      <th>Course</th>
+                      <th>Session/Semester</th>
+                      <th>Lecturer</th>
+                      <th style="text-align: center;">Registered</th>
+                      <th style="text-align: center;">Status</th>
+                      <th style="text-align: center;">Last Updated</th>
+                      <th style="text-align: center;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="centreResultsTableBody">
+                    <!-- Loaded dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 6. Announcements Sub-Tab -->
+            <div class="centre-subtab-pane" id="centre-subtab-Announcements" style="display: none;">
+              <div class="search-filter-bar" style="margin-bottom: 1.5rem;">
+                <div class="search-input-wrapper" style="flex-grow: 1;">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="centreAnnouncementsSearch" placeholder="Search announcements inside this study centre...">
+                </div>
+              </div>
+              <div class="table-container">
+                <table class="custom-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 40px; text-align: center;">Pin</th>
+                      <th>Announcement details</th>
+                      <th>Publish Date</th>
+                      <th>Expiry Date</th>
+                      <th style="text-align: center;">Status</th>
+                      <th>Attachment</th>
+                      <th>Created By</th>
+                      <th style="text-align: center;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="centreAnnouncementsTableBody">
+                    <!-- Loaded dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 7. Statistics Sub-Tab (Study Centre Dashboard!) -->
+            <div class="centre-subtab-pane" id="centre-subtab-Statistics" style="display: none;">
+              <div class="stats-grid" style="margin-bottom: 2rem;">
+                <div class="stat-card">
+                  <div class="stat-card-info">
+                    <h5>Total Applications</h5>
+                    <div class="stat-value" id="centreStatTotalApps">0</div>
+                  </div>
+                  <div class="stat-card-icon blue"><i class="fa-solid fa-file-invoice"></i></div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-card-info">
+                    <h5>Pending Admissions</h5>
+                    <div class="stat-value" id="centreStatPendingApps">0</div>
+                  </div>
+                  <div class="stat-card-icon yellow"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-card-info">
+                    <h5>Approved Students</h5>
+                    <div class="stat-value" id="centreStatApprovedApps">0</div>
+                  </div>
+                  <div class="stat-card-icon green"><i class="fa-solid fa-circle-check"></i></div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-card-info">
+                    <h5>Rejected Applications</h5>
+                    <div class="stat-value" id="centreStatRejectedApps">0</div>
+                  </div>
+                  <div class="stat-card-icon red"><i class="fa-solid fa-circle-xmark"></i></div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-card-info">
+                    <h5>Total Active Students</h5>
+                    <div class="stat-value" id="centreStatTotalStudents">0</div>
+                  </div>
+                  <div class="stat-card-icon purple"><i class="fa-solid fa-user-graduate"></i></div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-card-info">
+                    <h5>Lecturers Assigned</h5>
+                    <div class="stat-value" id="centreStatLecturers">0</div>
+                  </div>
+                  <div class="stat-card-icon blue" style="background-color: rgba(31,59,130,0.12); color: #1F3B82;"><i class="fa-solid fa-chalkboard-user"></i></div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-card-info">
+                    <h5>Programmes Offered</h5>
+                    <div class="stat-value" id="centreStatProgrammes">0</div>
+                  </div>
+                  <div class="stat-card-icon green"><i class="fa-solid fa-book-bible"></i></div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-card-info">
+                    <h5>Results Published</h5>
+                    <div class="stat-value" id="centreStatResults">0</div>
+                  </div>
+                  <div class="stat-card-icon purple" style="background-color: rgba(111,66,193,0.12); color: #6F42C1;"><i class="fa-solid fa-file-signature"></i></div>
+                </div>
+              </div>
+
+              <!-- Metadata blocks: Programmes list and latest announcements -->
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+                <div style="background-color: var(--bg-white); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); padding: 2rem;">
+                  <h3 class="font-display" style="color: var(--primary); font-size: 1.25rem; margin-bottom: 1rem;"><i class="fa-solid fa-graduation-cap"></i> Programmes Offered List</h3>
+                  <div id="centreProgrammesList" style="color: var(--text-dark); font-size: 0.95rem; line-height: 1.6; font-weight: 500;">
+                    No academic programmes registered.
+                  </div>
+                </div>
+
+                <div style="background-color: var(--bg-white); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); padding: 2rem;">
+                  <h3 class="font-display" style="color: var(--primary); font-size: 1.25rem; margin-bottom: 1rem;"><i class="fa-solid fa-bullhorn"></i> Latest Announcement</h3>
+                  <div id="centreLatestAnnouncement" style="color: var(--text-dark); font-size: 0.95rem; line-height: 1.6; font-style: italic;">
+                    No recent announcements posted.
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 

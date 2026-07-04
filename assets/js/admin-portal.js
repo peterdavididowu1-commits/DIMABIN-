@@ -369,10 +369,12 @@ document.querySelectorAll(".sidebar-nav-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     const targetTab = btn.getAttribute("data-tab");
     document.querySelectorAll(".sidebar-nav-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".sidebar-sub-btn").forEach(b => b.classList.remove("active"));
     document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
     
     btn.classList.add("active");
-    document.getElementById(`tab-${targetTab}`).classList.add("active");
+    const tabEl = document.getElementById(`tab-${targetTab}`);
+    if (tabEl) tabEl.classList.add("active");
 
     if (targetTab === "cbt-control") {
       initAdminCbtControl();
@@ -3616,6 +3618,17 @@ async function loadStudyCentres() {
     populateStudyCentreCheckboxes();
     // Dynamic dropdown filters
     populateStudyCentreFilterDropdowns();
+
+    // Reorganize Sidebar and menus with dynamic centres
+    if (typeof populateDynamicSidebarCentres === "function") {
+      populateDynamicSidebarCentres();
+    }
+    if (typeof initSidebarAccordions === "function") {
+      initSidebarAccordions();
+    }
+    if (typeof initStudyCentreTabListeners === "function") {
+      initStudyCentreTabListeners();
+    }
   } catch (err) {
     console.warn("⚠️ Failed to load study centres:", err);
   }
@@ -4338,4 +4351,626 @@ if (btnCancelAnnouncementForm) {
   btnCancelAnnouncementForm.addEventListener("click", () => {
     document.getElementById("announcementModal").style.display = "none";
   });
+}
+
+// ==========================================
+// STUDY CENTRE ACCORDION & DIRECTORY SYSTEM
+// ==========================================
+let currentSelectedStudyCentreId = null;
+let currentSelectedStudyCentreSubtab = "Applications";
+let studyCentreListenersInitialized = false;
+
+window.populateDynamicSidebarCentres = function() {
+  const adContent = document.getElementById("sidebarAdmissionsCentres");
+  const stContent = document.getElementById("sidebarStudentsCentres");
+  if (!adContent || !stContent) return;
+
+  adContent.innerHTML = "";
+  stContent.innerHTML = "";
+
+  const sortedCentres = [...allStudyCentres].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
+  sortedCentres.forEach(c => {
+    // Admissions sub-item
+    const btnAd = document.createElement("button");
+    btnAd.className = "sidebar-sub-btn";
+    btnAd.setAttribute("data-centre-id", c.id);
+    btnAd.setAttribute("data-subtab", "Applications");
+    btnAd.innerHTML = `<i class="fa-solid fa-angle-right" style="font-size: 0.7rem; opacity: 0.7;"></i> ${c.name}`;
+    btnAd.addEventListener("click", () => {
+      openStudyCentrePage(c.id, "Applications");
+    });
+    adContent.appendChild(btnAd);
+
+    // Student Directory sub-item
+    const btnSt = document.createElement("button");
+    btnSt.className = "sidebar-sub-btn";
+    btnSt.setAttribute("data-centre-id", c.id);
+    btnSt.setAttribute("data-subtab", "Students");
+    btnSt.innerHTML = `<i class="fa-solid fa-angle-right" style="font-size: 0.7rem; opacity: 0.7;"></i> ${c.name}`;
+    btnSt.addEventListener("click", () => {
+      openStudyCentrePage(c.id, "Students");
+    });
+    stContent.appendChild(btnSt);
+  });
+};
+
+window.initSidebarAccordions = function() {
+  document.querySelectorAll(".sidebar-accordion-header").forEach(header => {
+    // Remove old listeners to avoid multiple attachments
+    const newHeader = header.cloneNode(true);
+    header.parentNode.replaceChild(newHeader, header);
+    
+    newHeader.addEventListener("click", () => {
+      const accordion = newHeader.closest(".sidebar-accordion");
+      if (accordion) {
+        accordion.classList.toggle("collapsed");
+      }
+    });
+  });
+};
+
+window.openStudyCentrePage = function(centreId, defaultSubtab = "Applications") {
+  currentSelectedStudyCentreId = centreId;
+  currentSelectedStudyCentreSubtab = defaultSubtab;
+
+  const centre = allStudyCentres.find(c => c.id === centreId);
+  if (!centre) return;
+
+  // Set header details
+  const titleEl = document.getElementById("centreViewTitle");
+  const subtitleEl = document.getElementById("centreViewSubtitle");
+  if (titleEl) titleEl.textContent = centre.name || "Study Centre";
+  if (subtitleEl) subtitleEl.textContent = `${centre.code || "N/A"} — Regional Campus Hub`;
+
+  // Remove active highlight from main sidebar buttons
+  document.querySelectorAll(".sidebar-nav-btn").forEach(b => b.classList.remove("active"));
+  
+  // Highlight active sub-button in sidebar
+  document.querySelectorAll(".sidebar-sub-btn").forEach(subBtn => {
+    const cid = subBtn.getAttribute("data-centre-id");
+    const sub = subBtn.getAttribute("data-subtab");
+    if (cid === centreId && sub === defaultSubtab) {
+      subBtn.classList.add("active");
+    } else {
+      subBtn.classList.remove("active");
+    }
+  });
+
+  // Switch to study centre view content tab
+  document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+  const targetTab = document.getElementById("tab-study-centre-view");
+  if (targetTab) targetTab.classList.add("active");
+
+  // Activate subtab menu button
+  document.querySelectorAll(".centre-menu-tab-btn").forEach(btn => {
+    const sub = btn.getAttribute("data-subtab");
+    if (sub === defaultSubtab) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+
+  // Show selected subtab pane
+  document.querySelectorAll(".centre-subtab-pane").forEach(pane => {
+    if (pane.id === `centre-subtab-${defaultSubtab}`) {
+      pane.style.display = "block";
+    } else {
+      pane.style.display = "none";
+    }
+  });
+
+  renderStudyCentreSubtabData(centreId, defaultSubtab);
+};
+
+// Bind subtab menus
+document.querySelectorAll(".centre-menu-tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const subtab = btn.getAttribute("data-subtab");
+    currentSelectedStudyCentreSubtab = subtab;
+
+    document.querySelectorAll(".centre-menu-tab-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    document.querySelectorAll(".centre-subtab-pane").forEach(pane => {
+      if (pane.id === `centre-subtab-${subtab}`) {
+        pane.style.display = "block";
+      } else {
+        pane.style.display = "none";
+      }
+    });
+
+    renderStudyCentreSubtabData(currentSelectedStudyCentreId, subtab);
+  });
+});
+
+window.renderStudyCentreSubtabData = function(centreId, subtab) {
+  if (subtab === "Applications") {
+    renderCentreApplications(centreId);
+  } else if (subtab === "Students") {
+    renderCentreStudents(centreId);
+  } else if (subtab === "Lecturers") {
+    renderCentreLecturers(centreId);
+  } else if (subtab === "Courses") {
+    renderCentreCourses(centreId);
+  } else if (subtab === "Results") {
+    renderCentreResults(centreId);
+  } else if (subtab === "Announcements") {
+    renderCentreAnnouncements(centreId);
+  } else if (subtab === "Statistics") {
+    renderCentreStatistics(centreId);
+  }
+};
+
+window.initStudyCentreTabListeners = function() {
+  if (studyCentreListenersInitialized) return;
+
+  const cAppsSearch = document.getElementById("centreAppsSearch");
+  const cAppsFilter = document.getElementById("centreAppsStatusFilter");
+  const cStudentsSearch = document.getElementById("centreStudentsSearch");
+  const cLecturersSearch = document.getElementById("centreLecturersSearch");
+  const cCoursesSearch = document.getElementById("centreCoursesSearch");
+  const cResultsSearch = document.getElementById("centreResultsSearch");
+  const cAnnSearch = document.getElementById("centreAnnouncementsSearch");
+
+  if (cAppsSearch) cAppsSearch.addEventListener("input", () => renderCentreApplications(currentSelectedStudyCentreId));
+  if (cAppsFilter) cAppsFilter.addEventListener("change", () => renderCentreApplications(currentSelectedStudyCentreId));
+  if (cStudentsSearch) cStudentsSearch.addEventListener("input", () => renderCentreStudents(currentSelectedStudyCentreId));
+  if (cLecturersSearch) cLecturersSearch.addEventListener("input", () => renderCentreLecturers(currentSelectedStudyCentreId));
+  if (cCoursesSearch) cCoursesSearch.addEventListener("input", () => renderCentreCourses(currentSelectedStudyCentreId));
+  if (cResultsSearch) cResultsSearch.addEventListener("input", () => renderCentreResults(currentSelectedStudyCentreId));
+  if (cAnnSearch) cAnnSearch.addEventListener("input", () => renderCentreAnnouncements(currentSelectedStudyCentreId));
+
+  studyCentreListenersInitialized = true;
+};
+
+// --- RENDER APPLICATIONS SUB-TAB ---
+function renderCentreApplications(centreId) {
+  const tbody = document.getElementById("centreApplicationsTableBody");
+  if (!tbody) return;
+
+  const searchQuery = (document.getElementById("centreAppsSearch")?.value || "").toLowerCase().trim();
+  const filterStatus = document.getElementById("centreAppsStatusFilter")?.value || "All";
+
+  let filtered = allApplications.filter(app => app.preferredStudyCentreId === centreId);
+
+  if (filterStatus !== "All") {
+    filtered = filtered.filter(app => (app.admissionStatus || "Pending") === filterStatus);
+  }
+
+  if (searchQuery) {
+    filtered = filtered.filter(app => {
+      return (app.fullName || "").toLowerCase().includes(searchQuery) ||
+             (app.id || "").toLowerCase().includes(searchQuery) ||
+             (app.programme || "").toLowerCase().includes(searchQuery);
+    });
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">No applications found inside this Study Centre.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(app => {
+    const dateStr = app.submittedAt ? new Date(app.submittedAt).toLocaleDateString() : "N/A";
+    let badgeClass = "status-badge pending";
+    if (app.admissionStatus === "Approved") badgeClass = "status-badge cleared";
+    if (app.admissionStatus === "Rejected") badgeClass = "status-badge danger";
+
+    return `
+      <tr>
+        <td style="padding: 1rem;"><strong>${app.id}</strong></td>
+        <td style="padding: 1rem; font-weight: 600;">${app.fullName}</td>
+        <td style="padding: 1rem;">${app.programme}</td>
+        <td style="padding: 1rem;"><span class="${badgeClass}" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; font-weight: 700;">${app.admissionStatus || 'Pending'}</span></td>
+        <td style="padding: 1rem;">${dateStr}</td>
+        <td style="padding: 1rem;">
+          <button class="btn btn-sm btn-outline-primary view-centre-app-btn" data-id="${app.id}" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+            <i class="fa-solid fa-eye"></i> View Application
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  tbody.querySelectorAll(".view-centre-app-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-id");
+      if (typeof viewApplicationDetails === "function") {
+        viewApplicationDetails(id);
+      }
+    });
+  });
+}
+
+// --- RENDER STUDENTS SUB-TAB ---
+function renderCentreStudents(centreId) {
+  const tbody = document.getElementById("centreStudentsTableBody");
+  if (!tbody) return;
+
+  const searchQuery = (document.getElementById("centreStudentsSearch")?.value || "").toLowerCase().trim();
+
+  let filtered = allStudents.filter(stu => stu.studyCentreId === centreId);
+
+  if (searchQuery) {
+    filtered = filtered.filter(stu => {
+      return (stu.fullName || "").toLowerCase().includes(searchQuery) ||
+             (stu.studentId || "").toLowerCase().includes(searchQuery) ||
+             (stu.matricNumber || "").toLowerCase().includes(searchQuery) ||
+             (stu.email || "").toLowerCase().includes(searchQuery);
+    });
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">No active student records found inside this Study Centre.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(stu => {
+    return `
+      <tr>
+        <td style="padding: 1rem;"><strong>${stu.studentId}</strong></td>
+        <td style="padding: 1rem;">${stu.matricNumber || "Pending"}</td>
+        <td style="padding: 1rem; font-weight: 600;">${stu.fullName}</td>
+        <td style="padding: 1rem;">${stu.email || "N/A"}</td>
+        <td style="padding: 1rem;"><span class="status-badge cleared" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; font-weight: 700;">Active</span></td>
+        <td style="padding: 1rem;">
+          <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: flex-start; flex-wrap: wrap;">
+            <button class="btn btn-sm btn-outline-primary view-centre-stu-credentials-btn" data-name="${stu.fullName}" data-stu-id="${stu.studentId}" data-matric="${stu.matricNumber || ''}" data-pass="${stu.loginCredentials?.password || 'N/A'}" data-email="${stu.email || ''}" data-programme="${stu.programme || ''}" data-department="${stu.department || ''}" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+              <i class="fa-solid fa-id-card"></i> View Credentials
+            </button>
+            <button class="btn btn-sm resend-centre-admission-email-btn" data-matric="${stu.matricNumber}" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; background-color: var(--secondary); color: var(--text-dark); border: 1.5px solid var(--border-color);">
+              <i class="fa-solid fa-envelope"></i> Send Email Again
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  tbody.querySelectorAll(".view-centre-stu-credentials-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (typeof showCredentialsReceipt === "function") {
+        showCredentialsReceipt(
+          btn.getAttribute("data-name"),
+          btn.getAttribute("data-stu-id"),
+          btn.getAttribute("data-matric"),
+          btn.getAttribute("data-pass"),
+          btn.getAttribute("data-email"),
+          btn.getAttribute("data-programme"),
+          btn.getAttribute("data-department")
+        );
+      }
+    });
+  });
+
+  tbody.querySelectorAll(".resend-centre-admission-email-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const matric = btn.getAttribute("data-matric");
+      if (typeof resendAdmissionEmail === "function") {
+        await resendAdmissionEmail(matric, btn);
+      }
+    });
+  });
+}
+
+// --- RENDER LECTURERS SUB-TAB ---
+function renderCentreLecturers(centreId) {
+  const tbody = document.getElementById("centreLecturersTableBody");
+  if (!tbody) return;
+
+  const searchQuery = (document.getElementById("centreLecturersSearch")?.value || "").toLowerCase().trim();
+
+  let filtered = allLecturers.filter(lec => lec.assignedStudyCentreIds && lec.assignedStudyCentreIds.includes(centreId));
+
+  if (searchQuery) {
+    filtered = filtered.filter(lec => {
+      return (lec.fullName || "").toLowerCase().includes(searchQuery) ||
+             (lec.lecturerId || "").toLowerCase().includes(searchQuery) ||
+             (lec.department || "").toLowerCase().includes(searchQuery);
+    });
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-muted);">No lecturers assigned to this Study Centre.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(lec => {
+    const statusBg = lec.status === "Active" ? "rgba(40,167,69,0.1)" : "rgba(220,53,69,0.1)";
+    const statusColor = lec.status === "Active" ? "#28A745" : "#DC3545";
+
+    const assignedCentres = lec.assignedStudyCentreIds || [];
+    const centresHtml = assignedCentres.length > 0 
+      ? assignedCentres.map(cid => {
+          const centre = allStudyCentres.find(c => c.id === cid);
+          return centre ? `<span style="background-color: var(--accent); color: var(--primary); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.72rem; font-weight: 700; margin-right: 0.3rem; display: inline-block; margin-bottom: 0.25rem;">${centre.name}</span>` : "";
+        }).join("")
+      : `<span style="color: var(--text-muted); font-style: italic; font-size: 0.8rem;">None Assigned</span>`;
+
+    const coursesList = lec.coursesAssigned || lec.assignedCourses || [];
+    const coursesHtml = coursesList.length > 0 
+      ? coursesList.map(c => `<span style="background-color: var(--primary); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.72rem; font-weight: 600; margin-right: 0.3rem; display: inline-block; margin-bottom: 0.25rem;">${c}</span>`).join("")
+      : `<span style="color: var(--text-muted); font-style: italic; font-size: 0.8rem;">None Allocated</span>`;
+
+    return `
+      <tr style="border-bottom: 1.5px solid var(--border-color);">
+        <td style="padding: 1rem; font-family: monospace; font-weight: 700; color: var(--primary); font-size: 0.92rem;">${lec.lecturerId || ""}</td>
+        <td style="padding: 1rem; font-weight: 600; color: var(--primary-dark);">${lec.title || ""} ${lec.fullName || ""}</td>
+        <td style="padding: 1rem; font-size: 0.88rem; font-weight: 500;">${lec.department || ""}</td>
+        <td style="padding: 1rem; max-width: 250px;">${centresHtml}</td>
+        <td style="padding: 1rem; max-width: 200px;">${coursesHtml}</td>
+        <td style="padding: 1rem;">
+          <span style="background-color: ${statusBg}; color: ${statusColor}; padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.78rem; font-weight: 700; display: inline-block;">
+            ${lec.status || "Active"}
+          </span>
+        </td>
+        <td style="padding: 1rem; text-align: center;">
+          <div style="display: flex; gap: 0.45rem; justify-content: center; align-items: center;">
+            <button class="btn btn-edit-centre-lec" data-id="${lec.id}" title="View & Edit Facilitator Profile" style="background-color: #1F3B82; color: white; border: none; border-radius: 6px; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.95rem;"><i class="fa-solid fa-user-pen"></i></button>
+            <button class="btn btn-reset-pass-centre-lec" data-id="${lec.id}" title="Reset Security Credentials" style="background-color: #F4B000; color: #1F3B82; border: none; border-radius: 6px; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.95rem;"><i class="fa-solid fa-key"></i></button>
+            <button class="btn btn-toggle-status-centre-lec" data-id="${lec.id}" data-status="${lec.status}" title="${lec.status === 'Active' ? 'Deactivate' : 'Activate'}" style="background-color: ${lec.status === 'Active' ? '#DC3545' : '#28A745'}; color: white; border: none; border-radius: 6px; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.95rem;">
+              <i class="fa-solid ${lec.status === 'Active' ? 'fa-user-slash' : 'fa-user-check'}"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  tbody.querySelectorAll(".btn-edit-centre-lec").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-id");
+      if (typeof openEditLecturerModal === "function") openEditLecturerModal(id);
+    });
+  });
+
+  tbody.querySelectorAll(".btn-reset-pass-centre-lec").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-id");
+      if (typeof resetLecturerPassword === "function") resetLecturerPassword(id);
+    });
+  });
+
+  tbody.querySelectorAll(".btn-toggle-status-centre-lec").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-id");
+      const status = btn.getAttribute("data-status");
+      if (typeof toggleLecturerStatus === "function") toggleLecturerStatus(id, status);
+    });
+  });
+}
+
+// --- RENDER COURSES SUB-TAB ---
+function renderCentreCourses(centreId) {
+  const tbody = document.getElementById("centreCoursesTableBody");
+  if (!tbody) return;
+
+  const searchQuery = (document.getElementById("centreCoursesSearch")?.value || "").toLowerCase().trim();
+
+  let filtered = allCourses.filter(c => c.studyCentreId === centreId || (c.assignedStudyCentreIds && c.assignedStudyCentreIds.includes(centreId)));
+
+  if (searchQuery) {
+    filtered = filtered.filter(c => {
+      return (c.courseCode || c.code || "").toLowerCase().includes(searchQuery) ||
+             (c.courseTitle || c.name || "").toLowerCase().includes(searchQuery) ||
+             (c.department || "").toLowerCase().includes(searchQuery);
+    });
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-muted);">No courses listed for this Study Centre.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(c => {
+    const statusBg = c.status === "Active" ? "rgba(40,167,69,0.1)" : "rgba(220,53,69,0.1)";
+    const statusColor = c.status === "Active" ? "#28A745" : "#DC3545";
+
+    return `
+      <tr>
+        <td style="padding: 1rem;"><strong>${c.courseCode || c.code}</strong></td>
+        <td style="padding: 1rem; font-weight: 600;">${c.courseTitle || c.name}</td>
+        <td style="padding: 1rem;">${c.semester}</td>
+        <td style="padding: 1rem;">${c.creditUnit || c.credits || 0}</td>
+        <td style="padding: 1rem;">${c.department || "General"}</td>
+        <td style="padding: 1rem;"><span style="background-color: ${statusBg}; color: ${statusColor}; padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.78rem; font-weight: 700;">${c.status || "Active"}</span></td>
+        <td style="padding: 1rem;">
+          <button class="btn btn-sm btn-outline-primary view-centre-course-btn" data-id="${c.id}" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+            <i class="fa-solid fa-eye"></i> View
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  tbody.querySelectorAll(".view-centre-course-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-id");
+      if (typeof openEditCourseModal === "function") openEditCourseModal(id);
+    });
+  });
+}
+
+// --- RENDER RESULTS SUB-TAB ---
+function renderCentreResults(centreId) {
+  const tbody = document.getElementById("centreResultsTableBody");
+  if (!tbody) return;
+
+  const searchQuery = (document.getElementById("centreResultsSearch")?.value || "").toLowerCase().trim();
+
+  let filtered = approvalSubmissionsList.filter(item => item.studyCentreId === centreId);
+
+  if (searchQuery) {
+    filtered = filtered.filter(item => {
+      return (item.courseCode || "").toLowerCase().includes(searchQuery) ||
+             (item.lecturerName || "").toLowerCase().includes(searchQuery);
+    });
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-muted);">No grading sheet submissions found for this Study Centre.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(item => {
+    const stdCount = item.students ? item.students.length : 0;
+    const formattedDate = item.lastUpdated ? new Date(item.lastUpdated).toLocaleDateString() : "-";
+    let badgeClass = "status-badge info";
+    if (item.status === "Published" || item.status === "Approved") badgeClass = "status-badge cleared";
+    else if (item.status === "Submitted") badgeClass = "status-badge pending";
+    else if (item.status === "Returned" || item.status === "Rejected") badgeClass = "status-badge danger";
+
+    return `
+      <tr>
+        <td style="padding: 1rem;"><strong>${item.courseCode}</strong></td>
+        <td style="padding: 1rem;"><code>${item.academicSession}</code> - ${item.semester}</td>
+        <td style="padding: 1rem; font-weight: 600;">${item.lecturerName || 'Assigned Facilitator'}</td>
+        <td style="padding: 1rem; text-align: center; font-weight: 700;">${stdCount}</td>
+        <td style="padding: 1rem; text-align: center;"><span class="${badgeClass}" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; font-weight: 700;">${item.status || 'Draft'}</span></td>
+        <td style="padding: 1rem; text-align: center;">${formattedDate}</td>
+        <td style="padding: 1rem; text-align: center;">
+          <button class="btn btn-sm btn-outline-primary review-centre-result-btn" data-id="${item.id}" data-source="${item.source}" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+            <i class="fa-solid fa-file-invoice"></i> Review & Approve
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  tbody.querySelectorAll(".review-centre-result-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-id");
+      const source = btn.getAttribute("data-source");
+      if (typeof openReviewModal === "function") openReviewModal(id, source);
+    });
+  });
+}
+
+// --- RENDER ANNOUNCEMENTS SUB-TAB ---
+function renderCentreAnnouncements(centreId) {
+  const tbody = document.getElementById("centreAnnouncementsTableBody");
+  if (!tbody) return;
+
+  const searchQuery = (document.getElementById("centreAnnouncementsSearch")?.value || "").toLowerCase().trim();
+
+  let filtered = allAnnouncements.filter(a => !a.studyCentreId || a.studyCentreId === centreId);
+
+  if (searchQuery) {
+    filtered = filtered.filter(a => {
+      return (a.title || "").toLowerCase().includes(searchQuery) ||
+             (a.body || "").toLowerCase().includes(searchQuery) ||
+             (a.createdBy || "").toLowerCase().includes(searchQuery);
+    });
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 3rem; color: var(--text-muted);">No announcements found for this Study Centre.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(a => {
+    const isPinned = !!a.isPinned;
+    const pinColor = isPinned ? "color: var(--accent);" : "color: var(--text-muted); opacity: 0.4;";
+    const formattedPub = a.publishDate ? new Date(a.publishDate).toLocaleDateString() : "Immediate";
+    const formattedExp = a.expiryDate ? new Date(a.expiryDate).toLocaleDateString() : "Never";
+    
+    let badgeClass = "status-badge info";
+    if (a.status === "Published") badgeClass = "status-badge cleared";
+    if (a.status === "Draft") badgeClass = "status-badge pending";
+
+    const hasAttachment = a.attachmentName ? `<span style="font-size:0.8rem; font-weight:600;"><i class="fa-solid fa-paperclip"></i> ${a.attachmentName}</span>` : `<span style="color:var(--text-muted); font-size:0.8rem; font-style:italic;">No File</span>`;
+
+    return `
+      <tr>
+        <td style="text-align: center; padding: 1rem;"><i class="fa-solid fa-thumbtack" style="${pinColor} font-size: 1.15rem;"></i></td>
+        <td style="padding: 1rem;"><strong>${a.title}</strong><br><span style="font-size:0.8rem; color:var(--text-muted); display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;">${a.body || a.message}</span></td>
+        <td style="padding: 1rem;">${formattedPub}</td>
+        <td style="padding: 1rem;">${formattedExp}</td>
+        <td style="padding: 1rem; text-align: center;"><span class="${badgeClass}" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; font-weight: 700;">${a.status || 'Published'}</span></td>
+        <td style="padding: 1rem;">${hasAttachment}</td>
+        <td style="padding: 1rem;">${a.createdBy || 'Admin'}</td>
+        <td style="padding: 1rem; text-align: center;">
+          <div style="display:flex; gap:0.4rem; justify-content:center;">
+            <button class="btn btn-sm btn-outline-primary edit-centre-ann-btn" data-id="${a.id}" style="padding:0.35rem; width:30px; height:30px; display: inline-flex; align-items: center; justify-content: center;"><i class="fa-solid fa-pen-to-square"></i></button>
+            <button class="btn btn-sm btn-outline-danger delete-centre-ann-btn" data-id="${a.id}" style="padding:0.35rem; width:30px; height:30px; display: inline-flex; align-items: center; justify-content: center;"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  tbody.querySelectorAll(".edit-centre-ann-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-id");
+      if (typeof openEditAnnouncementModal === "function") openEditAnnouncementModal(id);
+    });
+  });
+
+  tbody.querySelectorAll(".delete-centre-ann-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-id");
+      if (typeof deleteAnnouncement === "function") deleteAnnouncement(id);
+    });
+  });
+}
+
+// --- RENDER STATISTICS (STUDY CENTRE DASHBOARD) ---
+function renderCentreStatistics(centreId) {
+  const centre = allStudyCentres.find(c => c.id === centreId);
+  if (!centre) return;
+
+  const totalApps = allApplications.filter(app => app.preferredStudyCentreId === centreId).length;
+  const pendingApps = allApplications.filter(app => app.preferredStudyCentreId === centreId && (app.admissionStatus || "Pending") === "Pending").length;
+  const approvedApps = allApplications.filter(app => app.preferredStudyCentreId === centreId && app.admissionStatus === "Approved").length;
+  const rejectedApps = allApplications.filter(app => app.preferredStudyCentreId === centreId && app.admissionStatus === "Rejected").length;
+  const activeStudents = allStudents.filter(s => s.studyCentreId === centreId).length;
+  const assignedLecturers = allLecturers.filter(l => l.assignedStudyCentreIds && l.assignedStudyCentreIds.includes(centreId)).length;
+
+  const appsProgs = allApplications.filter(app => app.preferredStudyCentreId === centreId).map(app => app.programme);
+  const stProgs = allStudents.filter(s => s.studyCentreId === centreId).map(s => s.programme);
+  const uniqueProgs = Array.from(new Set([...appsProgs, ...stProgs].filter(Boolean)));
+  const programmesCount = uniqueProgs.length || 3;
+
+  const resultsCount = approvalSubmissionsList.filter(item => item.studyCentreId === centreId && item.status === "Published").length;
+
+  // Set visual values
+  document.getElementById("centreStatTotalApps").textContent = totalApps;
+  document.getElementById("centreStatPendingApps").textContent = pendingApps;
+  document.getElementById("centreStatApprovedApps").textContent = approvedApps;
+  document.getElementById("centreStatRejectedApps").textContent = rejectedApps;
+  document.getElementById("centreStatTotalStudents").textContent = activeStudents;
+  document.getElementById("centreStatLecturers").textContent = assignedLecturers;
+  document.getElementById("centreStatProgrammes").textContent = programmesCount;
+  document.getElementById("centreStatResults").textContent = resultsCount;
+
+  // Set programmes list
+  const progsListEl = document.getElementById("centreProgrammesList");
+  if (progsListEl) {
+    if (uniqueProgs.length > 0) {
+      progsListEl.innerHTML = uniqueProgs.map(p => `<div style="background-color: var(--bg-slate); padding: 0.5rem 0.75rem; border-radius: var(--border-radius-sm); margin-bottom: 0.5rem; border-left: 3px solid var(--accent);"><i class="fa-solid fa-certificate" style="color: var(--primary); margin-right: 0.5rem;"></i>${p}</div>`).join("");
+    } else {
+      progsListEl.innerHTML = `
+        <div style="background-color: var(--bg-slate); padding: 0.5rem 0.75rem; border-radius: var(--border-radius-sm); margin-bottom: 0.5rem; border-left: 3px solid var(--accent);"><i class="fa-solid fa-certificate" style="color: var(--primary); margin-right: 0.5rem;"></i>Diploma in Theology</div>
+        <div style="background-color: var(--bg-slate); padding: 0.5rem 0.75rem; border-radius: var(--border-radius-sm); margin-bottom: 0.5rem; border-left: 3px solid var(--accent);"><i class="fa-solid fa-certificate" style="color: var(--primary); margin-right: 0.5rem;"></i>Bachelor of Theology</div>
+        <div style="background-color: var(--bg-slate); padding: 0.5rem 0.75rem; border-radius: var(--border-radius-sm); margin-bottom: 0.5rem; border-left: 3px solid var(--accent);"><i class="fa-solid fa-certificate" style="color: var(--primary); margin-right: 0.5rem;"></i>Postgraduate Diploma</div>
+      `;
+    }
+  }
+
+  // Set latest announcement
+  const annEl = document.getElementById("centreLatestAnnouncement");
+  if (annEl) {
+    const centreAnns = allAnnouncements.filter(a => !a.studyCentreId || a.studyCentreId === centreId);
+    if (centreAnns.length > 0) {
+      annEl.innerHTML = `
+        <strong style="color: var(--primary); font-size: 1.05rem; display: block; margin-bottom: 0.5rem;">📢 ${centreAnns[0].title}</strong>
+        <p style="color: var(--text-dark); margin-bottom: 0.5rem;">${centreAnns[0].body || centreAnns[0].message}</p>
+        <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;"><i class="fa-regular fa-clock"></i> Published: ${centreAnns[0].publishDate ? new Date(centreAnns[0].publishDate).toLocaleDateString() : 'Immediate'}</span>
+      `;
+    } else {
+      annEl.textContent = "No recent announcements posted.";
+    }
+  }
 }
