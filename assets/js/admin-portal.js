@@ -5409,7 +5409,7 @@ window.loadCentreAdministrators = async function() {
     }
 
     if (list.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">No administrators found matching criteria.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">No administrators found matching criteria.</td></tr>`;
       return;
     }
 
@@ -5427,6 +5427,7 @@ window.loadCentreAdministrators = async function() {
           <td style="padding: 1rem; font-family: monospace; font-weight: 700; color: var(--primary);">${adm.adminId}</td>
           <td style="padding: 1rem; font-weight: 600; color: var(--primary-dark);">${adm.fullName}</td>
           <td style="padding: 1rem;"><span style="background-color: var(--accent); color: var(--primary); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: 700;">${adm.assignedStudyCentreName || "None"}</span></td>
+          <td style="padding: 1rem; font-weight: 500; color: var(--text-dark);">${adm.phone || "N/A"}</td>
           <td style="padding: 1rem;"><span class="${badgeClass}" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; font-weight: 700;">${adm.status || 'Active'}</span></td>
           <td style="padding: 1rem;">${createdStr}</td>
           <td style="padding: 1rem; text-align: center;">
@@ -5496,6 +5497,28 @@ window.populateAdminCentresDropdowns = function() {
   if (editAdminCentre) editAdminCentre.innerHTML = `<option value="">-- Choose Centre --</option>` + opts;
 };
 
+window.generateUniqueAdminEmail = async function() {
+  const q = query(collection(db, "admins"));
+  const snap = await getDocs(q);
+  const emails = snap.docs.map(doc => (doc.data().email || "").toLowerCase().trim());
+  
+  let maxNum = 0;
+  const pattern = /^admctr(\d+)@dimabin\.local$/;
+  for (const email of emails) {
+    const match = email.match(pattern);
+    if (match) {
+      const num = parseInt(match[1], 10);
+      if (num > maxNum) {
+        maxNum = num;
+      }
+    }
+  }
+  
+  const nextNum = maxNum + 1;
+  const padded = String(nextNum).padStart(4, "0");
+  return `ADMCTR${padded}@dimabin.local`;
+};
+
 // Form listeners for Centre Admin Console
 const createCentreAdminForm = document.getElementById("createCentreAdminForm");
 if (createCentreAdminForm) {
@@ -5523,10 +5546,36 @@ if (createCentreAdminForm) {
         return;
       }
 
-      // 2. Generate email
-      const email = `${adminId.toLowerCase().replace(/\//g, ".")}@dimabin.edu.ng`;
+      // 2. Validate one active administrator per centre
+      if (status === "Active") {
+        const activeAdminsQuery = query(
+          collection(db, "admins"),
+          where("assignedStudyCentreId", "==", studyCentreId),
+          where("status", "==", "Active")
+        );
+        const activeAdminsSnap = await getDocs(activeAdminsQuery);
+        if (!activeAdminsSnap.empty) {
+          window.showToast("This Study Centre already has an active Administrator account.", "error");
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Create Administrator`;
+          return;
+        }
+      }
 
-      // 3. Provision Firebase Auth account via secondary instance
+      // 3. Generate guaranteed unique hidden Firebase email
+      const email = await window.generateUniqueAdminEmail();
+
+      // Double check Firebase email is unique in admins collection
+      const qEmail = query(collection(db, "admins"), where("email", "==", email));
+      const snapEmail = await getDocs(qEmail);
+      if (!snapEmail.empty) {
+        window.showToast("Internal error: Email collision detected. Please try again.", "error");
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Create Administrator`;
+        return;
+      }
+
+      // 4. Provision Firebase Auth account via secondary instance
       const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
       const { getAuth, createUserWithEmailAndPassword, signOut } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js");
       const firebaseConfig = (await import("./firebase-config-env.js")).default;
@@ -5539,10 +5588,10 @@ if (createCentreAdminForm) {
       await signOut(secAuth);
       await secApp.delete();
 
-      // 4. Hash password
+      // 5. Hash password
       const hashedPass = await sha256(tempPassword);
 
-      // 5. Save to Firestore
+      // 6. Save to Firestore
       const centre = allStudyCentres.find(c => c.id === studyCentreId);
       const adminDocData = {
         adminId,
@@ -5555,7 +5604,9 @@ if (createCentreAdminForm) {
         phone,
         status,
         role: "Centre Admin",
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        createdDate: new Date().toISOString(),
+        lastLogin: ""
       };
 
       // Firestore document ID
@@ -5594,31 +5645,31 @@ window.resetCentreAdminPassword = async function(adminDocId) {
       let authReset = false;
       try {
         const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
-        const { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js");
+        const { getAuth, signInWithEmailAndPassword, updatePassword, createUserWithEmailAndPassword, signOut } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js");
         const firebaseConfig = (await import("./firebase-config-env.js")).default;
 
         const secAppName = `secResetAdmin-${Date.now()}`;
         const secApp = initializeApp(firebaseConfig, secAppName);
         const secAuth = getAuth(secApp);
 
-        // Delete old Auth profile
-        let deleted = false;
         const prevPassword = adm.password || "";
-        if (prevPassword) {
+        try {
+          // Attempt to sign in and update password directly
+          const userCred = await signInWithEmailAndPassword(secAuth, adm.email, prevPassword);
+          await updatePassword(userCred.user, newTempPassword);
+          authReset = true;
+        } catch (signInErr) {
+          console.warn("Direct password update failed, attempting re-creation:", signInErr.message);
+          // If updatePassword fails or user not found, try recreating the Auth profile
           try {
-            const userCred = await signInWithEmailAndPassword(secAuth, adm.email, prevPassword);
-            await userCred.user.delete();
-            deleted = true;
-          } catch (delErr) {
-            console.warn("Sign in deletion warning:", delErr.message);
+            await createUserWithEmailAndPassword(secAuth, adm.email, newTempPassword);
+            authReset = true;
+          } catch (createErr) {
+            console.error("Re-creation of Auth user failed:", createErr);
           }
         }
-
-        // Re-create Auth profile
-        await createUserWithEmailAndPassword(secAuth, adm.email, newTempPassword);
         await signOut(secAuth);
         await secApp.delete();
-        authReset = true;
       } catch (authErr) {
         console.warn("Auth sync skipped:", authErr.message);
       }
@@ -5642,6 +5693,25 @@ window.resetCentreAdminPassword = async function(adminDocId) {
 window.toggleCentreAdminStatus = async function(adminDocId, currentStatus) {
   try {
     const newStatus = currentStatus === "Active" ? "Deactivated" : "Active";
+    
+    if (newStatus === "Active") {
+      const docSnap = await getDoc(doc(db, "admins", adminDocId));
+      if (docSnap.exists()) {
+        const adm = docSnap.data();
+        const activeAdminsQuery = query(
+          collection(db, "admins"),
+          where("assignedStudyCentreId", "==", adm.assignedStudyCentreId),
+          where("status", "==", "Active")
+        );
+        const activeAdminsSnap = await getDocs(activeAdminsQuery);
+        const otherActiveAdmins = activeAdminsSnap.docs.filter(d => d.id !== adminDocId);
+        if (otherActiveAdmins.length > 0) {
+          window.showToast("This Study Centre already has an active Administrator account. Deactivate it first.", "error");
+          return;
+        }
+      }
+    }
+
     await updateDoc(doc(db, "admins", adminDocId), { status: newStatus, updatedAt: new Date().toISOString() });
     window.showToast(`Administrator status changed to ${newStatus}.`, "success");
     await loadCentreAdministrators();
@@ -5727,6 +5797,21 @@ if (editCentreAdminForm) {
     const status = document.getElementById("editAdminStatus").value;
 
     try {
+      // Validate: only one active administrator per centre
+      if (status === "Active") {
+        const activeAdminsQuery = query(
+          collection(db, "admins"),
+          where("assignedStudyCentreId", "==", centreId),
+          where("status", "==", "Active")
+        );
+        const activeAdminsSnap = await getDocs(activeAdminsQuery);
+        const otherActiveAdmins = activeAdminsSnap.docs.filter(d => d.id !== docId);
+        if (otherActiveAdmins.length > 0) {
+          window.showToast("This Study Centre already has an active Administrator account. Deactivate it first.", "error");
+          return;
+        }
+      }
+
       const centre = allStudyCentres.find(c => c.id === centreId);
       await updateDoc(doc(db, "admins", docId), {
         fullName,
