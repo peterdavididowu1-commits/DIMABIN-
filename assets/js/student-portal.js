@@ -208,6 +208,14 @@ if (linkForgotPassword) {
 
 // Handle entering the authenticated dashboard state
 function enterDashboard(studentDoc) {
+  // Security verification: ensure student doc matches current authenticated Firebase user
+  const currentUser = auth.currentUser;
+  if (currentUser && studentDoc.email !== currentUser.email) {
+    console.error("❌ Security violation: studentDoc email does not match authenticated user:", studentDoc.email, currentUser.email);
+    handleLogout("Authentication security mismatch. Please log in again.");
+    return;
+  }
+
   currentStudentDoc = studentDoc;
   
   // Hide anonymous login block, display authenticated main panel
@@ -239,9 +247,14 @@ function enterDashboard(studentDoc) {
 
 // Logout workflow
 function handleLogout(message = "Logged out successfully.") {
-  sessionStorage.removeItem(SESSION_KEY);
-  localStorage.removeItem(SESSION_KEY);
-  signOut(auth).catch(() => {});
+  currentStudentDoc = null;
+  studentPublishedResultsList = [];
+  officialCoursesList = [];
+  sessionStorage.clear();
+  localStorage.clear();
+  signOut(auth).catch((err) => {
+    console.error("Error signing out:", err);
+  });
   
   document.getElementById("anonymousView").style.display = "block";
   document.getElementById("authenticatedView").style.display = "none";
@@ -330,13 +343,7 @@ if (btnSemesterResultsCard) {
     if (btn) btn.click();
   });
 }
-const btnTranscriptCard = document.getElementById("btnTranscriptCard");
-if (btnTranscriptCard) {
-  btnTranscriptCard.addEventListener("click", () => {
-    const btn = document.querySelector('.sidebar-nav-btn[data-tab="transcript"]');
-    if (btn) btn.click();
-  });
-}
+
 
 // Retrieve active timeline rollover configs
 async function loadTimelineAndTimelineConfigs() {
@@ -775,7 +782,6 @@ async function loadResults() {
 
 function renderFilteredStudentResults() {
   const tbody = document.getElementById("resultsTableBody");
-  const tPrintBody = document.getElementById("printableTranscriptTableBody");
   if (!tbody) return;
 
   const fSession = document.getElementById("resultsFilterSession")?.value || "all";
@@ -805,7 +811,7 @@ function renderFilteredStudentResults() {
 
   const overallCGPA = overallAttemptedUnits > 0 ? (overallQualityPoints / overallAttemptedUnits).toFixed(2) : "0.00";
 
-  // Filter list for web view & transcript printable view
+  // Filter list for web view
   const filtered = studentPublishedResultsList.filter(item => {
     if (fSession !== "all" && item.academicSession !== fSession) return false;
     if (fSemester !== "all" && item.semester !== fSemester) return false;
@@ -813,7 +819,6 @@ function renderFilteredStudentResults() {
   });
 
   tbody.innerHTML = "";
-  if (tPrintBody) tPrintBody.innerHTML = "";
 
   let filteredAttemptedUnits = 0;
   let filteredPassedUnits = 0;
@@ -868,48 +873,7 @@ function renderFilteredStudentResults() {
       </tr>
     `;
     tbody.insertAdjacentHTML("beforeend", webRow);
-
-    // Printable Row
-    if (tPrintBody) {
-      const printRow = `
-        <tr style="border-bottom: 1px solid #ddd;">
-          <td style="padding: 0.65rem;"><strong>${r.courseCode}</strong></td>
-          <td style="padding: 0.65rem;">${r.courseTitle || "Bible Theology Study"}</td>
-          <td style="padding: 0.65rem; text-align: center; font-weight: 700;">${credits}</td>
-          <td style="padding: 0.65rem; text-align: center;">${r.semester}</td>
-          <td style="padding: 0.65rem; text-align: center;"><code>${r.academicSession}</code></td>
-          <td style="padding: 0.65rem; text-align: center;">${r.attendance !== undefined ? r.attendance : 0}</td>
-          <td style="padding: 0.65rem; text-align: center;">${r.assignment !== undefined ? r.assignment : 0}</td>
-          <td style="padding: 0.65rem; text-align: center;">${r.test !== undefined ? r.test : 0}</td>
-          <td style="padding: 0.65rem; text-align: center;">${r.practical !== undefined ? r.practical : 0}</td>
-          <td style="padding: 0.65rem; text-align: center;">${cbtTestScore}</td>
-          <td style="padding: 0.65rem; text-align: center;">${cbtExamScore}</td>
-          <td style="padding: 0.65rem; text-align: center;">${manualExamScore}</td>
-          <td style="padding: 0.65rem; text-align: center; font-weight: 700; color: var(--primary);">${r.total}</td>
-          <td style="padding: 0.65rem; text-align: center; font-weight: 800;">${r.grade}</td>
-          <td style="padding: 0.65rem; text-align: center; font-weight: 700; color: var(--accent);">${gp}</td>
-          <td style="padding: 0.65rem; text-align: center; font-weight: 700;">${remarkText}</td>
-        </tr>
-      `;
-      tPrintBody.insertAdjacentHTML("beforeend", printRow);
-    }
   });
-
-  // Dynamic show/hide of transcript placeholder alert based on results existence
-  const placeholderAlert = document.getElementById("transcriptPlaceholderAlert");
-  const printableTranscriptSection = document.getElementById("printableTranscriptSection");
-  const btnPrintTranscript = document.getElementById("btnPrintTranscript");
-  if (placeholderAlert && printableTranscriptSection) {
-    if (studentPublishedResultsList.length === 0) {
-      placeholderAlert.style.display = "flex";
-      printableTranscriptSection.style.display = "none";
-      if (btnPrintTranscript) btnPrintTranscript.style.display = "none";
-    } else {
-      placeholderAlert.style.display = "none";
-      printableTranscriptSection.style.display = "block";
-      if (btnPrintTranscript) btnPrintTranscript.style.display = "inline-flex";
-    }
-  }
 
   const filteredGPA = filteredAttemptedUnits > 0 ? (filteredQualityPoints / filteredAttemptedUnits).toFixed(2) : "0.00";
 
@@ -918,52 +882,6 @@ function renderFilteredStudentResults() {
   document.getElementById("resultsCGPA").textContent = overallCGPA;
   document.getElementById("resultsPassed").textContent = filteredPassedUnits;
   document.getElementById("resultsAttempted").textContent = filteredAttemptedUnits;
-
-  // Update Transcript Printable fields
-  const transName = document.getElementById("transFullname");
-  const transMatric = document.getElementById("transMatric");
-  const transProgramme = document.getElementById("transProgramme");
-  const transSession = document.getElementById("transSession");
-  const transReportDate = document.getElementById("transReportDate");
-
-  if (transName) transName.textContent = currentStudentDoc.fullName;
-  if (transMatric) transMatric.textContent = currentStudentDoc.matricNumber;
-  if (transProgramme) transProgramme.textContent = currentStudentDoc.programme;
-  if (transSession) transSession.textContent = (fSession === "all" ? "cumulative records" : fSession);
-  if (transReportDate) transReportDate.textContent = new Date().toLocaleDateString();
-
-  const transMetaAttempted = document.getElementById("transMetaAttempted");
-  const transMetaPassed = document.getElementById("transMetaPassed");
-  const transMetaGPA = document.getElementById("transMetaGPA");
-  const transMetaCGPA = document.getElementById("transMetaCGPA");
-
-  if (transMetaAttempted) transMetaAttempted.textContent = filteredAttemptedUnits;
-  if (transMetaPassed) transMetaPassed.textContent = filteredPassedUnits;
-  if (transMetaGPA) transMetaGPA.textContent = filteredGPA;
-  if (transMetaCGPA) transMetaCGPA.textContent = overallCGPA;
-}
-
-const btnPrintTranscript = document.getElementById("btnPrintTranscript");
-if (btnPrintTranscript) {
-  btnPrintTranscript.addEventListener("click", () => {
-    const transSection = document.getElementById("printableTranscriptSection");
-    const webViewContainer = document.getElementById("webViewResultsTableContainer");
-    const filterBar = document.querySelector(".search-filter-bar");
-    const statsGrid = document.querySelector(".stats-grid");
-
-    if (transSection) transSection.style.display = "block";
-    if (webViewContainer) webViewContainer.style.display = "none";
-    if (filterBar) filterBar.style.display = "none";
-    if (statsGrid) statsGrid.style.display = "none";
-
-    window.print();
-
-    // Restore standard viewport
-    if (transSection) transSection.style.display = "none";
-    if (webViewContainer) webViewContainer.style.display = "block";
-    if (filterBar) filterBar.style.display = "flex";
-    if (statsGrid) statsGrid.style.display = "grid";
-  });
 }
 
 const btnPrintSemester = document.getElementById("btnPrintSemester");
@@ -1199,8 +1117,24 @@ if (passwordChangeForm) {
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     console.log("👤 [Student Portal] Firebase Auth detected signed-in user:", user.email);
+    
+    // If currentStudentDoc is already loaded but has a mismatched email, clear it!
+    if (currentStudentDoc && currentStudentDoc.email !== user.email) {
+      console.warn("⚠️ Mismatched cached student detected on auth state change. Clearing...");
+      currentStudentDoc = null;
+      studentPublishedResultsList = [];
+      officialCoursesList = [];
+      sessionStorage.clear();
+      localStorage.clear();
+      document.getElementById("anonymousView").style.display = "block";
+      document.getElementById("authenticatedView").style.display = "none";
+    }
+
     // If currentStudentDoc is already loaded (e.g., from manual login), skip re-fetching
     if (currentStudentDoc && currentStudentDoc.email === user.email) {
+      if (document.getElementById("anonymousView").style.display !== "none") {
+        enterDashboard(currentStudentDoc);
+      }
       return;
     }
 
@@ -1221,13 +1155,18 @@ onAuthStateChanged(auth, async (user) => {
             const qFallback = query(collection(db, "students"), where("matricNumber", "==", parsed.matricNumber));
             const snapFallback = await getDocs(qFallback);
             if (!snapFallback.empty) {
-              studentDoc = { id: snapFallback.docs[0].id, ...snapFallback.docs[0].data() };
+              const docCandidate = { id: snapFallback.docs[0].id, ...snapFallback.docs[0].data() };
+              if (docCandidate.email === user.email) {
+                studentDoc = docCandidate;
+              } else {
+                console.warn("⚠️ Fallback candidate email mismatch:", docCandidate.email, "vs authenticated user email:", user.email);
+              }
             }
           }
         }
       }
 
-      if (studentDoc) {
+      if (studentDoc && studentDoc.email === user.email) {
         currentStudentDoc = studentDoc;
         const sessionData = {
           matricNumber: studentDoc.matricNumber,
@@ -1241,7 +1180,7 @@ onAuthStateChanged(auth, async (user) => {
         
         enterDashboard(studentDoc);
       } else {
-        console.warn("⚠️ Student profile not found in database for email:", user.email);
+        console.warn("⚠️ Student profile not found in database or email mismatch for:", user.email);
         handleLogout(null);
       }
     } catch (err) {
