@@ -21,6 +21,7 @@ let allStudents = [];
 let allLecturers = [];
 let allCourses = [];
 let allStudyCentres = [];
+let allCentreAdmins = [];
 let currentAdminDoc = null;
 
 // Global toggle password visibility
@@ -409,6 +410,12 @@ document.querySelectorAll(".sidebar-nav-btn").forEach(btn => {
     } else if (targetTab === "announcements") {
       initAnnouncementsTab();
     } else if (targetTab === "administration") {
+      if (!currentAdminDoc || currentAdminDoc.role !== "Super Admin") {
+        window.showToast("Access Denied: Only Super Administrators can access the Administration Console.", "error");
+        const overviewBtn = document.querySelector('.sidebar-nav-btn[data-tab="overview"]');
+        if (overviewBtn) overviewBtn.click();
+        return;
+      }
       loadCentreAdministrators();
       populateAdminCentresDropdowns();
     }
@@ -5387,9 +5394,11 @@ window.loadCentreAdministrators = async function() {
     const q = query(collection(db, "admins"), where("role", "==", "Centre Admin"));
     const snap = await getDocs(q);
 
+    allCentreAdmins = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
     const searchQuery = (document.getElementById("searchAdminsInput")?.value || "").toLowerCase().trim();
 
-    let list = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    let list = [...allCentreAdmins];
 
     if (searchQuery) {
       list = list.filter(adm => {
@@ -5409,6 +5418,9 @@ window.loadCentreAdministrators = async function() {
       const badgeClass = adm.status === "Active" ? "status-badge cleared" : "status-badge danger";
       const toggleActionLabel = adm.status === "Active" ? "Deactivate" : "Activate";
       const toggleActionIcon = adm.status === "Active" ? "fa-user-slash" : "fa-user-check";
+      const toggleBtnStyle = adm.status === "Active" 
+        ? "background-color: #fef2f2; color: #dc2626; border: 1px solid #fee2e2;"
+        : "background-color: #f0fdf4; color: #16a34a; border: 1px solid #dcfce7;";
 
       return `
         <tr style="border-bottom: 1.5px solid var(--border-color);">
@@ -5419,17 +5431,17 @@ window.loadCentreAdministrators = async function() {
           <td style="padding: 1rem;">${createdStr}</td>
           <td style="padding: 1rem; text-align: center;">
             <div style="display: flex; gap: 0.35rem; justify-content: center; align-items: center; flex-wrap: wrap;">
-              <button class="btn btn-sm btn-outline-primary edit-admin-btn" data-id="${adm.id}" title="Edit Profile" style="padding: 0.35rem 0.6rem; font-size: 0.78rem;">
-                <i class="fa-solid fa-user-pen"></i> Edit
+              <button class="btn btn-sm btn-outline-primary edit-admin-btn" data-id="${adm.id}" title="Edit Profile & Transfer Centre" style="padding: 0.35rem 0.6rem; font-size: 0.78rem;">
+                <i class="fa-solid fa-user-pen"></i> Edit / Transfer
               </button>
               <button class="btn btn-sm reset-admin-pass-btn" data-id="${adm.id}" style="background-color: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 0.35rem 0.6rem; font-size: 0.78rem;" title="Reset Password">
-                <i class="fa-solid fa-key"></i> Key
+                <i class="fa-solid fa-key"></i> Reset Pass
               </button>
-              <button class="btn btn-sm toggle-admin-status-btn" data-id="${adm.id}" data-status="${adm.status || 'Active'}" style="background-color: #fffbeb; color: #b45309; border: 1px solid #fef3c7; padding: 0.35rem 0.6rem; font-size: 0.78rem;" title="${toggleActionLabel}">
-                <i class="fa-solid ${toggleActionIcon}"></i> Toggle
+              <button class="btn btn-sm toggle-admin-status-btn" data-id="${adm.id}" data-status="${adm.status || 'Active'}" style="${toggleBtnStyle} padding: 0.35rem 0.6rem; font-size: 0.78rem;" title="${toggleActionLabel}">
+                <i class="fa-solid ${toggleActionIcon}"></i> ${toggleActionLabel}
               </button>
-              <button class="btn btn-sm btn-outline-danger delete-admin-btn" data-id="${adm.id}" title="Delete Profile" style="padding: 0.35rem 0.6rem; font-size: 0.78rem;">
-                <i class="fa-solid fa-trash-can"></i> Del
+              <button class="btn btn-sm btn-outline-danger delete-admin-btn" data-id="${adm.id}" title="Delete Account" style="padding: 0.35rem 0.6rem; font-size: 0.78rem;">
+                <i class="fa-solid fa-trash-can"></i> Delete
               </button>
             </div>
           </td>
@@ -5448,12 +5460,39 @@ window.loadCentreAdministrators = async function() {
   }
 };
 
+window.autoGenerateAdminId = function() {
+  const select = document.getElementById("adminFormCentre");
+  const idInput = document.getElementById("adminFormId");
+  if (!select || !idInput) return;
+
+  const centreId = select.value;
+  if (!centreId) {
+    idInput.value = "";
+    return;
+  }
+
+  const centre = allStudyCentres.find(c => c.id === centreId);
+  const centreCode = (centre ? (centre.code || centre.id) : "CTR").toUpperCase().replace(/\s+/g, "");
+
+  // Find count of admins assigned to this study centre
+  const count = allCentreAdmins.filter(adm => adm.assignedStudyCentreId === centreId).length;
+  const suffix = String(count + 1).padStart(2, "0");
+
+  idInput.value = `ADM/CTR/${centreCode}${suffix}`;
+};
+
 window.populateAdminCentresDropdowns = function() {
   const adminFormCentre = document.getElementById("adminFormCentre");
   const editAdminCentre = document.getElementById("editAdminCentre");
 
   const opts = allStudyCentres.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
-  if (adminFormCentre) adminFormCentre.innerHTML = `<option value="">-- Choose Centre --</option>` + opts;
+  if (adminFormCentre) {
+    adminFormCentre.innerHTML = `<option value="">-- Choose Centre --</option>` + opts;
+    if (!adminFormCentre.dataset.listenerAdded) {
+      adminFormCentre.addEventListener("change", window.autoGenerateAdminId);
+      adminFormCentre.dataset.listenerAdded = "true";
+    }
+  }
   if (editAdminCentre) editAdminCentre.innerHTML = `<option value="">-- Choose Centre --</option>` + opts;
 };
 

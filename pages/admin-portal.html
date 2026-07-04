@@ -1455,7 +1455,7 @@
         </div>
 
         <!-- Tab: Administration (Super Admin Only) -->
-        <div class="tab-content" id="tab-administration" style="display: none;">
+        <div class="tab-content" id="tab-administration">
           <div style="margin-bottom: 2rem;">
             <h2 class="font-display" style="color: var(--primary); font-size: 2.2rem; margin-bottom: 0.25rem; font-weight: 800;">Administration Console</h2>
             <p style="color: var(--text-muted); font-size: 1.05rem;">Manage system-wide administrator directory, assign study centre managers, and maintain security parameters.</p>
@@ -1484,9 +1484,9 @@
                 </div>
 
                 <div class="form-group" style="margin-bottom: 1rem;">
-                  <label for="adminFormId" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Administrator ID</label>
-                  <input type="text" id="adminFormId" class="form-control" placeholder="e.g. ADM/CTR/ODEDA01" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
-                  <small style="color: var(--text-muted); font-size: 0.72rem; display: block; margin-top: 0.2rem;">Must be unique. Format recommendation: ADM/CTR/CODE</small>
+                  <label for="adminFormId" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Administrator ID (Auto-Generated)</label>
+                  <input type="text" id="adminFormId" class="form-control" placeholder="Automatically generated from study centre selection" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" readonly required>
+                  <small style="color: var(--text-muted); font-size: 0.72rem; display: block; margin-top: 0.2rem;">Generated automatically based on the assigned Study Centre code.</small>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 1rem;">
