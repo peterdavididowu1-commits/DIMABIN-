@@ -12,7 +12,8 @@ const {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  updatePassword
+  updatePassword,
+  getAuth
 } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js");
 const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
 
