@@ -1538,8 +1538,14 @@ function populateCourseCheckboxes() {
   const editContainer = document.getElementById("editCourseAllocationCheckboxes");
   if (!container && !editContainer) return;
 
+  // Filter courses by study centre if logged-in user is a Centre Admin
+  let allowedCourses = [...allCourses];
+  if (currentAdminDoc?.role === "Centre Admin") {
+    allowedCourses = allowedCourses.filter(c => c.studyCentreId === currentSelectedStudyCentreId || (c.assignedStudyCentreIds && c.assignedStudyCentreIds.includes(currentSelectedStudyCentreId)));
+  }
+
   // Sort courses alphabetically by code
-  const sortedCourses = [...allCourses].sort((a, b) => (a.courseCode || a.code || "").localeCompare(b.courseCode || b.code || ""));
+  const sortedCourses = allowedCourses.sort((a, b) => (a.courseCode || a.code || "").localeCompare(b.courseCode || b.code || ""));
 
   let html = "";
   if (sortedCourses.length === 0) {
@@ -1580,6 +1586,15 @@ function populateStudyCentreCheckboxes() {
   const container = document.getElementById("studyCentreAllocationCheckboxes");
   const editContainer = document.getElementById("editStudyCentreAllocationCheckboxes");
   if (!container && !editContainer) return;
+
+  const centreFormBlock = container.closest('div');
+  if (centreFormBlock) {
+    if (currentAdminDoc?.role === "Centre Admin") {
+      centreFormBlock.style.display = "none";
+    } else {
+      centreFormBlock.style.display = "block";
+    }
+  }
 
   const sortedCentres = [...allStudyCentres].filter(c => c.status === "Active").sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
@@ -2238,6 +2253,9 @@ async function loadLecturers() {
     });
     console.log(`🌟 [Lecturer Directory] Loaded ${allLecturers.length} facilitators successfully!`);
     renderLecturerDirectory();
+    if (typeof currentSelectedStudyCentreId !== 'undefined' && currentSelectedStudyCentreId) {
+      renderCentreLecturers(currentSelectedStudyCentreId);
+    }
   } catch (err) {
     console.error("❌ Failed to fetch lecturer registry:", err);
     window.showToast("Failed to fetch lecturer registry.", "error");
@@ -2434,10 +2452,14 @@ if (registerLecturerForm) {
     });
 
     // Gather assigned study centres
-    const checkedCentres = [];
-    document.querySelectorAll('#studyCentreAllocationCheckboxes input[name="assignedStudyCentres"]:checked').forEach(cb => {
-      checkedCentres.push(cb.value);
-    });
+    let checkedCentres = [];
+    if (currentAdminDoc?.role === "Centre Admin") {
+      checkedCentres = [currentSelectedStudyCentreId];
+    } else {
+      document.querySelectorAll('#studyCentreAllocationCheckboxes input[name="assignedStudyCentres"]:checked').forEach(cb => {
+        checkedCentres.push(cb.value);
+      });
+    }
 
     try {
       window.showToast("Securing institutional credentials...", "info");
@@ -2560,6 +2582,33 @@ if (btnCloseLecModal && editLecModal) {
   });
 }
 
+// Register Facilitator Modal logic
+const regLecModal = document.getElementById("registerLecturerModal");
+const btnCloseRegLecModal = document.getElementById("btnCloseRegLecturerModal");
+
+if (btnCloseRegLecModal && regLecModal) {
+  btnCloseRegLecModal.addEventListener("click", () => {
+    regLecModal.style.display = "none";
+  });
+}
+
+document.addEventListener("click", (e) => {
+  if (e.target && (e.target.id === "btnRegisterNewCentreLecturer" || e.target.closest("#btnRegisterNewCentreLecturer"))) {
+    const form = document.getElementById("registerLecturerForm");
+    if (form) form.reset();
+    const succCard = document.getElementById("regSuccessCredentialsCard");
+    if (succCard) succCard.style.display = "none";
+    
+    // Repopulate checkboxes
+    populateCourseCheckboxes();
+    populateStudyCentreCheckboxes();
+    
+    if (regLecModal) {
+      regLecModal.style.display = "flex";
+    }
+  }
+});
+
 function openEditLecturerModal(docId) {
   const lec = allLecturers.find(l => l.id === docId);
   if (!lec) {
@@ -2583,13 +2632,48 @@ function openEditLecturerModal(docId) {
   document.getElementById("editLecEmploymentDate").value = lec.employmentDate || "";
   document.getElementById("editLecStatus").value = lec.status || "Active";
 
-  // Match and check assigned checkboxes
+  // Match and check assigned checkboxes (filtered for Centre Admin if applicable)
+  const editContainer = document.getElementById("editCourseAllocationCheckboxes");
+  if (editContainer) {
+    let allowedCourses = [...allCourses];
+    if (currentAdminDoc?.role === "Centre Admin") {
+      allowedCourses = allowedCourses.filter(c => c.studyCentreId === currentSelectedStudyCentreId || (c.assignedStudyCentreIds && c.assignedStudyCentreIds.includes(currentSelectedStudyCentreId)));
+    }
+    allowedCourses.sort((a, b) => (a.courseCode || a.code || "").localeCompare(b.courseCode || b.code || ""));
+    
+    let editHtml = "";
+    if (allowedCourses.length === 0) {
+      editHtml = `<div style="color: var(--text-muted); font-size: 0.85rem; grid-column: 1/-1; text-align: center; padding: 1rem;">No courses available for this study centre.</div>`;
+    } else {
+      allowedCourses.forEach(c => {
+        const code = c.courseCode || c.code || c.id || "";
+        const name = c.courseTitle || c.name || "";
+        editHtml += `
+          <label style="display: flex; align-items: flex-start; gap: 0.5rem; background-color: var(--bg-white); padding: 0.5rem 0.7rem; border-radius: 6px; border: 1.5px solid var(--border-color); cursor: pointer; font-size: 0.8rem; transition: border-color 0.2s;">
+            <input type="checkbox" name="editAssignedCourses" value="${code}" style="margin-top: 0.15rem; accent-color: var(--primary);">
+            <span style="font-weight: 500;">[${code}] <span style="color: var(--text-muted);">${name}</span></span>
+          </label>
+        `;
+      });
+    }
+    editContainer.innerHTML = editHtml;
+  }
+
   const assigned = lec.coursesAssigned || lec.assignedCourses || [];
   document.querySelectorAll('#editCourseAllocationCheckboxes input[name="editAssignedCourses"]').forEach(cb => {
     cb.checked = assigned.includes(cb.value);
   });
 
-  // Match and check assigned study centre checkboxes
+  // Match and check assigned study centre checkboxes (hidden if Centre Admin)
+  const centreBlock = document.getElementById("editStudyCentreAllocationCheckboxes")?.closest('div');
+  if (centreBlock) {
+    if (currentAdminDoc?.role === "Centre Admin") {
+      centreBlock.style.display = "none";
+    } else {
+      centreBlock.style.display = "block";
+    }
+  }
+
   const assignedCentres = lec.assignedStudyCentreIds || [];
   document.querySelectorAll('#editStudyCentreAllocationCheckboxes input[name="editAssignedStudyCentres"]').forEach(cb => {
     cb.checked = assignedCentres.includes(cb.value);
@@ -2622,10 +2706,15 @@ if (editLecForm) {
       checkedCourses.push(cb.value);
     });
 
-    const checkedCentres = [];
-    document.querySelectorAll('#editStudyCentreAllocationCheckboxes input[name="editAssignedStudyCentres"]:checked').forEach(cb => {
-      checkedCentres.push(cb.value);
-    });
+    const lec = allLecturers.find(l => l.id === docId);
+    let checkedCentres = [];
+    if (currentAdminDoc?.role === "Centre Admin") {
+      checkedCentres = (lec && lec.assignedStudyCentreIds) ? lec.assignedStudyCentreIds : [currentSelectedStudyCentreId];
+    } else {
+      document.querySelectorAll('#editStudyCentreAllocationCheckboxes input[name="editAssignedStudyCentres"]:checked').forEach(cb => {
+        checkedCentres.push(cb.value);
+      });
+    }
 
     try {
       window.showToast("Securing profile coordinates...", "info");
@@ -2654,6 +2743,9 @@ if (editLecForm) {
       window.showToast("Facilitator profile updated successfully!", "success");
       if (editLecModal) editLecModal.style.display = "none";
       await loadLecturers();
+      if (currentAdminDoc?.role === "Centre Admin") {
+        renderCentreLecturers(currentSelectedStudyCentreId);
+      }
     } catch (err) {
       console.error("❌ Failed to update profile:", err);
       window.showToast("Failed to update profile: " + err.message, "error");
@@ -4610,12 +4702,18 @@ window.renderStudyCentreSubtabData = function(centreId, subtab) {
     renderCentreLecturers(centreId);
   } else if (subtab === "Courses") {
     renderCentreCourses(centreId);
+  } else if (subtab === "Allocation") {
+    if (typeof renderCentreAllocation === "function") renderCentreAllocation(centreId);
   } else if (subtab === "Results") {
     renderCentreResults(centreId);
+  } else if (subtab === "CBT") {
+    if (typeof renderCentreCbt === "function") renderCentreCbt(centreId);
   } else if (subtab === "Announcements") {
     renderCentreAnnouncements(centreId);
   } else if (subtab === "Statistics") {
     renderCentreStatistics(centreId);
+  } else if (subtab === "Reports") {
+    if (typeof renderCentreReports === "function") renderCentreReports(centreId);
   }
 };
 
@@ -4629,6 +4727,7 @@ window.initStudyCentreTabListeners = function() {
   const cCoursesSearch = document.getElementById("centreCoursesSearch");
   const cResultsSearch = document.getElementById("centreResultsSearch");
   const cAnnSearch = document.getElementById("centreAnnouncementsSearch");
+  const cAllocSearch = document.getElementById("centreAllocationSearch");
 
   if (cAppsSearch) cAppsSearch.addEventListener("input", () => renderCentreApplications(currentSelectedStudyCentreId));
   if (cAppsFilter) cAppsFilter.addEventListener("change", () => renderCentreApplications(currentSelectedStudyCentreId));
@@ -4637,6 +4736,9 @@ window.initStudyCentreTabListeners = function() {
   if (cCoursesSearch) cCoursesSearch.addEventListener("input", () => renderCentreCourses(currentSelectedStudyCentreId));
   if (cResultsSearch) cResultsSearch.addEventListener("input", () => renderCentreResults(currentSelectedStudyCentreId));
   if (cAnnSearch) cAnnSearch.addEventListener("input", () => renderCentreAnnouncements(currentSelectedStudyCentreId));
+  if (cAllocSearch) cAllocSearch.addEventListener("input", () => {
+    if (typeof renderCentreAllocation === "function") renderCentreAllocation(currentSelectedStudyCentreId);
+  });
 
   studyCentreListenersInitialized = true;
 };
@@ -4829,6 +4931,9 @@ function renderCentreLecturers(centreId) {
             <button class="btn btn-toggle-status-centre-lec" data-id="${lec.id}" data-status="${lec.status}" title="${lec.status === 'Active' ? 'Deactivate' : 'Activate'}" style="background-color: ${lec.status === 'Active' ? '#DC3545' : '#28A745'}; color: white; border: none; border-radius: 6px; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.95rem;">
               <i class="fa-solid ${lec.status === 'Active' ? 'fa-user-slash' : 'fa-user-check'}"></i>
             </button>
+            <button class="btn btn-delete-centre-lec" data-id="${lec.id}" title="Delete Facilitator" style="background-color: var(--error); color: white; border: none; border-radius: 6px; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.95rem;">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
           </div>
         </td>
       </tr>
@@ -4856,6 +4961,35 @@ function renderCentreLecturers(centreId) {
       if (typeof toggleLecturerStatus === "function") toggleLecturerStatus(id, status);
     });
   });
+
+  tbody.querySelectorAll(".btn-delete-centre-lec").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-id");
+      deleteLecturer(id);
+    });
+  });
+}
+
+async function deleteLecturer(docId) {
+  const lec = allLecturers.find(l => l.id === docId);
+  if (!lec) {
+    window.showToast("Facilitator record not found.", "error");
+    return;
+  }
+
+  const userConfirmed = await window.dimabinConfirm(`Are you sure you want to PERMANENTLY delete facilitator "${lec.title || ''} ${lec.fullName || ''}"? This action is irreversible.`);
+  if (!userConfirmed) return;
+
+  try {
+    window.showToast("Deleting facilitator record...", "info");
+    await deleteDoc(doc(db, "lecturers", docId));
+    window.showToast("Facilitator deleted successfully!", "success");
+    await loadLecturers();
+    renderCentreLecturers(currentSelectedStudyCentreId);
+  } catch (err) {
+    console.error("❌ Deletion failed:", err);
+    window.showToast("Failed to delete facilitator: " + err.message, "error");
+  }
 }
 
 // --- RENDER COURSES SUB-TAB ---
