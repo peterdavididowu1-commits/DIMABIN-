@@ -188,6 +188,25 @@ function checkActiveSession() {
       }
     } else {
       console.log("👤 [Admin Portal] No active Firebase Auth session.");
+      // Support Firestore-only Centre Admin sessions without Firebase Auth
+      const cached = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
+      if (cached) {
+        try {
+          const sessionData = JSON.parse(cached);
+          if (sessionData && sessionData.role === "Centre Admin" && sessionData.adminId) {
+            console.log("👤 [Admin Portal] Recovering Firestore-only Centre Admin session:", sessionData);
+            const adminRecord = await findAdminRecord(sessionData.adminId);
+            if (adminRecord && adminRecord.data && adminRecord.data.status === "Active") {
+              currentAdminDoc = adminRecord.data;
+              enterDashboard(sessionData);
+              return;
+            }
+          }
+        } catch (cacheErr) {
+          console.error("Failed to recover cached Centre Admin session:", cacheErr);
+        }
+      }
+
       if (sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY)) {
         handleLogout(null);
       }
@@ -5537,6 +5556,7 @@ window.loadCentreAdministrators = async function() {
           <td style="padding: 1rem; font-weight: 600; color: var(--primary-dark);">${adm.fullName}</td>
           <td style="padding: 1rem;"><span style="background-color: var(--accent); color: var(--primary); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: 700;">${adm.assignedStudyCentreName || "None"}</span></td>
           <td style="padding: 1rem; font-weight: 500; color: var(--text-dark);">${adm.phone || "N/A"}</td>
+          <td style="padding: 1rem; font-weight: 500; color: var(--text-dark);">${adm.email || adm.hiddenEmail || "N/A"}</td>
           <td style="padding: 1rem;"><span class="${badgeClass}" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; font-weight: 700;">${adm.status || 'Active'}</span></td>
           <td style="padding: 1rem;">${createdStr}</td>
           <td style="padding: 1rem; text-align: center;">
@@ -5669,6 +5689,7 @@ if (createCentreAdminForm) {
     const studyCentreId = document.getElementById("adminFormCentre").value;
     const tempPassword = document.getElementById("adminFormPassword").value;
     const phone = document.getElementById("adminFormPhone").value.trim();
+    const email = document.getElementById("adminFormEmail").value.trim().toLowerCase();
     const status = document.getElementById("adminFormStatus").value;
 
     const submitBtn = document.getElementById("btnCreateAdminSubmit");
@@ -5680,6 +5701,7 @@ if (createCentreAdminForm) {
     console.log(`👉 [Centre Admin Creation] Full Name: "${fullName}"`);
     console.log(`👉 [Centre Admin Creation] Study Centre ID: "${studyCentreId}"`);
     console.log(`👉 [Centre Admin Creation] Phone: "${phone}"`);
+    console.log(`👉 [Centre Admin Creation] Email: "${email}"`);
     console.log(`👉 [Centre Admin Creation] Initial Status: "${status}"`);
 
     try {
@@ -5722,68 +5744,39 @@ if (createCentreAdminForm) {
         console.log(`✅ [Centre Admin Creation] Success: No active administrator exists for this Study Centre.`);
       }
 
-      // 3. Generate guaranteed unique hidden Firebase email using study centre code and administrator ID
-      console.log(`🔍 [Centre Admin Creation] Step 3: Generating unique hidden Firebase email...`);
-      const email = await window.generateUniqueAdminEmail(studyCentreId, null, adminId);
-      console.log(`📧 [Centre Admin Creation] Generated unique hidden email: "${email}"`);
-
-      // Double check Firebase email is unique in both collections
-      console.log(`🔍 [Centre Admin Creation] Double checking uniqueness of email "${email}" in Firestore collections...`);
+      // 3. Verify uniqueness of Email Address
+      console.log(`🔍 [Centre Admin Creation] Step 3: Checking uniqueness of email: "${email}"...`);
       const qEmail1 = query(collection(db, "admins"), where("email", "==", email));
       const snapEmail1 = await getDocs(qEmail1);
       
-      const qEmail2 = query(collection(db, "centreAdministrators"), where("hiddenEmail", "==", email));
+      const qEmail2 = query(collection(db, "centreAdministrators"), where("email", "==", email));
       const snapEmail2 = await getDocs(qEmail2);
 
-      const qEmail3 = query(collection(db, "centreAdministrators"), where("email", "==", email));
+      const qEmail3 = query(collection(db, "centreAdministrators"), where("hiddenEmail", "==", email));
       const snapEmail3 = await getDocs(qEmail3);
       
       if (!snapEmail1.empty || !snapEmail2.empty || !snapEmail3.empty) {
-        console.warn(`⚠️ [Centre Admin Creation] Email Collision: The generated hidden email "${email}" is already in use.`);
-        window.showToast("Internal error: Email collision detected. Please try again.", "error");
+        console.warn(`⚠️ [Centre Admin Creation] Email Collision: The email "${email}" is already in use.`);
+        window.showToast("An administrator profile with this email address already exists.", "error");
         submitBtn.disabled = false;
         submitBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Create Administrator`;
         return;
       }
-      console.log(`✅ [Centre Admin Creation] Success: Generated hidden email "${email}" is unique.`);
+      console.log(`✅ [Centre Admin Creation] Success: Email "${email}" is unique.`);
 
-      // 4. Provision Firebase Auth account via secondary instance
-      console.log(`🔍 [Centre Admin Creation] Step 4: Provisioning Firebase Authentication profile...`);
-      const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
-      const { getAuth, createUserWithEmailAndPassword, signOut } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js");
-      const firebaseConfig = (await import("./firebase-config-env.js")).default;
-
-      const secAppName = `secRegAdmin-${Date.now()}`;
-      const secApp = initializeApp(firebaseConfig, secAppName);
-      const secAuth = getAuth(secApp);
-
-      let userCred;
-      let uid;
-      try {
-        console.log(`🔐 [Centre Admin Creation] Calling Firebase Auth API for email: "${email}"...`);
-        userCred = await createUserWithEmailAndPassword(secAuth, email, tempPassword);
-        uid = userCred.user.uid;
-        console.log(`✅ [Centre Admin Creation] Success: Firebase Auth profile created. UID: "${uid}"`);
-      } catch (authErr) {
-        console.error(`❌ [Centre Admin Creation] Firebase Authentication failed:`, authErr);
-        await secApp.delete();
-        throw new Error(`Authentication Failed: ${authErr.message}`);
-      }
-
-      // 5. Hash password
-      console.log(`🔍 [Centre Admin Creation] Step 5: Hashing default administrative password...`);
+      // 4. Hash password
+      console.log(`🔍 [Centre Admin Creation] Step 4: Hashing default administrative password...`);
       const hashedPass = await sha256(tempPassword);
       console.log(`✅ [Centre Admin Creation] Password hashed successfully.`);
 
-      // 6. Save to Firestore centreAdministrators collection
-      console.log(`🔍 [Centre Admin Creation] Step 6: Compiling and saving administrator profile data to Firestore...`);
+      // 5. Save to Firestore centreAdministrators collection
+      console.log(`🔍 [Centre Admin Creation] Step 5: Compiling and saving administrator profile data to Firestore...`);
       const centre = allStudyCentres.find(c => c.id === studyCentreId);
       const adminDocData = {
-        uid: uid,
         administratorId: adminId,
         adminId: adminId, // keep for compatibility
-        hiddenEmail: email,
-        email: email, // keep for compatibility
+        hiddenEmail: email, // keep for compatibility
+        email: email,
         fullName,
         studyCentre: centre ? centre.name : "",
         assignedStudyCentreId: studyCentreId,
@@ -5805,11 +5798,6 @@ if (createCentreAdminForm) {
 
       try {
         await setDoc(doc(db, "centreAdministrators", firestoreDocId), adminDocData);
-        console.log(`✅ [Centre Admin Creation] Firestore document written successfully.`);
-        
-        // Clean up secondary auth instance
-        await signOut(secAuth);
-        await secApp.delete();
         console.log(`🎉 [Centre Admin Creation] Registration complete! Centre Administrator "${adminId}" created successfully.`);
         
         window.showToast(`Administrator profile "${adminId}" created successfully!`, "success");
@@ -5817,24 +5805,7 @@ if (createCentreAdminForm) {
         await loadCentreAdministrators();
       } catch (firestoreErr) {
         console.error(`❌ [Centre Admin Creation] Firestore write failed:`, firestoreErr);
-        console.log(`⚠️ [Centre Admin Creation] Initiating graceful rollback: Deleting the created Firebase Auth user account...`);
-        
-        try {
-          await userCred.user.delete();
-          console.log(`🔄 [Centre Admin Creation] Rollback successful: Firebase Auth user account deleted.`);
-        } catch (rollbackErr) {
-          console.error(`❌ [Centre Admin Creation] Rollback Failed: Could not delete Auth user. Error:`, rollbackErr);
-        }
-        
-        // Clean up secondary instance
-        try {
-          await signOut(secAuth);
-          await secApp.delete();
-        } catch (cleanupErr) {
-          console.error(`❌ [Centre Admin Creation] Error during cleanup of secondary instance:`, cleanupErr);
-        }
-        
-        throw new Error(`Firestore Creation Failed: ${firestoreErr.message}. (Auth account successfully rolled back)`);
+        throw new Error(`Firestore Creation Failed: ${firestoreErr.message}`);
       }
 
     } catch (err) {
@@ -5857,46 +5828,12 @@ window.resetCentreAdminPassword = async function(adminDocId) {
 
     const adm = res.snap.data();
     const adminEmail = adm.hiddenEmail || adm.email || "";
-    const adminPhone = adm.phoneNumber || adm.phone || "";
     
     if (confirm(`Are you sure you want to reset the login password for Administrator "${adm.fullName}"?`)) {
       window.showToast("Resetting credentials...", "info");
 
       const randHex = Math.random().toString(36).substring(2, 6).toUpperCase();
       const newTempPassword = `Dimabin@2026${randHex}`;
-
-      // Auth reset via secondary Auth
-      let authReset = false;
-      try {
-        const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
-        const { getAuth, signInWithEmailAndPassword, updatePassword, createUserWithEmailAndPassword, signOut } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js");
-        const firebaseConfig = (await import("./firebase-config-env.js")).default;
-
-        const secAppName = `secResetAdmin-${Date.now()}`;
-        const secApp = initializeApp(firebaseConfig, secAppName);
-        const secAuth = getAuth(secApp);
-
-        const prevPassword = adm.password || "";
-        try {
-          // Attempt to sign in and update password directly
-          const userCred = await signInWithEmailAndPassword(secAuth, adminEmail, prevPassword);
-          await updatePassword(userCred.user, newTempPassword);
-          authReset = true;
-        } catch (signInErr) {
-          console.warn("Direct password update failed, attempting re-creation:", signInErr.message);
-          // If updatePassword fails or user not found, try recreating the Auth profile
-          try {
-            await createUserWithEmailAndPassword(secAuth, adminEmail, newTempPassword);
-            authReset = true;
-          } catch (createErr) {
-            console.error("Re-creation of Auth user failed:", createErr);
-          }
-        }
-        await signOut(secAuth);
-        await secApp.delete();
-      } catch (authErr) {
-        console.warn("Auth sync skipped:", authErr.message);
-      }
 
       const hashedPass = await sha256(newTempPassword);
       await updateDoc(res.ref, {
@@ -5966,31 +5903,9 @@ window.deleteCentreAdminAccount = async function(adminDocId) {
     }
 
     const adm = res.snap.data();
-    const adminEmail = adm.hiddenEmail || adm.email || "";
 
     if (confirm(`CRITICAL WARNING: Are you sure you want to permanently delete the Administrator profile for "${adm.fullName}" (${adm.adminId || adm.administratorId})?\n\nThis action cannot be undone.`)) {
-      // 1. Delete Firebase Auth profile
-      try {
-        const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
-        const { getAuth, signInWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js");
-        const firebaseConfig = (await import("./firebase-config-env.js")).default;
-
-        const secAppName = `secDelAdmin-${Date.now()}`;
-        const secApp = initializeApp(firebaseConfig, secAppName);
-        const secAuth = getAuth(secApp);
-
-        try {
-          const userCred = await signInWithEmailAndPassword(secAuth, adminEmail, adm.password);
-          await userCred.user.delete();
-        } catch (delErr) {
-          console.warn("Could not delete Auth credentials:", delErr.message);
-        }
-        await secApp.delete();
-      } catch (authErr) {
-        console.warn("Auth clean skipped:", authErr.message);
-      }
-
-      // 2. Delete Firestore Document
+      // Delete Firestore Document
       await deleteDoc(res.ref);
       window.showToast("Administrative profile permanently deleted.", "success");
       await loadCentreAdministrators();
@@ -6013,6 +5928,7 @@ window.openEditCentreAdminModal = async function(adminDocId) {
     document.getElementById("editAdminId").value = adm.administratorId || adm.adminId || "";
     document.getElementById("editAdminFullName").value = adm.fullName || "";
     document.getElementById("editAdminPhone").value = adm.phoneNumber || adm.phone || "";
+    document.getElementById("editAdminEmail").value = adm.email || adm.hiddenEmail || "";
     document.getElementById("editAdminStatus").value = adm.status || "Active";
 
     // Populate dropdown
@@ -6036,6 +5952,7 @@ if (editCentreAdminForm) {
     const docId = document.getElementById("editAdminDocId").value;
     const fullName = document.getElementById("editAdminFullName").value.trim();
     const phone = document.getElementById("editAdminPhone").value.trim();
+    const email = document.getElementById("editAdminEmail").value.trim().toLowerCase();
     const centreId = document.getElementById("editAdminCentre").value;
     const status = document.getElementById("editAdminStatus").value;
 
@@ -6043,6 +5960,24 @@ if (editCentreAdminForm) {
       const res = await getAdminDocAndRef(docId);
       if (!res) {
         window.showToast("Administrator record not found.", "error");
+        return;
+      }
+
+      // Check email uniqueness, excluding current administrator docId
+      const qEmail1 = query(collection(db, "admins"), where("email", "==", email));
+      const snapEmail1 = await getDocs(qEmail1);
+      const otherEmail1 = snapEmail1.docs.filter(d => d.id !== docId);
+      
+      const qEmail2 = query(collection(db, "centreAdministrators"), where("email", "==", email));
+      const snapEmail2 = await getDocs(qEmail2);
+      const otherEmail2 = snapEmail2.docs.filter(d => d.id !== docId);
+
+      const qEmail3 = query(collection(db, "centreAdministrators"), where("hiddenEmail", "==", email));
+      const snapEmail3 = await getDocs(qEmail3);
+      const otherEmail3 = snapEmail3.docs.filter(d => d.id !== docId);
+      
+      if (otherEmail1.length > 0 || otherEmail2.length > 0 || otherEmail3.length > 0) {
+        window.showToast("An administrator profile with this email address already exists.", "error");
         return;
       }
 
@@ -6075,6 +6010,8 @@ if (editCentreAdminForm) {
         fullName,
         phoneNumber: phone,
         phone, // compatibility
+        email,
+        hiddenEmail: email, // compatibility
         assignedStudyCentreId: centreId,
         assignedStudyCentreName: centre ? centre.name : "",
         studyCentre: centre ? centre.name : "", // compatibility
