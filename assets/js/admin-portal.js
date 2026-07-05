@@ -5678,6 +5678,44 @@ window.generateUniqueAdminEmail = async function(studyCentreId, centreCode, admi
   return email;
 };
 
+// Password visibility toggles for Centre Admin creation form
+function setupPasswordToggles() {
+  const toggleBtn = document.getElementById("toggleAdminFormPasswordBtn");
+  const passwordInput = document.getElementById("adminFormPassword");
+  const toggleIcon = document.getElementById("toggleAdminFormPasswordIcon");
+
+  if (toggleBtn && passwordInput && toggleIcon) {
+    toggleBtn.addEventListener("click", () => {
+      if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        toggleIcon.className = "fa-solid fa-eye-slash";
+      } else {
+        passwordInput.type = "password";
+        toggleIcon.className = "fa-solid fa-eye";
+      }
+    });
+  }
+
+  const toggleConfirmBtn = document.getElementById("toggleAdminFormConfirmPasswordBtn");
+  const confirmInput = document.getElementById("adminFormConfirmPassword");
+  const toggleConfirmIcon = document.getElementById("toggleAdminFormConfirmPasswordIcon");
+
+  if (toggleConfirmBtn && confirmInput && toggleConfirmIcon) {
+    toggleConfirmBtn.addEventListener("click", () => {
+      if (confirmInput.type === "password") {
+        confirmInput.type = "text";
+        toggleConfirmIcon.className = "fa-solid fa-eye-slash";
+      } else {
+        confirmInput.type = "password";
+        toggleConfirmIcon.className = "fa-solid fa-eye";
+      }
+    });
+  }
+}
+
+// Call toggle setup
+setTimeout(setupPasswordToggles, 100);
+
 // Form listeners for Centre Admin Console
 const createCentreAdminForm = document.getElementById("createCentreAdminForm");
 if (createCentreAdminForm) {
@@ -5688,6 +5726,7 @@ if (createCentreAdminForm) {
     const adminId = document.getElementById("adminFormId").value.trim().toUpperCase();
     const studyCentreId = document.getElementById("adminFormCentre").value;
     const tempPassword = document.getElementById("adminFormPassword").value;
+    const confirmPassword = document.getElementById("adminFormConfirmPassword").value;
     const phone = document.getElementById("adminFormPhone").value.trim();
     const email = document.getElementById("adminFormEmail").value.trim().toLowerCase();
     const status = document.getElementById("adminFormStatus").value;
@@ -5695,6 +5734,20 @@ if (createCentreAdminForm) {
     const submitBtn = document.getElementById("btnCreateAdminSubmit");
     submitBtn.disabled = true;
     submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Registering...`;
+
+    if (tempPassword !== confirmPassword) {
+      window.showToast("Passwords do not match.", "error");
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Create Administrator`;
+      return;
+    }
+
+    if (tempPassword.length < 6) {
+      window.showToast("Password must be at least 6 characters.", "error");
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Create Administrator`;
+      return;
+    }
 
     console.log(`🚀 [Centre Admin Creation] Form submission received.`);
     console.log(`👉 [Centre Admin Creation] Entered Admin ID: "${adminId}"`);

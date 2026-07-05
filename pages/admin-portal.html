@@ -1502,7 +1502,22 @@
 
                 <div class="form-group" style="margin-bottom: 1rem;">
                   <label for="adminFormPassword" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Temporary Password</label>
-                  <input type="password" id="adminFormPassword" class="form-control" placeholder="Minimum 6 characters" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                  <div style="position: relative; display: flex; align-items: center;">
+                    <input type="password" id="adminFormPassword" class="form-control" placeholder="Minimum 6 characters" style="width: 100%; padding: 0.6rem 2.5rem 0.6rem 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                    <button type="button" id="toggleAdminFormPasswordBtn" style="position: absolute; right: 0.6rem; background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1rem; display: flex; align-items: center; justify-content: center; height: 100%; width: 2rem; outline: none; padding: 0;">
+                      <i class="fa-solid fa-eye" id="toggleAdminFormPasswordIcon"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                  <label for="adminFormConfirmPassword" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">Confirm Password</label>
+                  <div style="position: relative; display: flex; align-items: center;">
+                    <input type="password" id="adminFormConfirmPassword" class="form-control" placeholder="Re-enter password" style="width: 100%; padding: 0.6rem 2.5rem 0.6rem 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                    <button type="button" id="toggleAdminFormConfirmPasswordBtn" style="position: absolute; right: 0.6rem; background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1rem; display: flex; align-items: center; justify-content: center; height: 100%; width: 2rem; outline: none; padding: 0;">
+                      <i class="fa-solid fa-eye" id="toggleAdminFormConfirmPasswordIcon"></i>
+                    </button>
+                  </div>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 1rem;">

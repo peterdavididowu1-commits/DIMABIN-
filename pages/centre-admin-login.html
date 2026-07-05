@@ -207,6 +207,13 @@
 
     const SESSION_KEY = "dimabin_admin_session";
 
+    async function sha256(message) {
+      const msgBuffer = new TextEncoder().encode(message);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+
     const form = document.getElementById("centreAdminLoginForm");
     if (form) {
       form.addEventListener("submit", async (e) => {
@@ -227,6 +234,7 @@
           
           let adminData = null;
           let adminDocId = cleanId;
+          let collName = "centreAdministrators";
           
           if (docSnap.exists()) {
             adminData = docSnap.data();
@@ -237,6 +245,7 @@
             if (!snap.empty) {
               adminData = snap.docs[0].data();
               adminDocId = snap.docs[0].id;
+              collName = "centreAdministrators";
             } else {
               // Check legacy admins collection for backward compatibility
               const qLegacy = query(collection(db, "admins"), where("adminId", "==", adminId), where("role", "==", "Centre Admin"));
@@ -244,6 +253,7 @@
               if (!snapLegacy.empty) {
                 adminData = snapLegacy.docs[0].data();
                 adminDocId = snapLegacy.docs[0].id;
+                collName = "admins";
               }
             }
           }
@@ -263,20 +273,17 @@
             return;
           }
           
-          // 3. Retrieve the hidden Firebase email
-          const email = adminData.hiddenEmail || adminData.email;
-          if (!email) {
-            window.showToast("No registered email found for this Administrator ID.", "error");
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = `<i class="fa-solid fa-shield-halved"></i> Sign In`;
-            return;
+          // 3. Verify password against plain-text or SHA-256 hash in Firestore
+          const enteredHash = await sha256(password);
+          const dbPassword = adminData.password || "";
+          const dbPasswordHash = adminData.passwordHash || "";
+
+          const isMatch = (password === dbPassword) || (enteredHash === dbPasswordHash);
+          if (!isMatch) {
+            throw new Error("Access Denied. Invalid password credentials.");
           }
           
-          // 4. Authenticate with Firebase using the hidden email and password
-          await signInWithEmailAndPassword(auth, email, password);
-          
           // Update last login
-          const collName = adminData.hiddenEmail ? "centreAdministrators" : "admins";
           await updateDoc(doc(db, collName, adminDocId), { lastLogin: new Date().toISOString() });
           
           // Save session
@@ -302,7 +309,7 @@
         } catch (err) {
           console.error("❌ Centre Login error:", err);
           let errorMsg = err.message;
-          if (err.code === "auth/invalid-credential" || err.code === "auth/user-not-found" || err.code === "auth/wrong-password") {
+          if (err.code === "auth/invalid-credential" || err.code === "auth/user-not-found" || err.code === "auth/wrong-password" || err.message.includes("password credentials")) {
             errorMsg = "Access Denied. Invalid password credentials.";
           }
           window.showToast(errorMsg, "error");
