@@ -103,9 +103,12 @@
           <!-- Password Field -->
           <div style="margin-bottom: 1.25rem;">
             <label for="password" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: block;">Password</label>
-            <div style="position: relative;">
-              <i class="fa-solid fa-lock" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--primary); opacity: 0.7;"></i>
-              <input type="password" id="password" style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.75rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 0.95rem;" placeholder="••••••••" required>
+            <div style="position: relative; display: flex; align-items: center;">
+              <i class="fa-solid fa-lock" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--primary); opacity: 0.7; pointer-events: none;"></i>
+              <input type="password" id="password" style="width: 100%; padding: 0.75rem 2.5rem 0.75rem 2.75rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 0.95rem;" placeholder="••••••••" required>
+              <button type="button" class="btn-toggle-password" id="togglePasswordBtn" onclick="togglePasswordVisibility()" aria-label="Toggle Password Visibility" style="position: absolute; right: 0.75rem; background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1rem; display: flex; align-items: center; justify-content: center; height: 100%; width: 2rem; outline: none; padding: 0;">
+                <i class="fa-solid fa-eye" id="passwordEyeIcon" style="color: var(--primary); opacity: 0.7;"></i>
+              </button>
             </div>
           </div>
 
@@ -191,6 +194,23 @@
         setTimeout(() => toast.remove(), 300);
       }, 4000);
     };
+
+    // Toggle password visibility helper
+    window.togglePasswordVisibility = function() {
+      const passwordInput = document.getElementById("password");
+      const eyeIcon = document.getElementById("passwordEyeIcon");
+      if (passwordInput && eyeIcon) {
+        if (passwordInput.type === "password") {
+          passwordInput.type = "text";
+          eyeIcon.className = "fa-solid fa-eye-slash";
+          eyeIcon.style.color = "var(--primary)";
+        } else {
+          passwordInput.type = "password";
+          eyeIcon.className = "fa-solid fa-eye";
+          eyeIcon.style.color = "var(--primary)";
+        }
+      }
+    };
   </script>
 
   <!-- Login Module -->
@@ -206,13 +226,6 @@
     const db = getFirestore(app);
 
     const SESSION_KEY = "dimabin_admin_session";
-
-    async function sha256(message) {
-      const msgBuffer = new TextEncoder().encode(message);
-      const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
-    }
 
     const form = document.getElementById("centreAdminLoginForm");
     if (form) {
@@ -273,13 +286,17 @@
             return;
           }
           
-          // 3. Verify password against plain-text or SHA-256 hash in Firestore
-          const enteredHash = await sha256(password);
-          const dbPassword = adminData.password || "";
-          const dbPasswordHash = adminData.passwordHash || "";
+          // 3. Authenticate against Firebase Authentication using email & password
+          const email = adminData.email || adminData.hiddenEmail;
+          if (!email) {
+            throw new Error("Administrator profile does not have a registered email address.");
+          }
 
-          const isMatch = (password === dbPassword) || (enteredHash === dbPasswordHash);
-          if (!isMatch) {
+          console.log(`🔐 [Centre Admin Login] Authenticating "${adminId}" with Firebase Auth email "${email}"...`);
+          try {
+            await signInWithEmailAndPassword(auth, email, password);
+          } catch (authErr) {
+            console.error("❌ Firebase Auth sign-in failed:", authErr);
             throw new Error("Access Denied. Invalid password credentials.");
           }
           

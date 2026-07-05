@@ -1,5 +1,6 @@
 import { db, auth } from './firebase-init.js';
 import { getEmailJSConfig, saveEmailJSConfig, DEFAULT_EMAILJS_CONFIG, prepareAndLogEmail } from './emailjs-config.js';
+import firebaseConfig from './firebase-config-env.js';
 
 // Import dynamic Firebase Auth and Firestore methods
 const {
@@ -10,8 +11,10 @@ const {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  updatePassword
 } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js");
+const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
 
 const SESSION_KEY = "dimabin_admin_session";
 const INACTIVITY_LIMIT_MS = 15 * 60 * 1000; // 15 minutes in milliseconds
@@ -5817,15 +5820,32 @@ if (createCentreAdminForm) {
       }
       console.log(`✅ [Centre Admin Creation] Success: Email "${email}" is unique.`);
 
-      // 4. Hash password
-      console.log(`🔍 [Centre Admin Creation] Step 4: Hashing default administrative password...`);
+      // 4. Create Firebase Auth user in a temporary context so we do not log out the Super Admin
+      console.log(`🔐 [Centre Admin Creation] Step 4: Registering user in Firebase Authentication...`);
+      let firebaseUid = "";
+      try {
+        const tempAppName = `temp_admin_create_${Date.now()}`;
+        const tempApp = initializeApp(firebaseConfig, tempAppName);
+        const tempAuth = getAuth(tempApp);
+        const userCred = await createUserWithEmailAndPassword(tempAuth, email, tempPassword);
+        firebaseUid = userCred.user.uid;
+        console.log(`✅ [Centre Admin Creation] Created Firebase Authentication user successfully. UID: ${firebaseUid}`);
+        await signOut(tempAuth);
+      } catch (authErr) {
+        console.error(`❌ [Centre Admin Creation] Firebase Authentication creation failed:`, authErr);
+        throw new Error(`Firebase Auth Creation Failed: ${authErr.message}`);
+      }
+
+      // 5. Hash password
+      console.log(`🔍 [Centre Admin Creation] Step 5: Hashing default administrative password...`);
       const hashedPass = await sha256(tempPassword);
       console.log(`✅ [Centre Admin Creation] Password hashed successfully.`);
 
-      // 5. Save to Firestore centreAdministrators collection
-      console.log(`🔍 [Centre Admin Creation] Step 5: Compiling and saving administrator profile data to Firestore...`);
+      // 6. Save to Firestore centreAdministrators collection
+      console.log(`🔍 [Centre Admin Creation] Step 6: Compiling and saving administrator profile data to Firestore...`);
       const centre = allStudyCentres.find(c => c.id === studyCentreId);
       const adminDocData = {
+        uid: firebaseUid,
         administratorId: adminId,
         adminId: adminId, // keep for compatibility
         hiddenEmail: email, // keep for compatibility
@@ -5881,6 +5901,7 @@ window.resetCentreAdminPassword = async function(adminDocId) {
 
     const adm = res.snap.data();
     const adminEmail = adm.hiddenEmail || adm.email || "";
+    const oldPassword = adm.password || "";
     
     if (confirm(`Are you sure you want to reset the login password for Administrator "${adm.fullName}"?`)) {
       window.showToast("Resetting credentials...", "info");
@@ -5888,10 +5909,47 @@ window.resetCentreAdminPassword = async function(adminDocId) {
       const randHex = Math.random().toString(36).substring(2, 6).toUpperCase();
       const newTempPassword = `Dimabin@2026${randHex}`;
 
+      console.log(`🔐 [Centre Admin Password Reset] Initiating reset for ${adminEmail}...`);
+      
+      let firebaseUid = adm.uid || "";
+      const tempAppName = `temp_admin_reset_${Date.now()}`;
+      const tempApp = initializeApp(firebaseConfig, tempAppName);
+      const tempAuth = getAuth(tempApp);
+
+      try {
+        if (oldPassword) {
+          console.log(`🔑 [Centre Admin Password Reset] Attempting to sign in to update password...`);
+          try {
+            const userCred = await signInWithEmailAndPassword(tempAuth, adminEmail, oldPassword);
+            firebaseUid = userCred.user.uid;
+            await updatePassword(tempAuth.currentUser, newTempPassword);
+            console.log(`✅ [Centre Admin Password Reset] Updated password in Firebase Auth successfully.`);
+            await signOut(tempAuth);
+          } catch (signInErr) {
+            console.warn(`⚠️ [Centre Admin Password Reset] Sign in failed (${signInErr.message}), attempting user creation...`);
+            // If sign in fails, perhaps user wasn't in Auth yet. Let's try creating them.
+            const userCred = await createUserWithEmailAndPassword(tempAuth, adminEmail, newTempPassword);
+            firebaseUid = userCred.user.uid;
+            console.log(`✅ [Centre Admin Password Reset] Created new user in Firebase Auth.`);
+            await signOut(tempAuth);
+          }
+        } else {
+          console.log(`➕ [Centre Admin Password Reset] No old password found. Creating user in Firebase Auth...`);
+          const userCred = await createUserWithEmailAndPassword(tempAuth, adminEmail, newTempPassword);
+          firebaseUid = userCred.user.uid;
+          console.log(`✅ [Centre Admin Password Reset] Created new user in Firebase Auth.`);
+          await signOut(tempAuth);
+        }
+      } catch (authErr) {
+        console.error(`❌ [Centre Admin Password Reset] Firebase Auth update/creation failed:`, authErr);
+        throw new Error(`Firebase Auth Update Failed: ${authErr.message}`);
+      }
+
       const hashedPass = await sha256(newTempPassword);
       await updateDoc(res.ref, {
         password: newTempPassword,
         passwordHash: hashedPass,
+        uid: firebaseUid,
         updatedAt: new Date().toISOString()
       });
 
