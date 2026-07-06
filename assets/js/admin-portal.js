@@ -491,6 +491,8 @@ document.querySelectorAll(".sidebar-nav-btn").forEach(btn => {
       initStudyCentresTab();
     } else if (targetTab === "announcements") {
       initAnnouncementsTab();
+    } else if (targetTab === "courses-allocation") {
+      initCoursesAllocationTab();
     } else if (targetTab === "administration") {
       if (!currentAdminDoc || currentAdminDoc.role !== "Super Admin") {
         window.showToast("Access Denied: Only Super Administrators can access the Administration Console.", "error");
@@ -6538,9 +6540,421 @@ window.setupCentreAdminSidebar = function(centreId, centreName) {
       newEl.addEventListener("click", () => {
         document.querySelectorAll("#centreAdminSidebarNav .sidebar-nav-btn").forEach(btn => btn.classList.remove("active"));
         newEl.classList.add("active");
-        openStudyCentrePage(centreId, b.subtab);
+        if (b.id === "btnCentreAllocation") {
+          document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+          const targetTab = document.getElementById("tab-courses-allocation");
+          if (targetTab) targetTab.classList.add("active");
+          initCoursesAllocationTab();
+        } else {
+          openStudyCentrePage(centreId, b.subtab);
+        }
       });
     }
+  });
+};
+
+// --- CORE COURSE ALLOCATION MODULE ---
+
+window.initCoursesAllocationTab = function() {
+  const lecturerSelect = document.getElementById("allocationLecturerSelect");
+  if (!lecturerSelect) return;
+
+  // Initialize lecturers list in dropdown
+  const isCentreAdmin = currentAdminDoc && currentAdminDoc.role === "Centre Admin";
+  const centreId = isCentreAdmin ? currentAdminDoc.assignedStudyCentreId : null;
+
+  const relevantLecturers = allLecturers.filter(l => {
+    if (isCentreAdmin) {
+      return l.assignedStudyCentreIds && l.assignedStudyCentreIds.includes(centreId);
+    }
+    return true;
+  });
+
+  lecturerSelect.innerHTML = '<option value="">-- Choose Lecturer --</option>' +
+    relevantLecturers.map(l => `<option value="${l.id}">${l.title || ""} ${l.fullName} (${l.lecturerId || l.id})</option>`).join("");
+
+  // Attach dropdown change event
+  // Remove existing listeners if any
+  const newSelect = lecturerSelect.cloneNode(true);
+  lecturerSelect.parentNode.replaceChild(newSelect, lecturerSelect);
+
+  newSelect.addEventListener("change", (e) => {
+    const val = e.target.value;
+    const metaDisplay = document.getElementById("allocationLecMetaDisplay");
+
+    if (!val) {
+      if (metaDisplay) metaDisplay.style.display = "none";
+      renderAllocCoursesCheckboxes(null);
+      return;
+    }
+
+    const selectedLec = relevantLecturers.find(l => l.id === val);
+    if (!selectedLec) return;
+
+    // Populate metadata display
+    const deptSpan = document.getElementById("allocMetaDept");
+    const posSpan = document.getElementById("allocMetaPos");
+    const emailSpan = document.getElementById("allocMetaEmail");
+    const countSpan = document.getElementById("allocMetaCount");
+
+    if (deptSpan) deptSpan.textContent = selectedLec.department || "General";
+    if (posSpan) posSpan.textContent = selectedLec.position || "Lecturer";
+    if (emailSpan) emailSpan.textContent = selectedLec.email || "-";
+    if (countSpan) countSpan.textContent = (selectedLec.coursesAssigned || selectedLec.assignedCourses || []).length;
+
+    if (metaDisplay) metaDisplay.style.display = "block";
+
+    // Load active courses checkboxes pre-checked with assigned ones
+    renderAllocCoursesCheckboxes(selectedLec);
+  });
+
+  // Attach search and filter events to assignments table
+  const tableSearch = document.getElementById("coursesAllocationSearch");
+  const semesterFilter = document.getElementById("coursesAllocationSemesterFilter");
+
+  if (tableSearch && !tableSearch.dataset.listenerAttached) {
+    tableSearch.addEventListener("input", () => renderCoursesAllocationTable());
+    tableSearch.dataset.listenerAttached = "true";
+  }
+
+  if (semesterFilter && !semesterFilter.dataset.listenerAttached) {
+    semesterFilter.addEventListener("change", () => renderCoursesAllocationTable());
+    semesterFilter.dataset.listenerAttached = "true";
+  }
+
+  // Bind Bulk buttons and Save buttons
+  if (!window.coursesAllocationListenersBound) {
+    const selectAllBtn = document.getElementById("btnAllocSelectAll");
+    if (selectAllBtn) {
+      selectAllBtn.addEventListener("click", () => {
+        document.querySelectorAll(".alloc-course-checkbox").forEach(chk => {
+          chk.checked = true;
+          const label = chk.closest("label");
+          if (label) label.style.borderColor = "var(--primary)";
+        });
+        updateSelectedCoursesCount();
+      });
+    }
+
+    const clearAllBtn = document.getElementById("btnAllocClearAll");
+    if (clearAllBtn) {
+      clearAllBtn.addEventListener("click", () => {
+        document.querySelectorAll(".alloc-course-checkbox").forEach(chk => {
+          chk.checked = false;
+          const label = chk.closest("label");
+          if (label) label.style.borderColor = "var(--border-color)";
+        });
+        updateSelectedCoursesCount();
+      });
+    }
+
+    const saveBtn = document.getElementById("btnSaveCourseAllocation");
+    if (saveBtn) {
+      saveBtn.addEventListener("click", async () => {
+        const selectEl = document.getElementById("allocationLecturerSelect");
+        const lecId = selectEl ? selectEl.value : "";
+        if (!lecId) {
+          window.showToast("Please select a lecturer first.", "warning");
+          return;
+        }
+
+        const selectedLec = allLecturers.find(l => l.id === lecId);
+        if (!selectedLec) return;
+
+        const checkedBoxes = document.querySelectorAll(".alloc-course-checkbox:checked");
+        const selectedCodes = Array.from(checkedBoxes).map(chk => chk.value);
+
+        try {
+          window.showToast(`Saving course allocations for ${selectedLec.fullName}...`, "info");
+
+          const allocationsMetadata = selectedLec.allocationsMetadata || {};
+          const nowStr = new Date().toISOString();
+
+          // Add newly checked allocations
+          selectedCodes.forEach(code => {
+            if (!allocationsMetadata[code]) {
+              allocationsMetadata[code] = {
+                assignedAt: nowStr
+              };
+            }
+          });
+
+          // Delete deselected allocations
+          Object.keys(allocationsMetadata).forEach(code => {
+            if (!selectedCodes.includes(code)) {
+              delete allocationsMetadata[code];
+            }
+          });
+
+          const docRef = doc(db, "lecturers", lecId);
+          await updateDoc(docRef, {
+            coursesAssigned: selectedCodes,
+            assignedCourses: selectedCodes,
+            allocationsMetadata: allocationsMetadata,
+            updatedAt: nowStr
+          });
+
+          window.showToast(`Successfully updated syllabus allocations for ${selectedLec.fullName}!`, "success");
+          await loadLecturers();
+
+          // Refresh the checkboxes and registry table
+          const refreshedLec = allLecturers.find(l => l.id === lecId);
+          renderAllocCoursesCheckboxes(refreshedLec);
+          renderCoursesAllocationTable();
+
+          const countSpan = document.getElementById("allocMetaCount");
+          if (countSpan) countSpan.textContent = selectedCodes.length;
+
+        } catch (err) {
+          console.error("❌ Failed to save course allocations:", err);
+          window.showToast("Failed to save course allocations: " + err.message, "error");
+        }
+      });
+    }
+
+    window.coursesAllocationListenersBound = true;
+  }
+
+  // Render initial assignments table
+  renderCoursesAllocationTable();
+};
+
+window.renderAllocCoursesCheckboxes = function(selectedLec) {
+  const container = document.getElementById("allocCoursesContainer");
+  if (!container) return;
+
+  if (!selectedLec) {
+    container.innerHTML = `
+      <div style="color: var(--text-muted); font-size: 0.95rem; text-align: center; padding: 2rem;">
+        <i class="fa-solid fa-arrow-left" style="margin-right: 0.5rem; color: var(--accent);"></i> Select a facilitator on the left to activate syllabus allocation fields.
+      </div>
+    `;
+    const sAll = document.getElementById("btnAllocSelectAll");
+    const cAll = document.getElementById("btnAllocClearAll");
+    const saveBtn = document.getElementById("btnSaveCourseAllocation");
+    if (sAll) sAll.disabled = true;
+    if (cAll) cAll.disabled = true;
+    if (saveBtn) saveBtn.disabled = true;
+    return;
+  }
+
+  const sAll = document.getElementById("btnAllocSelectAll");
+  const cAll = document.getElementById("btnAllocClearAll");
+  const saveBtn = document.getElementById("btnSaveCourseAllocation");
+  if (sAll) sAll.disabled = false;
+  if (cAll) cAll.disabled = false;
+  if (saveBtn) saveBtn.disabled = false;
+
+  const activeCourses = allCourses.filter(c => c.status !== "Inactive");
+  const firstSemesterCourses = activeCourses.filter(c => c.semester === "First Semester");
+  const secondSemesterCourses = activeCourses.filter(c => c.semester === "Second Semester");
+
+  const assignedCourses = selectedLec.coursesAssigned || selectedLec.assignedCourses || [];
+
+  const renderGroup = (title, courses) => {
+    if (courses.length === 0) {
+      return `<p style="color: var(--text-muted); font-size: 0.85rem; font-style: italic; padding: 0.5rem 0;">No active courses in this semester.</p>`;
+    }
+    return `
+      <div style="margin-bottom: 1rem;">
+        <h4 style="font-size: 0.9rem; font-weight: 700; color: var(--primary); text-transform: uppercase; border-bottom: 1px dashed var(--border-color); padding-bottom: 0.35rem; margin-bottom: 0.75rem;">${title}</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem;">
+          ${courses.map(c => {
+            const code = c.courseCode || c.id || "";
+            const name = c.courseTitle || c.name || "";
+            const isChecked = assignedCourses.includes(code) ? "checked" : "";
+            return `
+              <label style="display: flex; align-items: flex-start; gap: 0.6rem; background-color: var(--bg-slate); padding: 0.75rem 1rem; border-radius: 6px; border: 1.5px solid ${isChecked ? "var(--primary)" : "var(--border-color)"}; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; position: relative;">
+                <input type="checkbox" class="alloc-course-checkbox" value="${code}" data-semester="${c.semester}" ${isChecked} style="margin-top: 0.15rem; accent-color: var(--primary);">
+                <div style="flex-grow: 1;">
+                  <span style="font-weight: 700; color: var(--primary); display: block; font-family: monospace;">${code}</span>
+                  <span style="color: var(--text-dark); font-weight: 500; display: block; line-height: 1.3; margin-top: 0.15rem;">${name}</span>
+                  <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">${c.department || ""} • ${c.creditUnit || 0} Units</span>
+                </div>
+              </label>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
+  };
+
+  container.innerHTML = `
+    ${renderGroup("First Semester Curriculum", firstSemesterCourses)}
+    <div style="margin-top: 1rem;"></div>
+    ${renderGroup("Second Semester Curriculum", secondSemesterCourses)}
+  `;
+
+  updateSelectedCoursesCount();
+
+  container.querySelectorAll(".alloc-course-checkbox").forEach(chk => {
+    chk.addEventListener("change", (e) => {
+      const label = e.target.closest("label");
+      if (label) {
+        if (e.target.checked) {
+          label.style.borderColor = "var(--primary)";
+        } else {
+          label.style.borderColor = "var(--border-color)";
+        }
+      }
+      updateSelectedCoursesCount();
+    });
+  });
+};
+
+window.updateSelectedCoursesCount = function() {
+  const display = document.getElementById("allocSelectedCoursesCountDisplay");
+  if (!display) return;
+  const count = document.querySelectorAll(".alloc-course-checkbox:checked").length;
+  display.textContent = `${count} selected`;
+};
+
+window.renderCoursesAllocationTable = function() {
+  const tbody = document.getElementById("coursesAllocationTableBody");
+  if (!tbody) return;
+
+  const searchQuery = (document.getElementById("coursesAllocationSearch")?.value || "").toLowerCase().trim();
+  const semesterFilter = document.getElementById("coursesAllocationSemesterFilter")?.value || "all";
+
+  const isCentreAdmin = currentAdminDoc && currentAdminDoc.role === "Centre Admin";
+  const centreId = isCentreAdmin ? currentAdminDoc.assignedStudyCentreId : null;
+
+  const relevantLecturers = allLecturers.filter(l => {
+    if (isCentreAdmin) {
+      return l.assignedStudyCentreIds && l.assignedStudyCentreIds.includes(centreId);
+    }
+    return true;
+  });
+
+  const allAllocations = [];
+  relevantLecturers.forEach(lec => {
+    const courses = lec.coursesAssigned || lec.assignedCourses || [];
+    courses.forEach(code => {
+      const course = allCourses.find(c => c.courseCode === code || c.id === code);
+      const meta = (lec.allocationsMetadata && lec.allocationsMetadata[code]) ? lec.allocationsMetadata[code] : null;
+      const assignedDate = meta && meta.assignedAt 
+        ? new Date(meta.assignedAt).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' })
+        : (lec.updatedAt ? new Date(lec.updatedAt).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' }) : "N/A");
+
+      allAllocations.push({
+        lecturerId: lec.id,
+        lecturerName: `${lec.title || ""} ${lec.fullName}`,
+        courseCode: code,
+        courseTitle: course ? (course.courseTitle || course.name || "") : "Unknown Course",
+        semester: course ? (course.semester || "First Semester") : "First Semester",
+        assignedDate: assignedDate,
+        rawAssignedDate: meta && meta.assignedAt ? meta.assignedAt : (lec.updatedAt || "")
+      });
+    });
+  });
+
+  let filteredAllocations = allAllocations.filter(alloc => {
+    const matchesSearch = 
+      alloc.lecturerName.toLowerCase().includes(searchQuery) ||
+      alloc.courseCode.toLowerCase().includes(searchQuery) ||
+      alloc.courseTitle.toLowerCase().includes(searchQuery);
+
+    const matchesSemester = semesterFilter === "all" || alloc.semester === semesterFilter;
+
+    return matchesSearch && matchesSemester;
+  });
+
+  filteredAllocations.sort((a, b) => b.rawAssignedDate.localeCompare(a.rawAssignedDate));
+
+  if (filteredAllocations.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+          <i class="fa-solid fa-folder-open" style="font-size: 2rem; display: block; margin-bottom: 0.5rem; color: var(--accent);"></i>
+          No active course allocations found matching criteria.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = filteredAllocations.map(alloc => {
+    return `
+      <tr style="border-bottom: 1.5px solid var(--border-color); transition: background 0.15s;">
+        <td style="padding: 1rem; font-weight: 600; color: var(--primary-dark);">${alloc.lecturerName}</td>
+        <td style="padding: 1rem; font-family: monospace; font-weight: 700; color: var(--primary);">${alloc.courseCode}</td>
+        <td style="padding: 1rem; font-weight: 500;">${alloc.courseTitle}</td>
+        <td style="padding: 1rem;"><span style="background-color: var(--bg-slate); color: var(--primary); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">${alloc.semester}</span></td>
+        <td style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem;"><i class="fa-regular fa-calendar"></i> ${alloc.assignedDate}</td>
+        <td style="padding: 1rem; text-align: center;">
+          <div style="display: inline-flex; gap: 0.5rem; align-items: center; justify-content: center;">
+            <button class="btn btn-sm btn-outline-primary btn-edit-allocation" data-lec-id="${alloc.lecturerId}" title="Edit Lecturer's Allocations" style="padding: 0.35rem; border-radius: 4px; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; border-color: rgba(31,59,130,0.3); color: var(--primary); background: transparent;">
+              <i class="fa-solid fa-user-gear"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger btn-remove-allocation" data-lec-id="${alloc.lecturerId}" data-course-code="${alloc.courseCode}" title="De-allocate Course" style="padding: 0.35rem; border-radius: 4px; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; border-color: rgba(220,53,69,0.3); color: var(--error); background: transparent;">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  // Attach event listeners
+  tbody.querySelectorAll(".btn-edit-allocation").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const lecId = btn.getAttribute("data-lec-id");
+      const selectEl = document.getElementById("allocationLecturerSelect");
+      if (selectEl) {
+        selectEl.value = lecId;
+        selectEl.dispatchEvent(new Event("change"));
+        document.getElementById("tab-courses-allocation").scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  });
+
+  tbody.querySelectorAll(".btn-remove-allocation").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const lecId = btn.getAttribute("data-lec-id");
+      const code = btn.getAttribute("data-course-code");
+      
+      const lec = allLecturers.find(l => l.id === lecId);
+      if (!lec) return;
+
+      const confirmed = confirm(`Are you sure you want to remove the allocation of course "${code}" from ${lec.fullName}?`);
+      if (!confirmed) return;
+
+      try {
+        window.showToast("Removing allocation...", "info");
+        
+        let arr = lec.coursesAssigned || lec.assignedCourses || [];
+        arr = arr.filter(c => c !== code);
+
+        const allocationsMetadata = lec.allocationsMetadata || {};
+        if (allocationsMetadata[code]) {
+          delete allocationsMetadata[code];
+        }
+
+        const docRef = doc(db, "lecturers", lecId);
+        await updateDoc(docRef, {
+          coursesAssigned: arr,
+          assignedCourses: arr,
+          allocationsMetadata: allocationsMetadata,
+          updatedAt: new Date().toISOString()
+        });
+
+        window.showToast("Allocation successfully removed.", "success");
+        await loadLecturers();
+        renderCoursesAllocationTable();
+
+        const currentLecId = document.getElementById("allocationLecturerSelect").value;
+        if (currentLecId === lecId) {
+          const refreshedLec = allLecturers.find(l => l.id === lecId);
+          renderAllocCoursesCheckboxes(refreshedLec);
+          const countSpan = document.getElementById("allocMetaCount");
+          if (countSpan) countSpan.textContent = arr.length;
+        }
+
+      } catch (err) {
+        console.error("❌ Failed to remove allocation:", err);
+        window.showToast("Failed to remove allocation: " + err.message, "error");
+      }
+    });
   });
 };
 
