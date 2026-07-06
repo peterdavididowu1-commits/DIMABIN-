@@ -1239,6 +1239,9 @@ async function loadSettings() {
         semester = d.semester || semester;
       }
       
+      window.activeAcademicSession = session;
+      window.activeAcademicSemester = semester;
+
       const headerSession = document.getElementById("headerAcademicSession");
       const headerSemester = document.getElementById("headerAcademicSemester");
       if (headerSession) headerSession.textContent = session;
@@ -1254,6 +1257,9 @@ async function loadSettings() {
       if (activeSessionDisplay) activeSessionDisplay.textContent = session;
       if (activeSemesterDisplay) activeSemesterDisplay.textContent = semester;
       
+      // Update global course checkboxes
+      populateCourseCheckboxes();
+
       // Update global dashboard information cards if they exist
       updateAllDashboardCards(session, semester);
     });
@@ -1620,24 +1626,62 @@ function populateCourseCheckboxes() {
   const editContainer = document.getElementById("editCourseAllocationCheckboxes");
   if (!container && !editContainer) return;
 
-  // Filter courses by active semester
-  const activeSem = window.activeAcademicSemester || "First Semester";
-  let allowedCourses = allCourses.filter(c => c.semester === activeSem);
-
-  // Filter courses by study centre if logged-in user is a Centre Admin
-  if (currentAdminDoc?.role === "Centre Admin") {
-    allowedCourses = allowedCourses.filter(c => c.studyCentreId === currentSelectedStudyCentreId || (c.assignedStudyCentreIds && c.assignedStudyCentreIds.includes(currentSelectedStudyCentreId)));
+  // Add change listener to department select once to trigger repopulation
+  const regLecDept = document.getElementById("regLecDepartment");
+  if (regLecDept && !regLecDept.dataset.listenerAttached) {
+    regLecDept.addEventListener("change", () => populateCourseCheckboxes());
+    regLecDept.dataset.listenerAttached = "true";
+  }
+  const editLecDept = document.getElementById("editLecDepartment");
+  if (editLecDept && !editLecDept.dataset.listenerAttached) {
+    editLecDept.addEventListener("change", () => populateCourseCheckboxes());
+    editLecDept.dataset.listenerAttached = "true";
   }
 
-  // Sort courses alphabetically by code
-  const sortedCourses = allowedCourses.sort((a, b) => (a.courseCode || a.code || "").localeCompare(b.courseCode || b.code || ""));
+  // Active coordinates
+  const activeSem = window.activeAcademicSemester || "First Semester";
 
+  // Filter courses for Register modal
+  let registerCourses = allCourses.filter(c => c.semester === activeSem && c.status === "Active");
+  if (currentSelectedStudyCentreId) {
+    registerCourses = registerCourses.filter(c => 
+      !c.studyCentreId || 
+      c.studyCentreId === "global" || 
+      c.studyCentreId === currentSelectedStudyCentreId || 
+      (c.assignedStudyCentreIds && c.assignedStudyCentreIds.includes(currentSelectedStudyCentreId))
+    );
+  }
+  const selectedDept = regLecDept ? regLecDept.value : "all";
+  if (selectedDept && selectedDept !== "all") {
+    registerCourses = registerCourses.filter(c => c.department === selectedDept || c.programme === selectedDept);
+  }
+
+  // Filter courses for Edit modal
+  let editCourses = allCourses.filter(c => c.semester === activeSem && c.status === "Active");
+  if (currentSelectedStudyCentreId) {
+    editCourses = editCourses.filter(c => 
+      !c.studyCentreId || 
+      c.studyCentreId === "global" || 
+      c.studyCentreId === currentSelectedStudyCentreId || 
+      (c.assignedStudyCentreIds && c.assignedStudyCentreIds.includes(currentSelectedStudyCentreId))
+    );
+  }
+  const selectedEditDept = editLecDept ? editLecDept.value : "all";
+  if (selectedEditDept && selectedEditDept !== "all") {
+    editCourses = editCourses.filter(c => c.department === selectedEditDept || c.programme === selectedEditDept);
+  }
+
+  // Sort alphabetically
+  registerCourses.sort((a, b) => (a.courseCode || "").localeCompare(b.courseCode || ""));
+  editCourses.sort((a, b) => (a.courseCode || "").localeCompare(b.courseCode || ""));
+
+  // Render Register courses
   let html = "";
-  if (sortedCourses.length === 0) {
-    html = `<div style="color: var(--text-muted); font-size: 0.9rem; grid-column: 1/-1; text-align: center; padding: 1rem;">No courses available in the syllabus repository.</div>`;
+  if (registerCourses.length === 0) {
+    html = `<div style="color: var(--text-muted); font-size: 0.9rem; grid-column: 1/-1; text-align: center; padding: 1rem;">No matching active courses available for this study centre, programme, and semester.</div>`;
   } else {
-    sortedCourses.forEach(c => {
-      const code = c.courseCode || c.code || c.id || "";
+    registerCourses.forEach(c => {
+      const code = c.courseCode || c.id || "";
       const name = c.courseTitle || c.name || "";
       html += `
         <label style="display: flex; align-items: flex-start; gap: 0.6rem; background-color: var(--bg-white); padding: 0.6rem 0.8rem; border-radius: 6px; border: 1.5px solid var(--border-color); cursor: pointer; font-size: 0.85rem; transition: border-color 0.2s;">
@@ -1649,12 +1693,13 @@ function populateCourseCheckboxes() {
   }
   if (container) container.innerHTML = html;
 
+  // Render Edit courses
   let editHtml = "";
-  if (sortedCourses.length === 0) {
-    editHtml = `<div style="color: var(--text-muted); font-size: 0.85rem; grid-column: 1/-1; text-align: center; padding: 1rem;">No courses available in the syllabus repository.</div>`;
+  if (editCourses.length === 0) {
+    editHtml = `<div style="color: var(--text-muted); font-size: 0.85rem; grid-column: 1/-1; text-align: center; padding: 1rem;">No matching active courses available for this study centre, programme, and semester.</div>`;
   } else {
-    sortedCourses.forEach(c => {
-      const code = c.courseCode || c.code || c.id || "";
+    editCourses.forEach(c => {
+      const code = c.courseCode || c.id || "";
       const name = c.courseTitle || c.name || "";
       editHtml += `
         <label style="display: flex; align-items: flex-start; gap: 0.5rem; background-color: var(--bg-white); padding: 0.5rem 0.7rem; border-radius: 6px; border: 1.5px solid var(--border-color); cursor: pointer; font-size: 0.8rem; transition: border-color 0.2s;">

@@ -127,6 +127,16 @@ async function renderCbtLists() {
   const upcomingContainer = document.getElementById("upcomingExamsContainer");
 
   try {
+    // Fetch active session and semester from timeline settings
+    const timelineSnap = await getDoc(doc(db, "settings", "timeline_settings"));
+    let activeSession = "2026/2027";
+    let activeSemester = "First Semester";
+    if (timelineSnap.exists()) {
+      const d = timelineSnap.data();
+      activeSession = d.session || activeSession;
+      activeSemester = d.semester || activeSemester;
+    }
+
     // 1. Fetch registrations for student courses
     const regQuery = query(collection(db, "registrations"), where("studentId", "==", currentStudentDoc.studentId));
     const regSnap = await getDocs(regQuery);
@@ -134,12 +144,15 @@ async function renderCbtLists() {
     let registeredCourses = [];
     regSnap.forEach(d => {
       const data = d.data();
-      if (Array.isArray(data.registeredCourses)) {
-        data.registeredCourses.forEach(code => {
-          if (!registeredCourses.includes(code)) {
-            registeredCourses.push(code);
-          }
-        });
+      // Only include registrations matching the active session and semester
+      if (data.academicSession === activeSession && data.semester === activeSemester) {
+        if (Array.isArray(data.registeredCourses)) {
+          data.registeredCourses.forEach(code => {
+            if (!registeredCourses.includes(code)) {
+              registeredCourses.push(code);
+            }
+          });
+        }
       }
     });
 
@@ -189,8 +202,12 @@ async function renderCbtLists() {
     const examSnap = await getDocs(query(collection(db, "cbtExams"), where("status", "==", "Published")));
     const publishedExams = examSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    // Filter matching courses
-    studentCbtExamsList = publishedExams.filter(ex => registeredCourses.includes(ex.courseCode));
+    // Filter matching courses and ensure they match active academic session & active semester
+    studentCbtExamsList = publishedExams.filter(ex => 
+      ex.academicSession === activeSession && 
+      ex.semester === activeSemester && 
+      registeredCourses.includes(ex.courseCode)
+    );
 
     if (studentCbtExamsList.length === 0) {
       const emptyMsg = `

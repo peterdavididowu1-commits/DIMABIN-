@@ -568,7 +568,7 @@ async function loadCoursesCatalog(regIsOpen) {
     });
 
     // 2. Fetch student course registration slip if existing
-    const regDocId = `${currentStudentDoc.studentId.replace(/\//g, "-")}_${timelineSettings.session.replace(/\//g, "-")}`;
+    const regDocId = `${currentStudentDoc.studentId.replace(/\//g, "-")}_${timelineSettings.session.replace(/\//g, "-")}_${timelineSettings.semester.replace(/\s+/g, "-")}`;
     const regSnap = await getDoc(doc(db, "registrations", regDocId));
     let existingReg = null;
 
@@ -797,13 +797,14 @@ if (courseRegForm) {
         totalUnits += parseInt(cb.getAttribute("data-credits") || "0", 10);
       });
 
-      const regDocId = `${currentStudentDoc.studentId.replace(/\//g, "-")}_${timelineSettings.session.replace(/\//g, "-")}`;
+      const regDocId = `${currentStudentDoc.studentId.replace(/\//g, "-")}_${timelineSettings.session.replace(/\//g, "-")}_${timelineSettings.semester.replace(/\s+/g, "-")}`;
       
       const payload = {
         studentId: currentStudentDoc.studentId,
         matricNumber: currentStudentDoc.matricNumber,
         fullName: currentStudentDoc.fullName,
         academicSession: timelineSettings.session,
+        semester: timelineSettings.semester,
         registeredCourses: selectedCodes,
         totalCreditUnits: totalUnits,
         registeredAt: new Date().toISOString()
