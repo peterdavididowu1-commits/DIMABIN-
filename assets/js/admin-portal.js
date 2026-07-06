@@ -4,7 +4,7 @@ import firebaseConfig from './firebase-config-env.js';
 
 // Import dynamic Firebase Auth and Firestore methods
 const {
-  collection, doc, getDoc, getDocs, setDoc, updateDoc, query, where, orderBy, limit, addDoc, deleteDoc
+  collection, doc, getDoc, getDocs, setDoc, updateDoc, query, where, orderBy, limit, addDoc, deleteDoc, onSnapshot
 } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
 const {
   sendPasswordResetEmail,
@@ -588,6 +588,7 @@ async function loadApplications() {
       allApplications.push({ id: d.id, ...d.data() });
     });
     renderApplicationsTable();
+    updateAllDashboardCards();
   } catch (err) {
     console.error("❌ Error loading applications:", err);
   }
@@ -669,6 +670,7 @@ async function loadStudents() {
       allStudents.push(d.data());
     });
     renderStudentsTable();
+    updateAllDashboardCards();
   } catch (err) {
     console.error("❌ Error loading students:", err);
   }
@@ -1228,25 +1230,33 @@ function showCredentialsReceipt(name, studentId, matric, password, email, progra
 async function loadSettings() {
   // Academic Timeline
   try {
-    const docSnap = await getDoc(doc(db, "settings", "timeline_settings"));
-    let session = "2026/2027";
-    let semester = "First Semester";
-    if (docSnap.exists()) {
-      const d = docSnap.data();
-      session = d.session || session;
-      semester = d.semester || semester;
-    } else {
-      await setDoc(doc(db, "settings", "timeline_settings"), { session, semester });
-    }
-    const settingsSession = document.getElementById("settingsSession");
-    const settingsSemester = document.getElementById("settingsSemester");
-    const activeSessionDisplay = document.getElementById("activeSessionDisplay");
-    const activeSemesterDisplay = document.getElementById("activeSemesterDisplay");
+    onSnapshot(doc(db, "settings", "timeline_settings"), (docSnap) => {
+      let session = "2026/2027";
+      let semester = "First Semester";
+      if (docSnap.exists()) {
+        const d = docSnap.data();
+        session = d.session || session;
+        semester = d.semester || semester;
+      }
+      
+      const headerSession = document.getElementById("headerAcademicSession");
+      const headerSemester = document.getElementById("headerAcademicSemester");
+      if (headerSession) headerSession.textContent = session;
+      if (headerSemester) headerSemester.textContent = semester;
 
-    if (settingsSession) settingsSession.value = session;
-    if (settingsSemester) settingsSemester.value = semester;
-    if (activeSessionDisplay) activeSessionDisplay.textContent = session;
-    if (activeSemesterDisplay) activeSemesterDisplay.textContent = semester;
+      const settingsSession = document.getElementById("settingsSession");
+      const settingsSemester = document.getElementById("settingsSemester");
+      const activeSessionDisplay = document.getElementById("activeSessionDisplay");
+      const activeSemesterDisplay = document.getElementById("activeSemesterDisplay");
+
+      if (settingsSession && document.activeElement !== settingsSession) settingsSession.value = session;
+      if (settingsSemester && document.activeElement !== settingsSemester) settingsSemester.value = semester;
+      if (activeSessionDisplay) activeSessionDisplay.textContent = session;
+      if (activeSemesterDisplay) activeSemesterDisplay.textContent = semester;
+      
+      // Update global dashboard information cards if they exist
+      updateAllDashboardCards(session, semester);
+    });
   } catch (err) {
     console.warn("⚠️ Failed to load timeline settings:", err);
   }
@@ -1265,6 +1275,77 @@ async function loadSettings() {
     console.warn("⚠️ Failed to load EmailJS configuration settings:", err);
   }
 }
+
+// Activity logging helper
+async function logActivity(action, details) {
+  try {
+    const userEmail = (auth && auth.currentUser) ? auth.currentUser.email : "System Admin";
+    await addDoc(collection(db, "activities"), {
+      action: action,
+      details: details,
+      user: userEmail,
+      timestamp: new Date().toISOString()
+    });
+    // Trigger card update after logging activity
+    updateAllDashboardCards();
+  } catch (err) {
+    console.warn("⚠️ Failed to log activity:", err);
+  }
+}
+
+// Dashboard Information Cards Updater
+async function updateAllDashboardCards(session, semester) {
+  try {
+    if (!session || !semester) {
+      const docSnap = await getDoc(doc(db, "settings", "timeline_settings"));
+      if (docSnap.exists()) {
+        const d = docSnap.data();
+        session = d.session || "2026/2027";
+        semester = d.semester || "First Semester";
+      } else {
+        session = "2026/2027";
+        semester = "First Semester";
+      }
+    }
+
+    // Current Academic Session and Semester
+    document.querySelectorAll(".global-session-card").forEach(el => el.textContent = session);
+    document.querySelectorAll(".global-semester-card").forEach(el => el.textContent = semester);
+
+    // Total Students
+    const studentsCount = (window.allStudents || allStudents || []).length;
+    document.querySelectorAll(".global-students-card").forEach(el => el.textContent = studentsCount);
+
+    // Total Lecturers
+    const lecturersCount = (window.allLecturers || allLecturers || []).length;
+    document.querySelectorAll(".global-lecturers-card").forEach(el => el.textContent = lecturersCount);
+
+    // Total Courses
+    const coursesCount = (window.allCourses || allCourses || []).length;
+    document.querySelectorAll(".global-courses-card").forEach(el => el.textContent = coursesCount);
+
+    // Pending Admissions
+    const pendingCount = (allApplications || []).filter(a => a.status === "Pending" || a.admissionStatus === "Pending").length;
+    document.querySelectorAll(".global-pending-card").forEach(el => el.textContent = pendingCount);
+
+    // Announcements
+    const announcementsCount = (window.allAnnouncements || allAnnouncements || []).length;
+    document.querySelectorAll(".global-announcements-card").forEach(el => el.textContent = announcementsCount);
+
+    // Recent Activities count
+    try {
+      const actSnap = await getDocs(collection(db, "activities"));
+      const activitiesCount = actSnap.size;
+      document.querySelectorAll(".global-activities-card").forEach(el => el.textContent = activitiesCount);
+    } catch (e) {
+      document.querySelectorAll(".global-activities-card").forEach(el => el.textContent = "0");
+    }
+  } catch (err) {
+    console.warn("Failed to update dashboard information cards:", err);
+  }
+}
+window.updateAllDashboardCards = updateAllDashboardCards;
+window.logActivity = logActivity;
 
 // Timeline save trigger
 const btnSaveTimeline = document.getElementById("btnSaveTimeline");
@@ -1528,6 +1609,7 @@ async function loadCourses() {
     // 5. Populate Allocation Facilitator selectors
     populateCourseAllocationLecturers();
     renderCourseAllocationGrid();
+    updateAllDashboardCards();
   } catch (err) {
     console.warn("⚠️ Failed to load courses catalog:", err);
   }
@@ -1538,8 +1620,11 @@ function populateCourseCheckboxes() {
   const editContainer = document.getElementById("editCourseAllocationCheckboxes");
   if (!container && !editContainer) return;
 
+  // Filter courses by active semester
+  const activeSem = window.activeAcademicSemester || "First Semester";
+  let allowedCourses = allCourses.filter(c => c.semester === activeSem);
+
   // Filter courses by study centre if logged-in user is a Centre Admin
-  let allowedCourses = [...allCourses];
   if (currentAdminDoc?.role === "Centre Admin") {
     allowedCourses = allowedCourses.filter(c => c.studyCentreId === currentSelectedStudyCentreId || (c.assignedStudyCentreIds && c.assignedStudyCentreIds.includes(currentSelectedStudyCentreId)));
   }
@@ -2129,15 +2214,12 @@ function renderCourseAllocationGrid(lecturer = null) {
   }
 
   // Gather active courses only
-  const activeCourses = allCourses.filter(c => c.status === "Active");
+  const activeSemester = window.activeAcademicSemester || "First Semester";
+  const activeCourses = allCourses.filter(c => c.status === "Active" && c.semester === activeSemester);
   if (activeCourses.length === 0) {
-    container.innerHTML = `<div style="color: var(--text-muted); padding: 1.5rem; text-align: center;">No active courses available in the curriculum. Ensure courses are activated inside Course Management.</div>`;
+    container.innerHTML = `<div style="color: var(--text-muted); padding: 1.5rem; text-align: center;">No active courses available in the curriculum for ${activeSemester}. Ensure courses are activated inside Course Management.</div>`;
     return;
   }
-
-  // Separate courses by semester
-  const firstSemesterCourses = activeCourses.filter(c => c.semester === "First Semester");
-  const secondSemesterCourses = activeCourses.filter(c => c.semester === "Second Semester");
 
   const lecturerAllocated = lecturer.coursesAssigned || lecturer.assignedCourses || [];
 
@@ -2178,8 +2260,7 @@ function renderCourseAllocationGrid(lecturer = null) {
     return sectionHtml;
   };
 
-  html += renderSemesterSection("First Semester Curriculum", firstSemesterCourses);
-  html += renderSemesterSection("Second Semester Curriculum", secondSemesterCourses);
+  html += renderSemesterSection(`${activeSemester} Curriculum`, activeCourses);
 
   container.innerHTML = html;
   updateAllocationCheckboxCount();
@@ -2274,6 +2355,7 @@ async function loadLecturers() {
     if (typeof currentSelectedStudyCentreId !== 'undefined' && currentSelectedStudyCentreId) {
       renderCentreLecturers(currentSelectedStudyCentreId);
     }
+    updateAllDashboardCards();
   } catch (err) {
     console.error("❌ Failed to fetch lecturer registry:", err);
     window.showToast("Failed to fetch lecturer registry.", "error");

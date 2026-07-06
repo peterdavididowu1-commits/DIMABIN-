@@ -1203,6 +1203,28 @@
       <!-- Dashboard Main Work Area -->
       <main class="dashboard-main">
         
+        <!-- Academic Header -->
+        <div class="academic-header" style="background: linear-gradient(135deg, var(--primary) 0%, #2A4FA3 100%); color: white; padding: 1.25rem 1.75rem; border-radius: 8px; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(31, 59, 130, 0.15); border-left: 5px solid var(--accent);">
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="background: rgba(255,255,255,0.15); width: 44px; height: 44px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+              <i class="fa-solid fa-calendar-days" style="color: var(--accent);"></i>
+            </div>
+            <div>
+              <h4 style="margin: 0; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85;">Current Academic Session</h4>
+              <p style="margin: 0; font-size: 1.35rem; font-weight: 700;" id="headerAcademicSession">Loading...</p>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="background: rgba(255,255,255,0.15); width: 44px; height: 44px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+              <i class="fa-solid fa-clock" style="color: var(--accent);"></i>
+            </div>
+            <div>
+              <h4 style="margin: 0; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85;">Current Semester</h4>
+              <p style="margin: 0; font-size: 1.35rem; font-weight: 700;" id="headerAcademicSemester">Loading...</p>
+            </div>
+          </div>
+        </div>
+        
         <!-- Centralized Portal Subpage Topbar with Back Button -->
         <div id="portalTopbar" style="background-color: var(--bg-white); border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; display: none; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;" class="no-print">
           <button class="btn" onclick="switchTab('overview')" style="background-color: var(--bg-slate); color: var(--primary); border: 1.5px solid var(--border-color); font-weight: 700; padding: 0.5rem 1.2rem; border-radius: var(--border-radius-md); display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-family: 'Poppins', sans-serif; font-size: 0.85rem; transition: all 0.2s;">
@@ -1233,6 +1255,71 @@
               <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); font-weight: 700; margin-bottom: 0.25rem;">Active Academic Period</div>
               <div style="font-size: 0.95rem; font-weight: 600; margin-bottom: 0.15rem;"><i class="fa-solid fa-calendar-days" style="margin-right: 4px; font-size: 0.85rem;"></i> Session: <span id="currentSessionDisplay">Loading...</span></div>
               <div style="font-size: 0.95rem; font-weight: 600;"><i class="fa-solid fa-clock" style="margin-right: 4px; font-size: 0.85rem;"></i> Semester: <span id="currentSemesterDisplay">Loading...</span></div>
+            </div>
+          </div>
+
+          <!-- Centralized Academic Status Coordinates Panel -->
+          <div class="academic-stats-panel" style="background-color: var(--bg-white); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); padding: 1.5rem; margin-bottom: 2rem; box-shadow: var(--shadow-sm);">
+            <h3 class="font-display" style="color: var(--primary); font-size: 1.15rem; margin-bottom: 1.25rem; border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; font-weight: 700;">
+              <i class="fa-solid fa-circle-nodes" style="color: var(--accent);"></i> Centralized Academic Status Coordinates
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+              <div style="background-color: var(--bg-slate); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; display: flex; align-items: center; gap: 1rem;">
+                <div style="background-color: rgba(31,59,130,0.1); color: var(--primary); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;"><i class="fa-solid fa-calendar-days"></i></div>
+                <div>
+                  <h5 style="margin: 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Current Session</h5>
+                  <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary);" class="global-session-card">Loading...</div>
+                </div>
+              </div>
+              <div style="background-color: var(--bg-slate); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; display: flex; align-items: center; gap: 1rem;">
+                <div style="background-color: rgba(230,162,44,0.1); color: #E6A22C; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;"><i class="fa-solid fa-clock"></i></div>
+                <div>
+                  <h5 style="margin: 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Current Semester</h5>
+                  <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary);" class="global-semester-card">Loading...</div>
+                </div>
+              </div>
+              <div style="background-color: var(--bg-slate); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; display: flex; align-items: center; gap: 1rem;">
+                <div style="background-color: rgba(111,66,193,0.1); color: #6F42C1; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;"><i class="fa-solid fa-user-graduate"></i></div>
+                <div>
+                  <h5 style="margin: 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Total Students</h5>
+                  <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary);" class="global-students-card">0</div>
+                </div>
+              </div>
+              <div style="background-color: var(--bg-slate); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; display: flex; align-items: center; gap: 1rem;">
+                <div style="background-color: rgba(40,167,69,0.1); color: #28A745; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;"><i class="fa-solid fa-chalkboard-user"></i></div>
+                <div>
+                  <h5 style="margin: 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Total Lecturers</h5>
+                  <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary);" class="global-lecturers-card">0</div>
+                </div>
+              </div>
+              <div style="background-color: var(--bg-slate); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; display: flex; align-items: center; gap: 1rem;">
+                <div style="background-color: rgba(23,162,184,0.1); color: #17A2B8; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;"><i class="fa-solid fa-book-open"></i></div>
+                <div>
+                  <h5 style="margin: 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Total Courses</h5>
+                  <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary);" class="global-courses-card">0</div>
+                </div>
+              </div>
+              <div style="background-color: var(--bg-slate); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; display: flex; align-items: center; gap: 1rem;">
+                <div style="background-color: rgba(220,53,69,0.1); color: #DC3545; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;"><i class="fa-solid fa-hourglass-half"></i></div>
+                <div>
+                  <h5 style="margin: 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Pending Admissions</h5>
+                  <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary);" class="global-pending-card">0</div>
+                </div>
+              </div>
+              <div style="background-color: var(--bg-slate); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; display: flex; align-items: center; gap: 1rem;">
+                <div style="background-color: rgba(108,117,125,0.1); color: #6C757D; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;"><i class="fa-solid fa-bullhorn"></i></div>
+                <div>
+                  <h5 style="margin: 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Announcements</h5>
+                  <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary);" class="global-announcements-card">0</div>
+                </div>
+              </div>
+              <div style="background-color: var(--bg-slate); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; display: flex; align-items: center; gap: 1rem;">
+                <div style="background-color: rgba(0,123,255,0.1); color: #007BFF; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;"><i class="fa-solid fa-list-ul"></i></div>
+                <div>
+                  <h5 style="margin: 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Recent Activities</h5>
+                  <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary);" class="global-activities-card">0</div>
+                </div>
+              </div>
             </div>
           </div>
 

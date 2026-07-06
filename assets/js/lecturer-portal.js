@@ -6,7 +6,7 @@ import { prepareAndLogEmail } from './emailjs-config.js';
 
 // Import Firestore methods dynamically
 const {
-  collection, doc, getDoc, getDocs, setDoc, updateDoc, query, where, orderBy, limit
+  collection, doc, getDoc, getDocs, setDoc, updateDoc, query, where, orderBy, limit, onSnapshot
 } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
 
 // Import Auth methods dynamically
@@ -77,21 +77,34 @@ function resetInactivityTimer() {
 // Load App Initial State
 document.addEventListener("DOMContentLoaded", async () => {
   try {
-    // 1. Fetch Timeline coordinates
-    const settingsSnap = await getDoc(doc(db, "settings", "timeline_settings"));
-    if (settingsSnap.exists()) {
-      const data = settingsSnap.data();
-      timelineSettings.session = data.session || timelineSettings.session;
-      timelineSettings.semester = data.semester || timelineSettings.semester;
-    }
-    
-    const sessDisp = document.getElementById("currentSessionDisplay");
-    const semDisp = document.getElementById("currentSemesterDisplay");
-    if (sessDisp) sessDisp.textContent = timelineSettings.session;
-    if (semDisp) semDisp.textContent = timelineSettings.semester;
+    // 1. Listen to Timeline coordinates in real-time
+    onSnapshot(doc(db, "settings", "timeline_settings"), (docSnap) => {
+      let session = "2026/2027";
+      let semester = "First Semester";
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        session = data.session || session;
+        semester = data.semester || semester;
+      }
+      timelineSettings.session = session;
+      timelineSettings.semester = semester;
+
+      const sessDisp = document.getElementById("currentSessionDisplay");
+      const semDisp = document.getElementById("currentSemesterDisplay");
+      if (sessDisp) sessDisp.textContent = session;
+      if (semDisp) semDisp.textContent = semester;
+
+      const headerSession = document.getElementById("headerAcademicSession");
+      const headerSemester = document.getElementById("headerAcademicSemester");
+      if (headerSession) headerSession.textContent = session;
+      if (headerSemester) headerSemester.textContent = semester;
+
+      updateAllDashboardCards(session, semester);
+    });
 
     // 2. Fetch Catalog of all Theology courses
     const coursesSnap = await getDocs(collection(db, "courses"));
+    officialCoursesList = [];
     coursesSnap.forEach(cs => {
       officialCoursesList.push({ id: cs.id, ...cs.data() });
     });
@@ -106,6 +119,63 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error("Initialization failed:", err);
   }
 });
+
+// Dashboard Information Cards Updater
+async function updateAllDashboardCards(session, semester) {
+  try {
+    if (!session || !semester) {
+      const docSnap = await getDoc(doc(db, "settings", "timeline_settings"));
+      if (docSnap.exists()) {
+        const d = docSnap.data();
+        session = d.session || "2026/2027";
+        semester = d.semester || "First Semester";
+      } else {
+        session = "2026/2027";
+        semester = "First Semester";
+      }
+    }
+
+    // Current Academic Session and Semester
+    document.querySelectorAll(".global-session-card").forEach(el => el.textContent = session);
+    document.querySelectorAll(".global-semester-card").forEach(el => el.textContent = semester);
+
+    // Fetch total students
+    const stuSnap = await getDocs(collection(db, "students"));
+    document.querySelectorAll(".global-students-card").forEach(el => el.textContent = stuSnap.size);
+
+    // Fetch total lecturers
+    const lecSnap = await getDocs(collection(db, "lecturers"));
+    document.querySelectorAll(".global-lecturers-card").forEach(el => el.textContent = lecSnap.size);
+
+    // Fetch total courses
+    const crsSnap = await getDocs(collection(db, "courses"));
+    document.querySelectorAll(".global-courses-card").forEach(el => el.textContent = crsSnap.size);
+
+    // Fetch pending admissions
+    const appSnap = await getDocs(collection(db, "applications"));
+    let pendingCount = 0;
+    appSnap.forEach(docSnap => {
+      const d = docSnap.data();
+      if (d.status === "Pending" || d.admissionStatus === "Pending") pendingCount++;
+    });
+    document.querySelectorAll(".global-pending-card").forEach(el => el.textContent = pendingCount);
+
+    // Fetch announcements count
+    const annSnap = await getDocs(collection(db, "announcements"));
+    document.querySelectorAll(".global-announcements-card").forEach(el => el.textContent = annSnap.size);
+
+    // Recent Activities count
+    try {
+      const actSnap = await getDocs(collection(db, "activities"));
+      document.querySelectorAll(".global-activities-card").forEach(el => el.textContent = actSnap.size);
+    } catch (e) {
+      document.querySelectorAll(".global-activities-card").forEach(el => el.textContent = "0");
+    }
+  } catch (err) {
+    console.warn("Failed to update dashboard information cards:", err);
+  }
+}
+window.updateAllDashboardCards = updateAllDashboardCards;
 
 // Tab navigation handler
 function setupTabNavigation() {
@@ -543,7 +613,10 @@ async function loadCoreDashboardMetrics() {
 // Populate session & courses selection selectors
 function populateFilterDropdowns() {
   const sessions = ["2026/2027", "2027/2028", "2025/2026"];
-  const assignedCodes = currentLecturerDoc.coursesAssigned || [];
+  const assignedCodes = (currentLecturerDoc.coursesAssigned || []).filter(code => {
+    const course = officialCoursesList.find(c => c.courseCode === code);
+    return course && course.semester === timelineSettings.semester;
+  });
 
   // Course Selector for students and results tabs
   const studentCourseFilter = document.getElementById("studentsCourseFilter");
@@ -732,6 +805,9 @@ async function renderCoursesTab() {
 
     officialCoursesList.forEach(course => {
       if (assignedCodes.includes(course.courseCode)) {
+        // Enforce active semester filtering system-wide
+        if (course.semester !== timelineSettings.semester) return;
+
         const studentCount = courseStats[course.courseCode] || 0;
         const row = `
           <tr class="clickable-course-row" data-course-code="${course.courseCode}" style="cursor: pointer; transition: background-color 0.2s;">
@@ -2361,22 +2437,27 @@ async function renderCbtManagementTab() {
 // Populate selectors with lecturer's assigned courses
 function populateCbtCourseSelectors() {
   const assigned = currentLecturerDoc.coursesAssigned || [];
+  const activeAssigned = assigned.filter(code => {
+    const course = officialCoursesList.find(c => c.courseCode === code);
+    return course && course.semester === timelineSettings.semester;
+  });
+
   const qCourseSelect = document.getElementById("qCourseSelect");
   const examCourse = document.getElementById("examCourse");
   const filterQCourse = document.getElementById("filterQCourse");
 
-  let optionsHtml = assigned.map(c => `<option value="${c}">${c}</option>`).join("");
+  let optionsHtml = activeAssigned.map(c => `<option value="${c}">${c}</option>`).join("");
   
-  if (assigned.length === 0) {
-    optionsHtml = `<option value="">No assigned courses</option>`;
+  if (activeAssigned.length === 0) {
+    optionsHtml = `<option value="">No active semester assigned courses</option>`;
   }
 
   if (qCourseSelect) qCourseSelect.innerHTML = optionsHtml;
   if (examCourse) examCourse.innerHTML = optionsHtml;
   
   if (filterQCourse) {
-    filterQCourse.innerHTML = `<option value="all">All My Courses</option>` + 
-      assigned.map(c => `<option value="${c}">${c}</option>`).join("");
+    filterQCourse.innerHTML = `<option value="all">All Active Semester Courses</option>` + 
+      activeAssigned.map(c => `<option value="${c}">${c}</option>`).join("");
   }
 }
 

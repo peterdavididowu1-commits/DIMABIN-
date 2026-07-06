@@ -2,7 +2,7 @@ import { db, auth } from './firebase-init.js';
 
 // Import dynamic Firebase Auth and Firestore methods
 const {
-  collection, doc, getDoc, getDocs, setDoc, updateDoc, query, where, orderBy, limit
+  collection, doc, getDoc, getDocs, setDoc, updateDoc, query, where, orderBy, limit, onSnapshot
 } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
 const {
   signInWithEmailAndPassword,
@@ -348,56 +348,130 @@ if (btnSemesterResultsCard) {
 // Retrieve active timeline rollover configs
 async function loadTimelineAndTimelineConfigs() {
   try {
-    // 1. Fetch settings timeline configuration
-    const settingsSnap = await getDoc(doc(db, "settings", "timeline_settings"));
-    if (settingsSnap.exists()) {
-      const data = settingsSnap.data();
-      timelineSettings.session = data.session || timelineSettings.session;
-      timelineSettings.semester = data.semester || timelineSettings.semester;
-    }
-
-    // 2. Fetch specific timeline parameters
-    let timelineTitle = "Academic Session Calendar Status";
-    let timelineDesc = "The theological academic study modules are active.";
-    let regIsOpen = true;
-
-    const timelineSnap = await getDoc(doc(db, "academicSessions", `${timelineSettings.session.replace(/\//g, "_")}_${timelineSettings.semester.replace(/\s+/g, "").toLowerCase()}`));
-    
-    if (timelineSnap.exists()) {
-      const ts = timelineSnap.data();
-      const now = new Date();
-      const start = ts.registrationStart ? new Date(ts.registrationStart) : null;
-      const end = ts.registrationEnd ? new Date(ts.registrationEnd) : null;
-
-      if (start && end) {
-        regIsOpen = now >= start && now <= end;
-        const fmtStart = start.toLocaleDateString(undefined, {month: 'long', day: 'numeric', year: 'numeric'});
-        const fmtEnd = end.toLocaleDateString(undefined, {month: 'long', day: 'numeric', year: 'numeric'});
-        timelineTitle = `Registration Period: ${timelineSettings.session} - ${timelineSettings.semester}`;
-        timelineDesc = `Course registrations are officially open from <strong>${fmtStart}</strong> until <strong>${fmtEnd}</strong>.`;
+    // 1. Listen to settings timeline configuration in real-time
+    onSnapshot(doc(db, "settings", "timeline_settings"), async (docSnap) => {
+      let session = "2026/2027";
+      let semester = "First Semester";
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        session = data.session || session;
+        semester = data.semester || semester;
       }
-    } else {
-      timelineTitle = `Course Registration is OPEN: ${timelineSettings.session}`;
-      timelineDesc = `Please select your first and second semester theological study outlines below to preserve your credit register records.`;
-    }
+      timelineSettings.session = session;
+      timelineSettings.semester = semester;
 
-    // Update Overview stats card
-    const cardSession = document.getElementById("cardSessionName");
-    if (cardSession) cardSession.textContent = `${timelineSettings.session} (${timelineSettings.semester})`;
+      // Update academic headers
+      const headerSession = document.getElementById("headerAcademicSession");
+      const headerSemester = document.getElementById("headerAcademicSemester");
+      if (headerSession) headerSession.textContent = session;
+      if (headerSemester) headerSemester.textContent = semester;
 
-    // Update registration panel timelines
-    const elTitle = document.getElementById("courseRegStatusTitle");
-    const elDesc = document.getElementById("courseRegStatusDesc");
-    if (elTitle) elTitle.innerHTML = timelineTitle;
-    if (elDesc) elDesc.innerHTML = timelineDesc;
+      // Update Overview stats card
+      const cardSession = document.getElementById("cardSessionName");
+      if (cardSession) cardSession.textContent = `${session} (${semester})`;
 
-    // Load Courses Catalog
-    loadCoursesCatalog(regIsOpen);
+      updateAllDashboardCards(session, semester);
+
+      // 2. Fetch specific timeline parameters
+      let timelineTitle = "Academic Session Calendar Status";
+      let timelineDesc = "The theological academic study modules are active.";
+      let regIsOpen = true;
+
+      try {
+        const timelineSnap = await getDoc(doc(db, "academicSessions", `${session.replace(/\//g, "_")}_${semester.replace(/\s+/g, "").toLowerCase()}`));
+        
+        if (timelineSnap.exists()) {
+          const ts = timelineSnap.data();
+          const now = new Date();
+          const start = ts.registrationStart ? new Date(ts.registrationStart) : null;
+          const end = ts.registrationEnd ? new Date(ts.registrationEnd) : null;
+
+          if (start && end) {
+            regIsOpen = now >= start && now <= end;
+            const fmtStart = start.toLocaleDateString(undefined, {month: 'long', day: 'numeric', year: 'numeric'});
+            const fmtEnd = end.toLocaleDateString(undefined, {month: 'long', day: 'numeric', year: 'numeric'});
+            timelineTitle = `Registration Period: ${session} - ${semester}`;
+            timelineDesc = `Course registrations are officially open from <strong>${fmtStart}</strong> until <strong>${fmtEnd}</strong>.`;
+          }
+        } else {
+          timelineTitle = `Course Registration is OPEN: ${session}`;
+          timelineDesc = `Please select your first and second semester theological study outlines below to preserve your credit register records.`;
+        }
+      } catch (err) {
+        console.warn("Could not load registration timeline:", err);
+      }
+
+      // Update registration panel timelines
+      const elTitle = document.getElementById("courseRegStatusTitle");
+      const elDesc = document.getElementById("courseRegStatusDesc");
+      if (elTitle) elTitle.innerHTML = timelineTitle;
+      if (elDesc) elDesc.innerHTML = timelineDesc;
+
+      // Load Courses Catalog
+      loadCoursesCatalog(regIsOpen);
+    });
 
   } catch (err) {
     console.error("❌ Timeline parameters load error:", err);
   }
 }
+
+// Dashboard Information Cards Updater
+async function updateAllDashboardCards(session, semester) {
+  try {
+    if (!session || !semester) {
+      const docSnap = await getDoc(doc(db, "settings", "timeline_settings"));
+      if (docSnap.exists()) {
+        const d = docSnap.data();
+        session = d.session || "2026/2027";
+        semester = d.semester || "First Semester";
+      } else {
+        session = "2026/2027";
+        semester = "First Semester";
+      }
+    }
+
+    // Current Academic Session and Semester
+    document.querySelectorAll(".global-session-card").forEach(el => el.textContent = session);
+    document.querySelectorAll(".global-semester-card").forEach(el => el.textContent = semester);
+
+    // Fetch total students
+    const stuSnap = await getDocs(collection(db, "students"));
+    document.querySelectorAll(".global-students-card").forEach(el => el.textContent = stuSnap.size);
+
+    // Fetch total lecturers
+    const lecSnap = await getDocs(collection(db, "lecturers"));
+    document.querySelectorAll(".global-lecturers-card").forEach(el => el.textContent = lecSnap.size);
+
+    // Fetch total courses
+    const crsSnap = await getDocs(collection(db, "courses"));
+    document.querySelectorAll(".global-courses-card").forEach(el => el.textContent = crsSnap.size);
+
+    // Fetch pending admissions
+    const appSnap = await getDocs(collection(db, "applications"));
+    let pendingCount = 0;
+    appSnap.forEach(docSnap => {
+      const d = docSnap.data();
+      if (d.status === "Pending" || d.admissionStatus === "Pending") pendingCount++;
+    });
+    document.querySelectorAll(".global-pending-card").forEach(el => el.textContent = pendingCount);
+
+    // Fetch announcements count
+    const annSnap = await getDocs(collection(db, "announcements"));
+    document.querySelectorAll(".global-announcements-card").forEach(el => el.textContent = annSnap.size);
+
+    // Recent Activities count
+    try {
+      const actSnap = await getDocs(collection(db, "activities"));
+      document.querySelectorAll(".global-activities-card").forEach(el => el.textContent = actSnap.size);
+    } catch (e) {
+      document.querySelectorAll(".global-activities-card").forEach(el => el.textContent = "0");
+    }
+  } catch (err) {
+    console.warn("Failed to update dashboard information cards:", err);
+  }
+}
+window.updateAllDashboardCards = updateAllDashboardCards;
 
 // Populates profile fields
 function loadProfileTab(studentDoc) {
@@ -543,15 +617,48 @@ async function loadCoursesCatalog(regIsOpen) {
 }
 
 // Generate checkboxes for registration
+function levelsMatch(studentLevel, courseLevel) {
+  if (!studentLevel || !courseLevel) return true;
+  const sStr = String(studentLevel).replace(/\D/g, '');
+  const cStr = String(courseLevel).replace(/\D/g, '');
+  return sStr === cStr || String(studentLevel).trim().toLowerCase() === String(courseLevel).trim().toLowerCase();
+}
+
 function renderRegistrationCheckboxes(regIsOpen) {
   const firstList = document.getElementById("firstSemesterCoursesList");
   const secondList = document.getElementById("secondSemesterCoursesList");
   
-  firstList.innerHTML = "";
-  secondList.innerHTML = "";
+  if (firstList) firstList.innerHTML = "";
+  if (secondList) secondList.innerHTML = "";
 
-  const firstCourses = officialCoursesList.filter(c => c.semester === "First Semester");
-  const secondCourses = officialCoursesList.filter(c => c.semester === "Second Semester");
+  const activeSemester = timelineSettings.semester;
+
+  const filteredCourses = officialCoursesList.filter(course => {
+    // 1. Active Status matching
+    if (course.status && course.status !== "Active") return false;
+
+    // 2. Semester matching
+    if (course.semester !== activeSemester) return false;
+
+    // 3. Programme matching
+    if (course.programme && currentStudentDoc.programme) {
+      const cProg = course.programme.trim().toLowerCase();
+      const sProg = currentStudentDoc.programme.trim().toLowerCase();
+      if (cProg !== "all" && cProg !== sProg) return false;
+    }
+
+    // 4. Level matching
+    const sLevel = currentStudentDoc.level || currentStudentDoc.currentLevel || currentStudentDoc.admittedLevel || "100";
+    if (course.level && !levelsMatch(sLevel, course.level)) return false;
+
+    // 5. Study Centre matching
+    const sCentre = currentStudentDoc.studyCentreId || "";
+    const cCentre = course.studyCentreId || "";
+    const cAssignedCentres = course.assignedStudyCentreIds || [];
+    if (cCentre && cCentre !== "all" && cCentre !== sCentre && !cAssignedCentres.includes(sCentre)) return false;
+
+    return true;
+  });
 
   const buildRow = (course) => {
     return `
@@ -565,20 +672,27 @@ function renderRegistrationCheckboxes(regIsOpen) {
     `;
   };
 
-  if (firstCourses.length === 0) {
-    firstList.innerHTML = "<div style='color:var(--text-muted); font-size:0.9rem;'>No curriculum courses available for first semester.</div>";
-  } else {
-    firstCourses.forEach(c => {
-      firstList.insertAdjacentHTML("beforeend", buildRow(c));
-    });
-  }
+  const emptyMsg = `<div style='color:var(--text-muted); font-size:0.9rem; padding: 1.5rem; text-align: center; background: var(--bg-slate); border-radius: 6px; border: 1.5px dashed var(--border-color);'>No matching curriculum courses available for your Programme/Level in this active semester.</div>`;
+  const inactiveMsg = `<div style='color:var(--text-muted); font-size:0.9rem; padding: 1rem; text-align: center; opacity: 0.6;'>This semester is currently inactive.</div>`;
 
-  if (secondCourses.length === 0) {
-    secondList.innerHTML = "<div style='color:var(--text-muted); font-size:0.9rem;'>No curriculum courses available for second semester.</div>";
+  if (activeSemester === "First Semester") {
+    if (firstList) {
+      if (filteredCourses.length === 0) {
+        firstList.innerHTML = emptyMsg;
+      } else {
+        filteredCourses.forEach(c => firstList.insertAdjacentHTML("beforeend", buildRow(c)));
+      }
+    }
+    if (secondList) secondList.innerHTML = inactiveMsg;
   } else {
-    secondCourses.forEach(c => {
-      secondList.insertAdjacentHTML("beforeend", buildRow(c));
-    });
+    if (secondList) {
+      if (filteredCourses.length === 0) {
+        secondList.innerHTML = emptyMsg;
+      } else {
+        filteredCourses.forEach(c => secondList.insertAdjacentHTML("beforeend", buildRow(c)));
+      }
+    }
+    if (firstList) firstList.innerHTML = inactiveMsg;
   }
 
   // Setup Select All buttons
