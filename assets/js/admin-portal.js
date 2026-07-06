@@ -1730,13 +1730,17 @@ function renderCoursesDirectory() {
     const statusBadgeColor = status === "Active" ? "rgba(40,167,69,0.12)" : "rgba(220,53,69,0.12)";
     const statusTextColor = status === "Active" ? "#28A745" : "#DC3545";
 
+    const programme = c.programme || c.department || "Bachelor of Theology";
+    const level = c.level || "100 Level";
+
     html += `
       <tr style="border-bottom: 1.5px solid var(--border-color);">
         <td style="padding: 1rem; font-weight: 700; color: var(--primary);">${code}</td>
         <td style="padding: 1rem; font-weight: 500;">${title}</td>
+        <td style="padding: 1rem; font-size: 0.85rem; color: var(--text-dark);">${programme}</td>
+        <td style="padding: 1rem; font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">${level}</td>
         <td style="padding: 1rem;">${semester}</td>
         <td style="padding: 1rem;"><span style="background-color: var(--bg-slate); border: 1px solid var(--border-color); padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600;">${creditUnit} Units</span></td>
-        <td style="padding: 1rem; font-size: 0.85rem; color: var(--text-muted);">${department}</td>
         <td style="padding: 1rem;">
           <span style="background-color: ${statusBadgeColor}; color: ${statusTextColor}; padding: 0.25rem 0.6rem; border-radius: 50px; font-size: 0.75rem; font-weight: 700; display: inline-block;">
             ${status}
@@ -1829,6 +1833,8 @@ if (addCourseForm) {
       const semester = document.getElementById("addCourseSemester").value;
       const creditUnit = parseInt(document.getElementById("addCourseCredit").value);
       const department = document.getElementById("addCourseDept").value;
+      const programme = document.getElementById("addCourseProgramme") ? document.getElementById("addCourseProgramme").value : "Bachelor of Theology";
+      const level = document.getElementById("addCourseLevel") ? document.getElementById("addCourseLevel").value : "100 Level";
       const description = document.getElementById("addCourseDesc").value.trim();
       const status = document.getElementById("addCourseStatus").value;
 
@@ -1851,6 +1857,8 @@ if (addCourseForm) {
         semester: semester,
         creditUnit: creditUnit,
         department: department,
+        programme: programme,
+        level: level,
         description: description,
         status: status,
         createdAt: new Date().toISOString(),
@@ -1889,6 +1897,12 @@ async function triggerEditCourseModal(courseCode) {
     document.getElementById("editCourseSemester").value = c.semester || "First Semester";
     document.getElementById("editCourseCredit").value = c.creditUnit || "3";
     document.getElementById("editCourseDept").value = c.department || "Theology";
+    if (document.getElementById("editCourseProgramme")) {
+      document.getElementById("editCourseProgramme").value = c.programme || "Bachelor of Theology";
+    }
+    if (document.getElementById("editCourseLevel")) {
+      document.getElementById("editCourseLevel").value = c.level || "100 Level";
+    }
     document.getElementById("editCourseStatus").value = c.status || "Active";
     document.getElementById("editCourseDesc").value = c.description || "";
 
@@ -1919,6 +1933,8 @@ if (editCourseForm) {
       const semester = document.getElementById("editCourseSemester").value;
       const credit = parseInt(document.getElementById("editCourseCredit").value);
       const department = document.getElementById("editCourseDept").value;
+      const programme = document.getElementById("editCourseProgramme") ? document.getElementById("editCourseProgramme").value : "Bachelor of Theology";
+      const level = document.getElementById("editCourseLevel") ? document.getElementById("editCourseLevel").value : "100 Level";
       const status = document.getElementById("editCourseStatus").value;
       const description = document.getElementById("editCourseDesc").value.trim();
 
@@ -1929,6 +1945,8 @@ if (editCourseForm) {
         semester: semester,
         creditUnit: credit,
         department: department,
+        programme: programme,
+        level: level,
         status: status,
         description: description,
         updatedAt: new Date().toISOString()
@@ -4999,7 +5017,7 @@ function renderCentreCourses(centreId) {
 
   const searchQuery = (document.getElementById("centreCoursesSearch")?.value || "").toLowerCase().trim();
 
-  let filtered = allCourses.filter(c => c.studyCentreId === centreId || (c.assignedStudyCentreIds && c.assignedStudyCentreIds.includes(centreId)));
+  let filtered = allCourses.filter(c => c.status === "Active" || c.status === undefined);
 
   if (searchQuery) {
     filtered = filtered.filter(c => {

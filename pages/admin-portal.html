@@ -2430,10 +2430,10 @@
                   <tr style="background-color: var(--bg-slate); text-align: left; border-bottom: 1.5px solid var(--border-color);">
                     <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Course Code</th>
                     <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Title</th>
+                    <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Programme</th>
+                    <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Level</th>
                     <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Semester</th>
                     <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Credits</th>
-                    <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Department</th>
-                    <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Study Centre</th>
                     <th style="padding: 1rem; color: var(--primary); font-weight: 700;">Status</th>
                     <th style="padding: 1rem; color: var(--primary); font-weight: 700; text-align: center;">Actions</th>
                   </tr>
@@ -2496,6 +2496,27 @@
                       <option value="Christian Education">Christian Education</option>
                       <option value="Missions & Evangelism">Missions & Evangelism</option>
                       <option value="Pastoral Ministry">Pastoral Ministry</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="addCourseProgramme" style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.5rem;">Programme</label>
+                    <select id="addCourseProgramme" class="form-control" style="width: 100%; padding: 0.75rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                      <option value="Bachelor of Theology">Bachelor of Theology</option>
+                      <option value="Diploma in Theology">Diploma in Theology</option>
+                      <option value="Postgraduate Diploma in Theology">Postgraduate Diploma in Theology</option>
+                      <option value="Certificate in Biblical Studies">Certificate in Biblical Studies</option>
+                      <option value="Missions & Evangelism">Missions & Evangelism</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="addCourseLevel" style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.5rem;">Level</label>
+                    <select id="addCourseLevel" class="form-control" style="width: 100%; padding: 0.75rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                      <option value="100 Level">100 Level</option>
+                      <option value="200 Level">200 Level</option>
+                      <option value="300 Level">300 Level</option>
+                      <option value="400 Level">400 Level</option>
                     </select>
                   </div>
 
@@ -3328,6 +3349,27 @@
                 <option value="Christian Education">Christian Education</option>
                 <option value="Missions & Evangelism">Missions & Evangelism</option>
                 <option value="Pastoral Ministry">Pastoral Ministry</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="editCourseProgramme" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Programme</label>
+              <select id="editCourseProgramme" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                <option value="Bachelor of Theology">Bachelor of Theology</option>
+                <option value="Diploma in Theology">Diploma in Theology</option>
+                <option value="Postgraduate Diploma in Theology">Postgraduate Diploma in Theology</option>
+                <option value="Certificate in Biblical Studies">Certificate in Biblical Studies</option>
+                <option value="Missions & Evangelism">Missions & Evangelism</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="editCourseLevel" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Level</label>
+              <select id="editCourseLevel" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                <option value="100 Level">100 Level</option>
+                <option value="200 Level">200 Level</option>
+                <option value="300 Level">300 Level</option>
+                <option value="400 Level">400 Level</option>
               </select>
             </div>
 
