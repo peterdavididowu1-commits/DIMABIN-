@@ -31,6 +31,145 @@ let officialCoursesList = [];
 let allStudentsList = [];
 let assignedCoursesData = [];
 
+// Study Centre Coordinates
+let selectedLoginCentreId = null;
+let selectedLoginCentreName = null;
+
+function getCentreCode(name) {
+  if (!name) return "MAIN";
+  const nameUpper = name.toUpperCase();
+  if (nameUpper.includes("MAIN CAMPUS") || nameUpper.includes("DEFAULT") || nameUpper.includes("UNASSIGNED")) {
+    return "MAIN";
+  }
+  if (nameUpper.includes("ODEDA")) {
+    return "ODED";
+  }
+  if (nameUpper.includes("IFO")) {
+    return "IFO";
+  }
+  if (nameUpper.includes("ABEOKUTA")) {
+    return "ABK";
+  }
+  if (nameUpper.includes("IFE")) {
+    return "IFE";
+  }
+  
+  // Clean fallback:
+  let clean = nameUpper.replace("STUDY CENTRE", "").replace("CENTRE", "").trim();
+  clean = clean.replace(/[^A-Z]/g, "");
+  if (clean.length >= 4) {
+    return clean.substring(0, 4);
+  } else if (clean.length > 0) {
+    return clean;
+  }
+  return "MAIN";
+}
+
+function isCentreMatch(studentCentre, lecturerCentre) {
+  const s = studentCentre || "default";
+  const l = lecturerCentre || "default";
+  if (s === "MAIN" || s === "default" || s === "") {
+    return (l === "MAIN" || l === "default" || l === "");
+  }
+  return s === l;
+}
+
+async function initializeCentreSelection() {
+  const grid = document.getElementById("centreSelectionGrid");
+  if (!grid) return;
+
+  try {
+    const centresSnap = await getDocs(collection(db, "study_centres"));
+    let centresList = [];
+    
+    // Always prepend Main Campus
+    centresList.push({
+      id: "default",
+      name: "Main Campus (Abeokuta)",
+      code: "MAIN",
+      status: "Active"
+    });
+
+    centresSnap.forEach(docSnap => {
+      const data = docSnap.data();
+      if (data.status === "Active") {
+        let centreCode = data.code || "";
+        const match = centreCode.match(/DIMABIN-CTR-(\d+)/);
+        if (match) {
+          centreCode = getCentreCode(data.name);
+        }
+        centresList.push({
+          id: docSnap.id,
+          name: data.name,
+          code: centreCode,
+          status: data.status
+        });
+      }
+    });
+
+    // Render the grid
+    let html = "";
+    centresList.forEach(centre => {
+      html += `
+        <div class="centre-select-item" data-id="${centre.id}" data-name="${centre.name}">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div style="background-color: #E2E8F0; color: var(--primary); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem;">
+              ${centre.code}
+            </div>
+            <div style="text-align: left;">
+              <h4 style="margin: 0; font-size: 0.95rem; color: var(--text-dark); font-weight: 700;">${centre.name}</h4>
+              <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">Click to select and sign in</p>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right" style="color: var(--primary); font-size: 0.9rem;"></i>
+        </div>
+      `;
+    });
+
+    grid.innerHTML = html;
+
+    // Attach click listeners
+    const items = grid.querySelectorAll(".centre-select-item");
+    items.forEach(item => {
+      item.addEventListener("click", () => {
+        const id = item.getAttribute("data-id");
+        const name = item.getAttribute("data-name");
+        
+        selectedLoginCentreId = id;
+        selectedLoginCentreName = name;
+
+        // Hide selection, show login form
+        document.getElementById("centreSelectionContainer").style.display = "none";
+        document.getElementById("loginContainer").style.display = "block";
+        
+        // Update labels
+        document.getElementById("loginCardTitle").textContent = `${name} Portal`;
+        document.getElementById("selectedCentreLabel").innerHTML = `<i class="fa-solid fa-hotel"></i> Selected: ${name}`;
+      });
+    });
+
+  } catch (err) {
+    console.error("Error loading study centres for login page:", err);
+    grid.innerHTML = `<div style="color:red; text-align:center; padding: 1rem;"><i class="fa-solid fa-circle-exclamation"></i> Failed to load study centres. Please reload the page.</div>`;
+  }
+}
+
+// Bind Change Study Centre button
+const btnChangeCentre = document.getElementById("btnChangeCentre");
+if (btnChangeCentre) {
+  btnChangeCentre.addEventListener("click", (e) => {
+    e.preventDefault();
+    selectedLoginCentreId = null;
+    selectedLoginCentreName = null;
+    
+    document.getElementById("loginContainer").style.display = "none";
+    document.getElementById("centreSelectionContainer").style.display = "block";
+    
+    const feedback = document.getElementById("loginFeedback");
+    if (feedback) feedback.style.display = "none";
+  });
+}
+
 // Initialize Window Toast if not present
 if (!window.showToast) {
   window.showToast = (message, type = "success") => {
@@ -307,10 +446,31 @@ async function checkActiveSession() {
         
         if (lecturerDoc) {
           currentLecturerDoc = lecturerDoc;
+          
+          // Recover or default the selectedCentreId / selectedCentreName
+          const sessionDataStr = localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY);
+          if (sessionDataStr) {
+            try {
+              const sessionData = JSON.parse(sessionDataStr);
+              if (sessionData.selectedCentreId) {
+                selectedLoginCentreId = sessionData.selectedCentreId;
+                selectedLoginCentreName = sessionData.selectedCentreName;
+              }
+            } catch (e) {
+              console.error("Error parsing session data", e);
+            }
+          }
+          if (!selectedLoginCentreId) {
+            selectedLoginCentreId = (lecturerDoc.assignedStudyCentreIds && lecturerDoc.assignedStudyCentreIds[0]) || "default";
+            selectedLoginCentreName = (lecturerDoc.assignedStudyCentreIds?.[0] === "default" || !lecturerDoc.assignedStudyCentreIds?.[0]) ? "Main Campus (Abeokuta)" : "Study Centre";
+          }
+
           const sessionData = {
             lecturerId: lecturerDoc.lecturerId,
             fullName: lecturerDoc.fullName,
-            email: lecturerDoc.email
+            email: lecturerDoc.email,
+            selectedCentreId: selectedLoginCentreId,
+            selectedCentreName: selectedLoginCentreName
           };
           localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
           sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
@@ -331,8 +491,11 @@ async function checkActiveSession() {
         // Show clean login panel
         document.getElementById("anonymousView").style.display = "block";
         document.getElementById("authenticatedView").style.display = "none";
+        document.getElementById("centreSelectionContainer").style.display = "block";
+        document.getElementById("loginContainer").style.display = "none";
         const feedback = document.getElementById("loginFeedback");
         if (feedback) feedback.style.display = "none";
+        initializeCentreSelection();
       }
     }
   });
@@ -358,22 +521,34 @@ if (loginForm) {
     if (btnSubmit) btnSubmit.disabled = true;
 
     try {
-      // 1. Search lecturer record
-      const q = query(collection(db, "lecturers"), where("lecturerId", "==", staffIdInput));
-      const snap = await getDocs(q);
+      // 1. Search lecturer record by Lecturer ID or Registered Email
+      let snap;
+      if (staffIdInput.includes("@")) {
+        const q = query(collection(db, "lecturers"), where("email", "==", staffIdInput));
+        snap = await getDocs(q);
+      } else {
+        const q = query(collection(db, "lecturers"), where("lecturerId", "==", staffIdInput));
+        snap = await getDocs(q);
+      }
 
       if (snap.empty) {
-        throw new Error("No facilitator profile discovered with that Staff ID.");
+        throw new Error("No facilitator profile discovered with that Staff ID or Email.");
       }
 
       const lecDoc = { id: snap.docs[0].id, ...snap.docs[0].data() };
-      const email = lecDoc.email;
 
+      // Verify that the lecturer belongs to the selected Study Centre
+      const assignedCentres = lecDoc.assignedStudyCentreIds || ["default"];
+      if (!assignedCentres.includes(selectedLoginCentreId)) {
+        throw new Error("This lecturer belongs to another Study Centre. Please log in through the correct Lecturer Portal.");
+      }
+
+      const email = lecDoc.email;
       if (!email || email === "N/A" || email.trim() === "") {
         throw new Error("Facilitator record lacks an institutional email address. Contact Registrars desk.");
       }
 
-      // 2. Authenticate with Firebase Authentication
+      // 2. Authenticate with Firebase Authentication (Password Verification)
       let authCredential = null;
       try {
         authCredential = await signInWithEmailAndPassword(auth, email, passwordInput);
@@ -405,7 +580,9 @@ if (loginForm) {
       const sessionData = {
         lecturerId: lecDoc.lecturerId,
         fullName: lecDoc.fullName,
-        email: lecDoc.email
+        email: lecDoc.email,
+        selectedCentreId: selectedLoginCentreId,
+        selectedCentreName: selectedLoginCentreName
       };
 
       if (rememberMe) {
@@ -521,6 +698,16 @@ async function enterDashboard() {
   if (overviewLecturerDept) {
     overviewLecturerDept.textContent = `Department: ${currentLecturerDoc.department || "Theology"}`;
   }
+  
+  const overviewLecturerCentre = document.getElementById("overviewLecturerCentre");
+  const overviewLecturerProgramme = document.getElementById("overviewLecturerProgramme");
+  if (overviewLecturerCentre) {
+    overviewLecturerCentre.innerHTML = `<i class="fa-solid fa-hotel" style="color: var(--accent); margin-right: 4px;"></i> <strong>Study Centre: ${selectedLoginCentreName || "Main Campus (Abeokuta)"}</strong>`;
+  }
+  if (overviewLecturerProgramme) {
+    overviewLecturerProgramme.innerHTML = `<i class="fa-solid fa-scroll" style="color: var(--accent); margin-right: 4px;"></i> <strong>Programme: ${currentLecturerDoc.programme || "Bachelor of Theology"}</strong>`;
+  }
+
   if (overviewProfilePic) {
     overviewProfilePic.src = currentLecturerDoc.passportPhoto || "../assets/images/logo.jpg";
   }
@@ -555,6 +742,15 @@ async function loadCoreDashboardMetrics() {
     }
 
     // 2. Fetch all registered students for those courses
+    const studentsSnap = await getDocs(collection(db, "students"));
+    const studentsMap = {};
+    studentsSnap.forEach(docSnap => {
+      const data = docSnap.data();
+      if (data.studentId) {
+        studentsMap[data.studentId] = data;
+      }
+    });
+
     const regSnap = await getDocs(collection(db, "registrations"));
     let enrolledCount = 0;
     allStudentsList = []; // Clean roster
@@ -562,9 +758,22 @@ async function loadCoreDashboardMetrics() {
     regSnap.forEach(docSnap => {
       const reg = docSnap.data();
       if (reg.academicSession === timelineSettings.session) {
+        // Filter by Student's Study Centre matches selectedLoginCentreId
+        const studentProfile = studentsMap[reg.studentId];
+        if (!studentProfile) return;
+        
+        const sCentreId = studentProfile.studyCentreId || "default";
+        if (sCentreId !== selectedLoginCentreId) return;
+
         const studentCourses = reg.registeredCourses || [];
-        // Check if there is intersection
-        const intersecting = studentCourses.filter(c => assignedCodes.includes(c));
+        
+        // Filter student courses to only those assigned to the lecturer AND belonging to the current semester
+        const intersecting = studentCourses.filter(code => {
+          if (!assignedCodes.includes(code)) return false;
+          const course = officialCoursesList.find(c => c.courseCode === code);
+          return course && course.semester === timelineSettings.semester;
+        });
+
         if (intersecting.length > 0) {
           enrolledCount++;
           intersecting.forEach(code => {
@@ -849,7 +1058,7 @@ async function renderCoursesTab() {
     officialCoursesList.forEach(course => {
       if (assignedCodes.includes(course.courseCode)) {
         // Enforce active semester filtering system-wide
-        if (course.semester !== timelineSettings.semester) return;
+        // if (course.semester !== timelineSettings.semester) return;
 
         const studentCount = courseStats[course.courseCode] || 0;
         const row = `
@@ -947,6 +1156,15 @@ async function renderStudentsTab() {
   tbody.innerHTML = `<tr><td colspan="6" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Filtering enrolled students...</td></tr>`;
 
   try {
+    const studentsSnap = await getDocs(collection(db, "students"));
+    const studentsMap = {};
+    studentsSnap.forEach(docSnap => {
+      const data = docSnap.data();
+      if (data.studentId) {
+        studentsMap[data.studentId] = data;
+      }
+    });
+
     const assignedCodes = currentLecturerDoc.coursesAssigned || [];
     const regSnap = await getDocs(collection(db, "registrations"));
     
@@ -957,10 +1175,23 @@ async function renderStudentsTab() {
 
     regSnap.forEach(docSnap => {
       const reg = docSnap.data();
-      if (reg.academicSession === sessionVal) {
+      // Must match academic session and semester
+      if (reg.academicSession === sessionVal && reg.semester === timelineSettings.semester) {
+        
+        // Filter by Student's Study Centre matches selectedLoginCentreId
+        const studentProfile = studentsMap[reg.studentId];
+        if (!studentProfile) return;
+        
+        const sCentreId = studentProfile.studyCentreId || "default";
+        if (sCentreId !== selectedLoginCentreId) return;
+
         const studentCourses = reg.registeredCourses || [];
-        // Intersection of student courses with assigned courses
-        let targetCourses = studentCourses.filter(c => assignedCodes.includes(c));
+        // Only courses assigned to the lecturer AND belonging to current semester
+        let targetCourses = studentCourses.filter(code => {
+          if (!assignedCodes.includes(code)) return false;
+          const course = officialCoursesList.find(c => c.courseCode === code);
+          return course && course.semester === timelineSettings.semester;
+        });
         
         // Apply course filter
         if (courseFilterVal !== "all") {
@@ -1210,13 +1441,28 @@ async function renderResultUploadTab() {
         }
       }
 
-      // 4. Fetch enrolled students registered for this course code
+      // 4. Fetch enrolled students registered for this course code and filter by study centre
+      const studentsSnap = await getDocs(collection(db, "students"));
+      const studentsMap = {};
+      studentsSnap.forEach(docSnap => {
+        const data = docSnap.data();
+        if (data.studentId) {
+          studentsMap[data.studentId] = data;
+        }
+      });
+
       const regSnap = await getDocs(collection(db, "registrations"));
       activeCourseGradingList = [];
       
       regSnap.forEach(docSnap => {
         const reg = docSnap.data();
-        if (reg.academicSession === timelineSettings.session) {
+        if (reg.academicSession === timelineSettings.session && reg.semester === timelineSettings.semester) {
+          const studentProfile = studentsMap[reg.studentId];
+          if (!studentProfile) return;
+          
+          const sCentreId = studentProfile.studyCentreId || "default";
+          if (sCentreId !== selectedLoginCentreId) return;
+
           const registered = reg.registeredCourses || [];
           if (registered.includes(code)) {
             activeCourseGradingList.push({
@@ -3678,9 +3924,18 @@ function setupAttendanceListeners() {
       
       try {
         // Query registrations
-        const regSnap = await getDocs(query(collection(db, "registrations"), where("courseCode", "==", courseCode), where("academicSession", "==", timelineSettings.session)));
+        const regSnap = await getDocs(collection(db, "registrations"));
         const registrants = [];
-        regSnap.forEach(snap => registrants.push(snap.data()));
+        regSnap.forEach(snap => {
+          const reg = snap.data();
+          if (reg.academicSession === timelineSettings.session && reg.semester === timelineSettings.semester) {
+            const registered = reg.registeredCourses || [];
+            // Support both courseCode field or registeredCourses array
+            if (registered.includes(courseCode) || reg.courseCode === courseCode) {
+              registrants.push(reg);
+            }
+          }
+        });
         
         if (registrants.length === 0) {
           tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 2rem; color: var(--text-muted);">No student registrations found for course ${courseCode} in session ${timelineSettings.session}.</td></tr>`;
@@ -3688,18 +3943,29 @@ function setupAttendanceListeners() {
           return;
         }
 
-        // Fetch student details
+        // Fetch student details & filter by study centre
         activeAttendanceStudents = [];
+        const studentsSnap = await getDocs(collection(db, "students"));
+        const studentsMap = {};
+        studentsSnap.forEach(docSnap => {
+          const data = docSnap.data();
+          if (data.studentId) {
+            studentsMap[data.studentId] = data;
+          }
+        });
+
         for (let reg of registrants) {
-          const sRef = doc(db, "students", reg.studentId);
-          const sSnap = await getDoc(sRef);
-          if (sSnap.exists()) {
-            activeAttendanceStudents.push({
-              studentId: reg.studentId,
-              fullName: sSnap.data().fullName || "N/A",
-              matricNumber: sSnap.data().matricNumber || "N/A",
-              status: "Present" // default to Present
-            });
+          const studentProfile = studentsMap[reg.studentId];
+          if (studentProfile) {
+            const sCentreId = studentProfile.studyCentreId || "default";
+            if (sCentreId === selectedLoginCentreId) {
+              activeAttendanceStudents.push({
+                studentId: reg.studentId,
+                fullName: studentProfile.fullName || "N/A",
+                matricNumber: studentProfile.matricNumber || "N/A",
+                status: "Present" // default to Present
+              });
+            }
           }
         }
 

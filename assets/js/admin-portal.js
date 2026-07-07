@@ -2810,22 +2810,45 @@ if (registerLecturerForm) {
     try {
       window.showToast("Securing institutional credentials...", "info");
 
-      // Generate incremental sequence
+      // Determine the Primary Centre Code for this Lecturer ID
+      if (checkedCentres.length === 0) {
+        checkedCentres.push("default");
+      }
+      let primaryCentreId = checkedCentres[0];
+      let primaryCentreCode = "MAIN";
+      
+      if (primaryCentreId !== "default" && primaryCentreId !== "MAIN") {
+        const foundCentre = allStudyCentres.find(c => c.id === primaryCentreId);
+        if (foundCentre) {
+          primaryCentreCode = getCentreCode(foundCentre.name);
+        }
+      }
+
+      // Generate incremental sequence for this specific study centre
       const qSnap = await getDocs(collection(db, "lecturers"));
       let maxSeq = 0;
       qSnap.forEach(docSnap => {
         const idVal = docSnap.data().lecturerId || "";
-        const m = idVal.match(/DIMABIN\/LEC\/2026\/(\d+)/);
-        if (m) {
-          const num = parseInt(m[1], 10);
-          if (num > maxSeq) maxSeq = num;
+        if (idVal.startsWith(`DIMABIN-L/${primaryCentreCode}/`)) {
+          const parts = idVal.split("/");
+          const lastPart = parts[parts.length - 1];
+          const num = parseInt(lastPart, 10);
+          if (!isNaN(num) && num > maxSeq) {
+            maxSeq = num;
+          }
+        } else if (primaryCentreCode === "MAIN" && idVal.match(/DIMABIN\/LEC\/2026\/(\d+)/)) {
+          const m = idVal.match(/DIMABIN\/LEC\/2026\/(\d+)/);
+          if (m) {
+            const num = parseInt(m[1], 10);
+            if (num > maxSeq) maxSeq = num;
+          }
         }
       });
 
       const nextSeq = maxSeq + 1;
-      const paddedSeq = String(nextSeq).padStart(3, "0");
-      const generatedLecId = `DIMABIN/LEC/2026/${paddedSeq}`;
-      const docId = `DIMABIN-LEC-2026-${paddedSeq}`;
+      const paddedSeq = String(nextSeq).padStart(4, "0");
+      const generatedLecId = `DIMABIN-L/${primaryCentreCode}/${paddedSeq}`;
+      const docId = `DIMABIN-LEC-${primaryCentreCode}-${paddedSeq}`;
 
       // Temporary password format
       const randHex = Math.random().toString(36).substring(2, 6).toUpperCase();

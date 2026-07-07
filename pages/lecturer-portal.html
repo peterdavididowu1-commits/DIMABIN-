@@ -40,6 +40,25 @@
   
   <style>
     /* Lecturer Portal Overrides and Specific Styles */
+    /* Study Centre Selection Styles */
+    .centre-select-item {
+      background-color: white;
+      border: 1.5px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.25rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.2s ease-in-out;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .centre-select-item:hover {
+      border-color: var(--primary) !important;
+      background-color: var(--bg-slate) !important;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+    }
     :root {
       --primary: #1F3B82; /* Deep Royal Blue */
       --primary-light: #3058BF;
@@ -1062,16 +1081,35 @@
           <!-- Left Column: Login & Security Notice -->
           <div class="portal-main">
             
+            <!-- Study Centre Selection Card -->
+            <div class="login-card" id="centreSelectionContainer" style="margin-bottom: 2rem;">
+              <div class="login-header" style="margin-bottom: 1.5rem;">
+                <div class="login-shield-icon"><i class="fa-solid fa-hotel"></i></div>
+                <h3>Select Study Centre</h3>
+                <p>Choose your official DIMABIN study centre to access your portal</p>
+              </div>
+              
+              <!-- Centre Grid/List -->
+              <div id="centreSelectionGrid" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                <div style="text-align: center; padding: 2rem 0; color: var(--text-muted);">
+                  <i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.5rem;"></i> Loading study centres...
+                </div>
+              </div>
+            </div>
+
             <!-- Lecturer Login Card -->
-            <div class="login-card">
+            <div class="login-card" id="loginContainer" style="display: none; margin-bottom: 2rem;">
               <div class="login-header">
                 <div class="login-shield-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
-                <h3>Lecturer Sign In</h3>
-                <p>Enter your staff credentials to access your academic dashboard</p>
+                <h3 id="loginCardTitle" style="margin-bottom: 0.25rem;">Lecturer Sign In</h3>
+                <p id="selectedCentreLabel" style="font-weight: 700; color: var(--primary); margin: 0.5rem 0; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: var(--bg-slate); padding: 0.5rem; border-radius: 4px; border: 1.5px dashed var(--border-color);"></p>
+                <div style="text-align: center; margin-bottom: 1rem;">
+                  <a href="#" id="btnChangeCentre" style="font-size: 0.8rem; color: var(--accent); font-weight: 600; text-decoration: none;"><i class="fa-solid fa-arrow-left"></i> Change Study Centre</a>
+                </div>
               </div>
 
               <!-- Login Form Alert Box -->
-              <div class="form-alert info" id="loginFeedback">
+              <div class="form-alert info" id="loginFeedback" style="display: none;">
                 <i class="fa-solid fa-circle-info" style="margin-top: 0.15rem;"></i>
                 <span id="loginFeedbackText">
                   Checking registry credentials...
@@ -1081,10 +1119,10 @@
               <form id="lecturerLoginForm">
                 <!-- Staff ID Field -->
                 <div class="form-group" style="margin-bottom: 1.5rem;">
-                  <label for="staffId" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: block;">Staff ID Number</label>
+                  <label for="staffId" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; display: block;">Lecturer ID or Registered Email</label>
                   <div class="input-with-icon">
                     <i class="fa-solid fa-id-card-clip input-icon"></i>
-                    <input type="text" id="staffId" class="form-control" placeholder="e.g. DIMABIN/FAC/2026/01" required>
+                    <input type="text" id="staffId" class="form-control" placeholder="e.g. DIMABIN-L/MAIN/0001 or email@domain.com" required>
                   </div>
                 </div>
 
@@ -1247,6 +1285,8 @@
                 <h2 class="font-display" style="font-size: 1.75rem; margin: 0 0 0.35rem 0; color: #fff;" id="welcomeMessage">Welcome back, Lecturer!</h2>
                 <div style="display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.85rem; opacity: 0.9;">
                   <span><i class="fa-solid fa-id-card" style="color: var(--accent); margin-right: 4px;"></i> <strong id="overviewLecturerId">Staff ID: Loading...</strong></span>
+                  <span><i class="fa-solid fa-hotel" style="color: var(--accent); margin-right: 4px;"></i> <strong id="overviewLecturerCentre">Study Centre: Loading...</strong></span>
+                  <span><i class="fa-solid fa-scroll" style="color: var(--accent); margin-right: 4px;"></i> <strong id="overviewLecturerProgramme">Programme: Loading...</strong></span>
                   <span><i class="fa-solid fa-graduation-cap" style="color: var(--accent); margin-right: 4px;"></i> <strong id="overviewLecturerDept">Department: Loading...</strong></span>
                 </div>
               </div>
