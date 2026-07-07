@@ -753,41 +753,67 @@ const filterStudentsStudyCentre = document.getElementById("filterStudentsStudyCe
 if (searchStudentsInput) searchStudentsInput.addEventListener("input", renderStudentsTable);
 if (filterStudentsStudyCentre) filterStudentsStudyCentre.addEventListener("change", renderStudentsTable);
 
-// Fetch next Student IDs and Matric sequence from Firestore
-async function generateStudentIds() {
-  let nextSeq = 1;
-  const studentsCollRef = collection(db, "students");
-  const q = query(studentsCollRef, orderBy("studentId", "desc"), limit(1));
-  try {
-    const qSnap = await getDocs(q);
-    if (!qSnap.empty) {
-      const latest = qSnap.docs[0].data();
-      const lastId = latest.studentId;
-      if (lastId && lastId.includes("/STU/")) {
-        const parts = lastId.split("/");
-        const lastSeqStr = parts[parts.length - 1];
-        const lastSeq = parseInt(lastSeqStr, 10);
-        if (!isNaN(lastSeq)) {
-          nextSeq = lastSeq + 1;
-        }
-      }
-    } else {
-      const totalSnap = await getDocs(studentsCollRef);
-      nextSeq = totalSnap.size + 1;
-    }
-  } catch (err) {
-    console.warn("⚠️ Failed to resolve sequence order. Fallback to count:", err);
-    try {
-      const totalSnap = await getDocs(studentsCollRef);
-      nextSeq = totalSnap.size + 1;
-    } catch (innerErr) {
-      nextSeq = Math.floor(100 + Math.random() * 900);
-    }
+// Helper to extract a 4-letter/short uppercase code from the study centre name
+function getCentreCode(centreName) {
+  if (!centreName) return "MAIN";
+  const nameUpper = centreName.toUpperCase();
+  if (nameUpper.includes("MAIN CAMPUS") || nameUpper.includes("DEFAULT") || nameUpper.includes("UNASSIGNED")) {
+    return "MAIN";
+  }
+  if (nameUpper.includes("ODEDA")) {
+    return "ODED";
+  }
+  if (nameUpper.includes("IFO")) {
+    return "IFO";
+  }
+  if (nameUpper.includes("ABEOKUTA")) {
+    return "ABK";
+  }
+  if (nameUpper.includes("IFE")) {
+    return "IFE";
   }
   
-  const formattedSeq = String(nextSeq).padStart(3, "0");
-  const studentId = `DIMABIN/STU/2026/${formattedSeq}`;
-  const matricNumber = `DIMABIN/2026/${formattedSeq}`;
+  // Clean fallback:
+  let clean = nameUpper.replace("STUDY CENTRE", "").replace("CENTRE", "").trim();
+  clean = clean.replace(/[^A-Z]/g, "");
+  if (clean.length >= 4) {
+    return clean.substring(0, 4);
+  } else if (clean.length > 0) {
+    return clean;
+  }
+  return "MAIN";
+}
+
+// Fetch next Student IDs and Matric sequence from Firestore per Study Centre
+async function generateStudentIds(studyCentreId, studyCentreName) {
+  const centreCode = getCentreCode(studyCentreName);
+  let nextSeq = 1;
+  const studentsCollRef = collection(db, "students");
+  
+  try {
+    const q = query(studentsCollRef, where("studyCentreId", "==", studyCentreId || "default"));
+    const snap = await getDocs(q);
+    let maxNum = 0;
+    snap.forEach(docSnap => {
+      const data = docSnap.data();
+      const sId = data.studentId || "";
+      if (sId.startsWith("DIMABIN/" + centreCode + "/")) {
+        const parts = sId.split("/");
+        const lastPart = parts[parts.length - 1];
+        const num = parseInt(lastPart, 10);
+        if (!isNaN(num) && num > maxNum) {
+          maxNum = num;
+        }
+      }
+    });
+    nextSeq = maxNum + 1;
+  } catch (err) {
+    console.warn("⚠️ Failed to resolve sequence order from Firestore:", err);
+  }
+  
+  const formattedSeq = String(nextSeq).padStart(4, "0");
+  const studentId = `DIMABIN/${centreCode}/${formattedSeq}`;
+  const matricNumber = studentId; // Align both to be exactly the same
   return { studentId, matricNumber };
 }
 
@@ -978,13 +1004,19 @@ async function processApproval(id) {
   const remarks = document.getElementById("modalRemarks").value;
   
   const selectedCentreId = document.getElementById("modalPreferredStudyCentre")?.value || "";
-  const selectedCentre = allStudyCentres.find(c => c.id === selectedCentreId);
-  const studyCentreId = selectedCentre ? selectedCentre.id : "";
-  const studyCentreName = selectedCentre ? selectedCentre.name : "Unassigned";
+  let studyCentreId = "default";
+  let studyCentreName = "Main Campus";
+  if (selectedCentreId && selectedCentreId !== "default") {
+    const selectedCentre = allStudyCentres.find(c => c.id === selectedCentreId);
+    if (selectedCentre) {
+      studyCentreId = selectedCentre.id;
+      studyCentreName = selectedCentre.name;
+    }
+  }
   
   try {
     // 1. Generate unique sequence IDs
-    const { studentId, matricNumber } = await generateStudentIds();
+    const { studentId, matricNumber } = await generateStudentIds(studyCentreId, studyCentreName);
 
     // 2. Generate student temporary credentials
     let cleanDob = "20260101";
@@ -1012,6 +1044,7 @@ async function processApproval(id) {
       whatsapp: app.whatsapp || "N/A",
       email: app.email || "N/A",
       programme: app.programme || "Diploma in Theology",
+      level: "100 Level",
       previousSchool: app.previousSchool || "N/A",
       highestQualification: app.highestQualification || "N/A",
       yearOfGraduation: app.yearOfGraduation || "N/A",

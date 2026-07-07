@@ -40,6 +40,25 @@
 
   <style>
     /* Student Portal Overrides and Specific Styles */
+    /* Study Centre Selection Styles */
+    .centre-select-item {
+      background-color: white;
+      border: 1.5px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.25rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.2s ease-in-out;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .centre-select-item:hover {
+      border-color: var(--primary) !important;
+      background-color: var(--bg-slate) !important;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+    }
     :root {
       --primary: #1F3B82; /* Deep Royal Blue */
       --primary-light: #3058BF;
@@ -1027,12 +1046,31 @@
           
           <!-- Left: Student Login Card & Security Notice -->
           <div class="portal-main">
+            <!-- Study Centre Selection Card -->
+            <div class="login-card" id="centreSelectionContainer" style="margin-bottom: 2rem;">
+              <div class="login-header" style="margin-bottom: 1.5rem;">
+                <div class="login-shield-icon"><i class="fa-solid fa-hotel"></i></div>
+                <h3>Select Study Centre</h3>
+                <p>Choose your official DIMABIN study centre to access your portal</p>
+              </div>
+              
+              <!-- Centre Grid/List -->
+              <div id="centreSelectionGrid" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                <div style="text-align: center; padding: 2rem 0; color: var(--text-muted);">
+                  <i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.5rem;"></i> Loading study centres...
+                </div>
+              </div>
+            </div>
+
             <!-- Student Login Card -->
-            <div class="login-card">
+            <div class="login-card" id="loginContainer" style="display: none; margin-bottom: 2rem;">
               <div class="login-header">
                 <div class="login-shield-icon"><i class="fa-solid fa-user-lock"></i></div>
-                <h3>Student Sign In</h3>
-                <p>Please enter your matriculation details to access your account</p>
+                <h3 id="loginCardTitle" style="margin-bottom: 0.25rem;">Student Sign In</h3>
+                <p id="selectedCentreLabel" style="font-weight: 700; color: var(--primary); margin: 0.5rem 0; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: var(--bg-slate); padding: 0.5rem; border-radius: 4px; border: 1.5px dashed var(--border-color);"></p>
+                <div style="text-align: center; margin-bottom: 1rem;">
+                  <a href="#" id="btnChangeCentre" style="font-size: 0.8rem; color: var(--accent); font-weight: 600; text-decoration: none;"><i class="fa-solid fa-arrow-left"></i> Change Study Centre</a>
+                </div>
               </div>
 
               <!-- UI-Only Informative Alert Box -->
@@ -1533,6 +1571,10 @@
               <div>
                 <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Programme major</span>
                 <div style="font-size: 0.95rem; color: var(--text-dark); font-weight: 500;" id="profileProgramme">-</div>
+              </div>
+              <div>
+                <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Student Level</span>
+                <div style="font-size: 0.95rem; color: var(--text-dark); font-weight: 500;" id="profileLevel">-</div>
               </div>
               <div>
                 <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Academic Session</span>

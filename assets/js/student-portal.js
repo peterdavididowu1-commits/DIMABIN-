@@ -63,6 +63,139 @@ function resetInactivityTimer() {
   document.addEventListener(evt, resetInactivityTimer);
 });
 
+// Helper to extract a 4-letter/short uppercase code from the study centre name
+function getCentreCode(centreName) {
+  if (!centreName) return "MAIN";
+  const nameUpper = centreName.toUpperCase();
+  if (nameUpper.includes("MAIN CAMPUS") || nameUpper.includes("DEFAULT") || nameUpper.includes("UNASSIGNED")) {
+    return "MAIN";
+  }
+  if (nameUpper.includes("ODEDA")) {
+    return "ODED";
+  }
+  if (nameUpper.includes("IFO")) {
+    return "IFO";
+  }
+  if (nameUpper.includes("ABEOKUTA")) {
+    return "ABK";
+  }
+  if (nameUpper.includes("IFE")) {
+    return "IFE";
+  }
+  
+  // Clean fallback:
+  let clean = nameUpper.replace("STUDY CENTRE", "").replace("CENTRE", "").trim();
+  clean = clean.replace(/[^A-Z]/g, "");
+  if (clean.length >= 4) {
+    return clean.substring(0, 4);
+  } else if (clean.length > 0) {
+    return clean;
+  }
+  return "MAIN";
+}
+
+let selectedLoginCentreId = null;
+let selectedLoginCentreName = null;
+
+// Load and initialize study centre selection before login
+async function initializeCentreSelection() {
+  const grid = document.getElementById("centreSelectionGrid");
+  if (!grid) return;
+
+  try {
+    // We fetch study centres from the "study_centres" collection
+    const centresSnap = await getDocs(collection(db, "study_centres"));
+    let centresList = [];
+    
+    // Always prepend Main Campus
+    centresList.push({
+      id: "default",
+      name: "Main Campus (Abeokuta)",
+      code: "MAIN",
+      status: "Active"
+    });
+
+    centresSnap.forEach(docSnap => {
+      const data = docSnap.data();
+      if (data.status === "Active") {
+        let centreCode = data.code || "";
+        const match = centreCode.match(/DIMABIN-CTR-(\d+)/);
+        if (match) {
+          centreCode = getCentreCode(data.name);
+        }
+        centresList.push({
+          id: docSnap.id,
+          name: data.name,
+          code: centreCode,
+          status: data.status
+        });
+      }
+    });
+
+    // Render the grid
+    let html = "";
+    centresList.forEach(centre => {
+      html += `
+        <div class="centre-select-item" data-id="${centre.id}" data-name="${centre.name}">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div style="background-color: #E2E8F0; color: var(--primary); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem;">
+              ${centre.code}
+            </div>
+            <div style="text-align: left;">
+              <h4 style="margin: 0; font-size: 0.95rem; color: var(--text-dark); font-weight: 700;">${centre.name}</h4>
+              <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">Click to select and sign in</p>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right" style="color: var(--primary); font-size: 0.9rem;"></i>
+        </div>
+      `;
+    });
+
+    grid.innerHTML = html;
+
+    // Attach click listeners
+    const items = grid.querySelectorAll(".centre-select-item");
+    items.forEach(item => {
+      item.addEventListener("click", () => {
+        const id = item.getAttribute("data-id");
+        const name = item.getAttribute("data-name");
+        
+        selectedLoginCentreId = id;
+        selectedLoginCentreName = name;
+
+        // Hide selection, show login form
+        document.getElementById("centreSelectionContainer").style.display = "none";
+        document.getElementById("loginContainer").style.display = "block";
+        
+        // Update labels
+        document.getElementById("loginCardTitle").textContent = `${name} Portal`;
+        document.getElementById("selectedCentreLabel").innerHTML = `<i class="fa-solid fa-hotel"></i> Selected: ${name}`;
+      });
+    });
+
+  } catch (err) {
+    console.error("Error loading study centres for login page:", err);
+    grid.innerHTML = `<div style="color:red; text-align:center; padding: 1rem;"><i class="fa-solid fa-circle-exclamation"></i> Failed to load study centres. Please reload the page.</div>`;
+  }
+}
+
+// Function to handle "Change Study Centre"
+const btnChangeCentre = document.getElementById("btnChangeCentre");
+if (btnChangeCentre) {
+  btnChangeCentre.addEventListener("click", (e) => {
+    e.preventDefault();
+    selectedLoginCentreId = null;
+    selectedLoginCentreName = null;
+    
+    document.getElementById("loginContainer").style.display = "none";
+    document.getElementById("centreSelectionContainer").style.display = "block";
+    
+    // Clear feedback
+    const feedback = document.getElementById("loginFeedback");
+    if (feedback) feedback.style.display = "none";
+  });
+}
+
 // Main login process
 const loginForm = document.getElementById("portalLoginForm");
 if (loginForm) {
@@ -100,6 +233,26 @@ if (loginForm) {
 
       if (!studentDoc) {
         throw new Error("Student profile could not be found with that ID or Matric Number.");
+      }
+
+      // Check if student belongs to the selected study centre
+      let isMatch = false;
+      const dbCentreId = studentDoc.studyCentreId || "";
+      
+      if (selectedLoginCentreId === "default" || selectedLoginCentreId === "" || !selectedLoginCentreId) {
+        // Main Campus
+        if (dbCentreId === "default" || dbCentreId === "" || dbCentreId === "MAIN") {
+          isMatch = true;
+        }
+      } else {
+        // Other Study Centres
+        if (dbCentreId === selectedLoginCentreId) {
+          isMatch = true;
+        }
+      }
+
+      if (!isMatch) {
+        throw new Error("This Student ID belongs to another Study Centre. Please log in through the correct Student Portal.");
       }
 
       const email = studentDoc.email;
@@ -487,6 +640,11 @@ function loadProfileTab(studentDoc) {
   document.getElementById("profileChurchName").textContent = studentDoc.churchName || "N/A";
   document.getElementById("profilePastorName").textContent = studentDoc.pastorsName || "N/A";
 
+  const elProfileLevel = document.getElementById("profileLevel");
+  if (elProfileLevel) {
+    elProfileLevel.textContent = studentDoc.level || studentDoc.currentLevel || "100 Level";
+  }
+
   const elProfileCentre = document.getElementById("profileStudyCentre");
   if (elProfileCentre) {
     elProfileCentre.textContent = studentDoc.studyCentreName || "Unassigned";
@@ -500,7 +658,7 @@ function loadProfileTab(studentDoc) {
   // Overview sub-bar details
   const subDetails = document.getElementById("stuNavDetails");
   if (subDetails) {
-    subDetails.textContent = `Student ID: ${studentDoc.studentId} | Matric: ${studentDoc.matricNumber} | Programme: ${studentDoc.programme} | Session: ${studentDoc.academicSession || "2026/2027"} (${studentDoc.semester || "First Semester"}) | Study Centre: ${studentDoc.studyCentreName || "Unassigned"} | Status: ${studentDoc.status || "Active"}`;
+    subDetails.textContent = `Student ID: ${studentDoc.studentId} | Level: ${studentDoc.level || studentDoc.currentLevel || "100 Level"} | Programme: ${studentDoc.programme} | Session: ${studentDoc.academicSession || "2026/2027"} (${studentDoc.semester || "First Semester"}) | Study Centre: ${studentDoc.studyCentreName || "Unassigned"} | Status: ${studentDoc.status || "Active"}`;
   }
 
   const welcomeMsg = document.getElementById("welcomeMessage");
@@ -1439,4 +1597,7 @@ async function loadCbtPublishedResults() {
     cbtExamBody.innerHTML = "<tr><td colspan='9' class='text-center py-3' style='color:red;'>Failed to load CBT results.</td></tr>";
   }
 }
+
+// Initialize selection on page load
+initializeCentreSelection();
 
