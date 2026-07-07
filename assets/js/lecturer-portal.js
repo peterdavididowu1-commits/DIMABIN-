@@ -470,7 +470,28 @@ if (forgotPasswordBtn) {
 }
 
 // Enter Dashboard Core
+async function fetchLecturerCentralAssignments() {
+  if (!currentLecturerDoc) return;
+  try {
+    const q = query(collection(db, "lecturer_assignments"), where("lecturerId", "==", currentLecturerDoc.id));
+    const snap = await getDocs(q);
+    const assignedCodes = [];
+    snap.forEach(doc => {
+      const data = doc.data();
+      if (data.courseCode) {
+        assignedCodes.push(data.courseCode);
+      }
+    });
+    currentLecturerDoc.coursesAssigned = assignedCodes;
+    currentLecturerDoc.assignedCourses = assignedCodes;
+    console.log("🔄 Loaded centralized assignments for lecturer:", assignedCodes);
+  } catch (err) {
+    console.error("❌ Failed to fetch lecturer central assignments:", err);
+  }
+}
+
 async function enterDashboard() {
+  await fetchLecturerCentralAssignments();
   document.getElementById("anonymousView").style.display = "none";
   document.getElementById("authenticatedView").style.display = "block";
   resetInactivityTimer();
@@ -680,7 +701,29 @@ async function renderProfileTab() {
   }
   
   const assigned = currentLecturerDoc.coursesAssigned || [];
-  document.getElementById("profileAssignedCourses").textContent = assigned.join(", ") || "None";
+  const firstSem = [];
+  const secondSem = [];
+  assigned.forEach(code => {
+    const course = (typeof officialCoursesList !== "undefined" ? officialCoursesList : []).find(c => c.courseCode === code || c.id === code);
+    if (course && course.semester === "Second Semester") {
+      secondSem.push(code);
+    } else {
+      firstSem.push(code);
+    }
+  });
+
+  let groupedHtml = "";
+  if (assigned.length > 0) {
+    if (firstSem.length > 0) {
+      groupedHtml += `<div style="margin-bottom: 0.5rem;"><strong style="color: var(--primary);">First Semester:</strong> ${firstSem.join(", ")}</div>`;
+    }
+    if (secondSem.length > 0) {
+      groupedHtml += `<div><strong style="color: var(--primary);">Second Semester:</strong> ${secondSem.join(", ")}</div>`;
+    }
+  } else {
+    groupedHtml = "None";
+  }
+  document.getElementById("profileAssignedCourses").innerHTML = groupedHtml;
 
   // Pre-fill fields
   document.getElementById("profilePhone").value = currentLecturerDoc.phone || "";

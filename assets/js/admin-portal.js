@@ -1628,90 +1628,128 @@ function populateCourseCheckboxes() {
   const editContainer = document.getElementById("editCourseAllocationCheckboxes");
   if (!container && !editContainer) return;
 
-  // Add change listener to department select once to trigger repopulation
+  // Add change listeners once to trigger repopulation
   const regLecDept = document.getElementById("regLecDepartment");
   if (regLecDept && !regLecDept.dataset.listenerAttached) {
     regLecDept.addEventListener("change", () => populateCourseCheckboxes());
     regLecDept.dataset.listenerAttached = "true";
   }
+  const regLecProg = document.getElementById("regLecProgramme");
+  if (regLecProg && !regLecProg.dataset.listenerAttached) {
+    regLecProg.addEventListener("change", () => populateCourseCheckboxes());
+    regLecProg.dataset.listenerAttached = "true";
+  }
+
   const editLecDept = document.getElementById("editLecDepartment");
   if (editLecDept && !editLecDept.dataset.listenerAttached) {
     editLecDept.addEventListener("change", () => populateCourseCheckboxes());
     editLecDept.dataset.listenerAttached = "true";
   }
+  const editLecProg = document.getElementById("editLecProgramme");
+  if (editLecProg && !editLecProg.dataset.listenerAttached) {
+    editLecProg.addEventListener("change", () => populateCourseCheckboxes());
+    editLecProg.dataset.listenerAttached = "true";
+  }
 
-  // Active coordinates
-  const activeSem = window.activeAcademicSemester || "First Semester";
+  // Determine role and active settings
+  const isCentreAdmin = currentAdminDoc && currentAdminDoc.role === "Centre Admin";
+  const activeSession = window.activeAcademicSession || "2026/2027";
+  const activeSemester = window.activeAcademicSemester || "First Semester";
 
   // Filter courses for Register modal
-  let registerCourses = allCourses.filter(c => c.semester === activeSem && c.status === "Active");
-  if (currentSelectedStudyCentreId) {
-    registerCourses = registerCourses.filter(c => 
-      !c.studyCentreId || 
-      c.studyCentreId === "global" || 
-      c.studyCentreId === currentSelectedStudyCentreId || 
-      (c.assignedStudyCentreIds && c.assignedStudyCentreIds.includes(currentSelectedStudyCentreId))
-    );
+  let registerCourses = allCourses.filter(c => c.status === "Active");
+  if (isCentreAdmin) {
+    // Under Centre Admin, filter by current session, semester, and study centre
+    registerCourses = registerCourses.filter(c => {
+      const matchesSession = !c.academicSession || c.academicSession === "all" || c.academicSession === activeSession;
+      const matchesSemester = c.semester === activeSemester;
+      const matchesCentre = !c.studyCentreId || c.studyCentreId === "global" || c.studyCentreId === currentSelectedStudyCentreId || (c.assignedStudyCentreIds && c.assignedStudyCentreIds.includes(currentSelectedStudyCentreId));
+      return matchesSession && matchesSemester && matchesCentre;
+    });
   }
+
   const selectedDept = regLecDept ? regLecDept.value : "all";
+  const selectedProg = regLecProg ? regLecProg.value : "all";
+  if (selectedProg && selectedProg !== "all") {
+    registerCourses = registerCourses.filter(c => c.programme === selectedProg);
+  }
   if (selectedDept && selectedDept !== "all") {
-    registerCourses = registerCourses.filter(c => c.department === selectedDept || c.programme === selectedDept);
+    registerCourses = registerCourses.filter(c => c.department === selectedDept);
   }
 
   // Filter courses for Edit modal
-  let editCourses = allCourses.filter(c => c.semester === activeSem && c.status === "Active");
-  if (currentSelectedStudyCentreId) {
-    editCourses = editCourses.filter(c => 
-      !c.studyCentreId || 
-      c.studyCentreId === "global" || 
-      c.studyCentreId === currentSelectedStudyCentreId || 
-      (c.assignedStudyCentreIds && c.assignedStudyCentreIds.includes(currentSelectedStudyCentreId))
-    );
+  let editCourses = allCourses.filter(c => c.status === "Active");
+  if (isCentreAdmin) {
+    editCourses = editCourses.filter(c => {
+      const matchesSession = !c.academicSession || c.academicSession === "all" || c.academicSession === activeSession;
+      const matchesSemester = c.semester === activeSemester;
+      const matchesCentre = !c.studyCentreId || c.studyCentreId === "global" || c.studyCentreId === currentSelectedStudyCentreId || (c.assignedStudyCentreIds && c.assignedStudyCentreIds.includes(currentSelectedStudyCentreId));
+      return matchesSession && matchesSemester && matchesCentre;
+    });
   }
+
   const selectedEditDept = editLecDept ? editLecDept.value : "all";
+  const selectedEditProg = editLecProg ? editLecProg.value : "all";
+  if (selectedEditProg && selectedEditProg !== "all") {
+    editCourses = editCourses.filter(c => c.programme === selectedEditProg);
+  }
   if (selectedEditDept && selectedEditDept !== "all") {
-    editCourses = editCourses.filter(c => c.department === selectedEditDept || c.programme === selectedEditDept);
+    editCourses = editCourses.filter(c => c.department === selectedEditDept);
   }
 
   // Sort alphabetically
   registerCourses.sort((a, b) => (a.courseCode || "").localeCompare(b.courseCode || ""));
   editCourses.sort((a, b) => (a.courseCode || "").localeCompare(b.courseCode || ""));
 
-  // Render Register courses
-  let html = "";
-  if (registerCourses.length === 0) {
-    html = `<div style="color: var(--text-muted); font-size: 0.9rem; grid-column: 1/-1; text-align: center; padding: 1rem;">No matching active courses available for this study centre, programme, and semester.</div>`;
-  } else {
-    registerCourses.forEach(c => {
-      const code = c.courseCode || c.id || "";
-      const name = c.courseTitle || c.name || "";
-      html += `
-        <label style="display: flex; align-items: flex-start; gap: 0.6rem; background-color: var(--bg-white); padding: 0.6rem 0.8rem; border-radius: 6px; border: 1.5px solid var(--border-color); cursor: pointer; font-size: 0.85rem; transition: border-color 0.2s;">
-          <input type="checkbox" name="assignedCourses" value="${code}" style="margin-top: 0.2rem; accent-color: var(--primary);">
-          <span style="font-weight: 500;">[${code}] <span style="color: var(--text-muted);">${name}</span></span>
-        </label>
-      `;
-    });
+  if (container) {
+    container.innerHTML = renderGroupedCoursesHtml(registerCourses, "assignedCourses");
   }
-  if (container) container.innerHTML = html;
 
-  // Render Edit courses
-  let editHtml = "";
-  if (editCourses.length === 0) {
-    editHtml = `<div style="color: var(--text-muted); font-size: 0.85rem; grid-column: 1/-1; text-align: center; padding: 1rem;">No matching active courses available for this study centre, programme, and semester.</div>`;
-  } else {
-    editCourses.forEach(c => {
+  if (editContainer) {
+    editContainer.innerHTML = renderGroupedCoursesHtml(editCourses, "editAssignedCourses");
+  }
+}
+
+function renderGroupedCoursesHtml(coursesList, checkboxName) {
+  if (coursesList.length === 0) {
+    return `<div style="color: var(--text-muted); font-size: 0.9rem; grid-column: 1/-1; text-align: center; padding: 1.5rem;">
+      No active courses available matching criteria.
+    </div>`;
+  }
+
+  const firstSem = coursesList.filter(c => c.semester === "First Semester");
+  const secondSem = coursesList.filter(c => c.semester === "Second Semester");
+
+  const makeListHtml = (courses) => {
+    if (courses.length === 0) {
+      return `<div style="color: var(--text-muted); font-size: 0.8rem; font-style: italic; padding: 0.5rem 1rem;">No courses in this semester.</div>`;
+    }
+    return courses.map(c => {
       const code = c.courseCode || c.id || "";
       const name = c.courseTitle || c.name || "";
-      editHtml += `
-        <label style="display: flex; align-items: flex-start; gap: 0.5rem; background-color: var(--bg-white); padding: 0.5rem 0.7rem; border-radius: 6px; border: 1.5px solid var(--border-color); cursor: pointer; font-size: 0.8rem; transition: border-color 0.2s;">
-          <input type="checkbox" name="editAssignedCourses" value="${code}" style="margin-top: 0.15rem; accent-color: var(--primary);">
+      return `
+        <label style="display: flex; align-items: flex-start; gap: 0.5rem; background-color: var(--bg-white); padding: 0.6rem 0.8rem; border-radius: 6px; border: 1.5px solid var(--border-color); cursor: pointer; font-size: 0.8rem; transition: border-color 0.2s;">
+          <input type="checkbox" name="${checkboxName}" value="${code}" style="margin-top: 0.15rem; accent-color: var(--primary);">
           <span style="font-weight: 500;">[${code}] <span style="color: var(--text-muted);">${name}</span></span>
         </label>
       `;
-    });
-  }
-  if (editContainer) editContainer.innerHTML = editHtml;
+    }).join("");
+  };
+
+  return `
+    <div style="grid-column: 1 / -1; margin-bottom: 0.75rem; width: 100%;">
+      <h5 style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; border-bottom: 1px dashed var(--border-color); padding-bottom: 0.25rem; margin-bottom: 0.5rem; display: block; width: 100%;">First Semester</h5>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.5rem; width: 100%;">
+        ${makeListHtml(firstSem)}
+      </div>
+    </div>
+    <div style="grid-column: 1 / -1; margin-top: 0.5rem; margin-bottom: 0.75rem; width: 100%;">
+      <h5 style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; border-bottom: 1px dashed var(--border-color); padding-bottom: 0.25rem; margin-bottom: 0.5rem; display: block; width: 100%;">Second Semester</h5>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.5rem; width: 100%;">
+        ${makeListHtml(secondSem)}
+      </div>
+    </div>
+  `;
 }
 
 function populateStudyCentreCheckboxes() {
@@ -2354,40 +2392,69 @@ if (btnAllocClearAll) {
   };
 }
 
-// Save Allocations Button
-const btnSaveCourseAllocation = document.getElementById("btnSaveCourseAllocation");
-if (btnSaveCourseAllocation) {
-  btnSaveCourseAllocation.onclick = async () => {
-    const select = document.getElementById("allocationLecturerSelect");
-    if (!select) return;
-    const lecId = select.value;
-    if (!lecId) return;
+let allLecturerAssignments = [];
 
-    try {
-      // Gather checked courses
-      const checkedBoxes = document.querySelectorAll(".alloc-course-checkbox:checked");
-      const allocatedCodes = Array.from(checkedBoxes).map(chk => chk.value);
-
-      const lec = allLecturers.find(l => l.id === lecId);
-      if (!lec) return;
-
-      const docRef = doc(db, "lecturers", lecId);
-      await updateDoc(docRef, {
-        coursesAssigned: allocatedCodes,
-        assignedCourses: allocatedCodes, // Dual field syncing
-        updatedAt: new Date().toISOString()
-      });
-
-      window.showToast(`Facilitator allocations successfully synchronized for ${lec.fullName}!`, "success");
-      
-      // Reload everything to keep state fully consistent
-      await loadLecturers();
-      handleAllocationLecturerChange();
-    } catch (err) {
-      console.error("❌ Allocation save failed:", err);
-      window.showToast("Failed to save course allocations: " + err.message, "error");
+async function syncLecturerAssignments(lecturerId, checkedCourseCodes) {
+  try {
+    const lec = allLecturers.find(l => l.id === lecturerId);
+    if (!lec) {
+      console.error("syncLecturerAssignments: Lecturer not found", lecturerId);
+      return;
     }
-  };
+    const lecturerName = `${lec.title || ""} ${lec.fullName}`.trim();
+
+    // Fetch existing allocations for this lecturer
+    const qSnap = await getDocs(query(collection(db, "lecturer_assignments"), where("lecturerId", "==", lecturerId)));
+    const existingAssigns = [];
+    qSnap.forEach(docSnap => {
+      existingAssigns.push({ id: docSnap.id, ...docSnap.data() });
+    });
+
+    const existingCodes = existingAssigns.map(a => a.courseCode);
+
+    // Identify which ones to add
+    const codesToAdd = checkedCourseCodes.filter(code => !existingCodes.includes(code));
+
+    // Identify which ones to remove
+    const codesToRemove = existingCodes.filter(code => !checkedCourseCodes.includes(code));
+
+    // Perform deletes
+    for (const code of codesToRemove) {
+      const docId = `${lecturerId}_${code}`;
+      await deleteDoc(doc(db, "lecturer_assignments", docId));
+    }
+
+    // Perform adds
+    const activeSession = window.activeAcademicSession || "2026/2027";
+    const nowStr = new Date().toISOString();
+
+    for (const code of codesToAdd) {
+      const course = allCourses.find(c => c.courseCode === code || c.id === code);
+      const docId = `${lecturerId}_${code}`;
+
+      // Find study centre
+      const studyCentreId = lec.assignedStudyCentreIds?.[0] || "global";
+      const centre = allStudyCentres.find(c => c.id === studyCentreId);
+
+      const assignData = {
+        lecturerId: lecturerId,
+        lecturerName: lecturerName,
+        courseCode: code,
+        courseTitle: course ? (course.courseTitle || course.name || "") : "Unknown Course",
+        semester: course ? (course.semester || "First Semester") : "First Semester",
+        programme: lec.programme || (course ? (course.programme || course.department) : "") || "Bachelor of Theology",
+        studyCentreId: studyCentreId,
+        studyCentreName: centre ? centre.name : "Global",
+        academicSession: activeSession,
+        assignedAt: nowStr,
+        createdAt: nowStr
+      };
+
+      await setDoc(doc(db, "lecturer_assignments", docId), assignData);
+    }
+  } catch (err) {
+    console.error("❌ syncLecturerAssignments failed:", err);
+  }
 }
 
 async function loadLecturers() {
@@ -2397,7 +2464,36 @@ async function loadLecturers() {
     qSnap.forEach(docSnap => {
       allLecturers.push({ id: docSnap.id, ...docSnap.data() });
     });
-    console.log(`🌟 [Lecturer Directory] Loaded ${allLecturers.length} facilitators successfully!`);
+
+    // Fetch centralized lecturer assignments
+    try {
+      const assignSnap = await getDocs(collection(db, "lecturer_assignments"));
+      allLecturerAssignments = [];
+      assignSnap.forEach(docSnap => {
+        allLecturerAssignments.push({ id: docSnap.id, ...docSnap.data() });
+      });
+    } catch (assignErr) {
+      console.warn("⚠️ Failed to load centralized assignments, seeding empty array:", assignErr);
+      allLecturerAssignments = [];
+    }
+
+    // Map centralized assignments back to lecturers
+    allLecturers.forEach(lec => {
+      const assignments = allLecturerAssignments.filter(a => a.lecturerId === lec.id);
+      const courses = assignments.map(a => a.courseCode);
+      lec.coursesAssigned = courses;
+      lec.assignedCourses = courses;
+
+      // Ensure allocationsMetadata is also synchronized
+      lec.allocationsMetadata = {};
+      assignments.forEach(a => {
+        lec.allocationsMetadata[a.courseCode] = {
+          assignedAt: a.assignedAt || a.createdAt || new Date().toISOString()
+        };
+      });
+    });
+
+    console.log(`🌟 [Lecturer Directory] Loaded ${allLecturers.length} facilitators and ${allLecturerAssignments.length} centralized assignments successfully!`);
     renderLecturerDirectory();
     if (typeof currentSelectedStudyCentreId !== 'undefined' && currentSelectedStudyCentreId) {
       renderCentreLecturers(currentSelectedStudyCentreId);
@@ -2472,11 +2568,38 @@ function renderLecturerDirectory() {
         }).join("")
       : `<span style="color: var(--text-muted); font-style: italic; font-size: 0.8rem;">None Assigned</span>`;
 
-    // Fallback support for course codes
+    // Fallback support for course codes grouped by semester
     const coursesList = lec.coursesAssigned || lec.assignedCourses || [];
-    const coursesHtml = coursesList.length > 0 
-      ? coursesList.map(c => `<span style="background-color: var(--primary); color: white; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.72rem; font-weight: 600; margin-right: 0.3rem; display: inline-block; margin-bottom: 0.25rem;">${c}</span>`).join("")
-      : `<span style="color: var(--text-muted); font-style: italic; font-size: 0.8rem;">None Allocated</span>`;
+    let coursesHtml = "";
+    if (coursesList.length > 0) {
+      const firstSemCourses = [];
+      const secondSemCourses = [];
+      
+      coursesList.forEach(c => {
+        const course = allCourses.find(item => item.courseCode === c || item.id === c);
+        const sem = course ? course.semester : "First Semester";
+        if (sem === "Second Semester") {
+          secondSemCourses.push(c);
+        } else {
+          firstSemCourses.push(c);
+        }
+      });
+
+      let firstHtml = firstSemCourses.length > 0 
+        ? `<div style="margin-bottom: 0.3rem;"><strong style="font-size: 0.72rem; color: var(--primary); display: block;">1st Sem:</strong>` + 
+          firstSemCourses.map(c => `<span style="background-color: var(--primary); color: white; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; margin-right: 0.25rem; display: inline-block; margin-bottom: 0.2rem;">${c}</span>`).join("") + "</div>"
+        : "";
+
+      let secondHtml = secondSemCourses.length > 0 
+        ? `<div><strong style="font-size: 0.72rem; color: var(--primary); display: block;">2nd Sem:</strong>` + 
+          secondSemCourses.map(c => `<span style="background-color: #555; color: white; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; margin-right: 0.25rem; display: inline-block; margin-bottom: 0.2rem;">${c}</span>`).join("") + "</div>"
+        : "";
+
+      coursesHtml = firstHtml + secondHtml;
+      if (!coursesHtml) coursesHtml = `<span style="color: var(--text-muted); font-style: italic; font-size: 0.8rem;">None Allocated</span>`;
+    } else {
+      coursesHtml = `<span style="color: var(--text-muted); font-style: italic; font-size: 0.8rem;">None Allocated</span>`;
+    }
 
     // Strictly ICONS ONLY action buttons matching style guidelines!
     return `
@@ -2584,6 +2707,7 @@ if (registerLecturerForm) {
     const address = document.getElementById("regLecAddress").value.trim();
     const qualification = document.getElementById("regLecQualification").value.trim();
     const department = document.getElementById("regLecDepartment").value;
+    const programme = document.getElementById("regLecProgramme") ? document.getElementById("regLecProgramme").value : "Bachelor of Theology";
     const position = document.getElementById("regLecPosition").value.trim();
     const employmentDate = document.getElementById("regLecEmploymentDate").value;
 
@@ -2670,6 +2794,7 @@ if (registerLecturerForm) {
         address,
         qualification,
         department,
+        programme,
         position,
         employmentDate,
         assignedCourses: checkedCourses,
@@ -2682,6 +2807,7 @@ if (registerLecturerForm) {
       };
 
       await setDoc(doc(db, "lecturers", docId), lecDocData);
+      await syncLecturerAssignments(docId, checkedCourses);
 
       // Display successfully generated credentials
       document.getElementById("dispGeneratedLecturerId").textContent = generatedLecId;
@@ -2740,7 +2866,10 @@ if (btnCloseRegLecModal && regLecModal) {
 }
 
 document.addEventListener("click", (e) => {
-  if (e.target && (e.target.id === "btnRegisterNewCentreLecturer" || e.target.closest("#btnRegisterNewCentreLecturer"))) {
+  if (e.target && (
+    e.target.id === "btnRegisterNewCentreLecturer" || e.target.closest("#btnRegisterNewCentreLecturer") ||
+    e.target.id === "btnRegisterNewLecturerSuper" || e.target.closest("#btnRegisterNewLecturerSuper")
+  )) {
     const form = document.getElementById("registerLecturerForm");
     if (form) form.reset();
     const succCard = document.getElementById("regSuccessCredentialsCard");
@@ -2774,7 +2903,10 @@ function openEditLecturerModal(docId) {
   document.getElementById("editLecEmail").value = lec.email || "";
   document.getElementById("editLecAddress").value = lec.address || "";
   document.getElementById("editLecQualification").value = lec.qualification || "";
-  document.getElementById("editLecDepartment").value = lec.department || "Theology";
+  document.getElementById("editLecDepartment").value = lec.department || "all";
+  if (document.getElementById("editLecProgramme")) {
+    document.getElementById("editLecProgramme").value = lec.programme || "all";
+  }
   document.getElementById("editLecPosition").value = lec.position || "";
   document.getElementById("editLecEmploymentDate").value = lec.employmentDate || "";
   document.getElementById("editLecStatus").value = lec.status || "Active";
@@ -2844,6 +2976,7 @@ if (editLecForm) {
     const address = document.getElementById("editLecAddress").value.trim();
     const qualification = document.getElementById("editLecQualification").value.trim();
     const department = document.getElementById("editLecDepartment").value;
+    const programme = document.getElementById("editLecProgramme") ? document.getElementById("editLecProgramme").value : "Bachelor of Theology";
     const position = document.getElementById("editLecPosition").value.trim();
     const employmentDate = document.getElementById("editLecEmploymentDate").value;
     const status = document.getElementById("editLecStatus").value;
@@ -2878,6 +3011,7 @@ if (editLecForm) {
         address,
         qualification,
         department,
+        programme,
         position,
         employmentDate,
         status,
@@ -2886,6 +3020,9 @@ if (editLecForm) {
         assignedStudyCentreIds: checkedCentres, // Multi study centre assignment support
         updatedAt: new Date().toISOString()
       });
+
+      // Sync centralized assignments collection
+      await syncLecturerAssignments(docId, checkedCourses);
 
       window.showToast("Facilitator profile updated successfully!", "success");
       if (editLecModal) editLecModal.style.display = "none";
@@ -6819,40 +6956,54 @@ window.renderCoursesAllocationTable = function() {
   const isCentreAdmin = currentAdminDoc && currentAdminDoc.role === "Centre Admin";
   const centreId = isCentreAdmin ? currentAdminDoc.assignedStudyCentreId : null;
 
-  const relevantLecturers = allLecturers.filter(l => {
+  // Render from allLecturerAssignments
+  const mappedAllocations = [];
+  allLecturerAssignments.forEach(assign => {
+    const lec = allLecturers.find(l => l.id === assign.lecturerId);
+    // If Centre Admin, filter by their study centre
     if (isCentreAdmin) {
-      return l.assignedStudyCentreIds && l.assignedStudyCentreIds.includes(centreId);
+      if (!lec || !lec.assignedStudyCentreIds || !lec.assignedStudyCentreIds.includes(centreId)) {
+        return; // skip
+      }
     }
-    return true;
-  });
 
-  const allAllocations = [];
-  relevantLecturers.forEach(lec => {
-    const courses = lec.coursesAssigned || lec.assignedCourses || [];
-    courses.forEach(code => {
-      const course = allCourses.find(c => c.courseCode === code || c.id === code);
-      const meta = (lec.allocationsMetadata && lec.allocationsMetadata[code]) ? lec.allocationsMetadata[code] : null;
-      const assignedDate = meta && meta.assignedAt 
-        ? new Date(meta.assignedAt).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' })
-        : (lec.updatedAt ? new Date(lec.updatedAt).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' }) : "N/A");
+    const course = allCourses.find(c => c.courseCode === assign.courseCode || c.id === assign.courseCode);
+    const studyCentreId = assign.studyCentreId || (lec ? (lec.assignedStudyCentreIds?.[0] || "") : "");
+    const centre = allStudyCentres.find(c => c.id === studyCentreId);
 
-      allAllocations.push({
-        lecturerId: lec.id,
-        lecturerName: `${lec.title || ""} ${lec.fullName}`,
-        courseCode: code,
-        courseTitle: course ? (course.courseTitle || course.name || "") : "Unknown Course",
-        semester: course ? (course.semester || "First Semester") : "First Semester",
-        assignedDate: assignedDate,
-        rawAssignedDate: meta && meta.assignedAt ? meta.assignedAt : (lec.updatedAt || "")
-      });
+    const lecturerName = assign.lecturerName || (lec ? `${lec.title || ""} ${lec.fullName}` : "Unknown Lecturer");
+    const courseTitle = assign.courseTitle || (course ? (course.courseTitle || course.name) : "Unknown Course");
+    const semester = assign.semester || (course ? (course.semester || "First Semester") : "First Semester");
+    const programme = assign.programme || (course ? course.programme : "") || (lec ? lec.programme : "") || "Bachelor of Theology";
+    const studyCentreName = assign.studyCentreName || (centre ? centre.name : "") || "Global";
+    const academicSession = assign.academicSession || window.activeAcademicSession || "2026/2027";
+    const rawAssignedDate = assign.assignedAt || assign.createdAt || "";
+    const assignedDate = rawAssignedDate
+      ? new Date(rawAssignedDate).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' })
+      : "N/A";
+
+    mappedAllocations.push({
+      id: assign.id,
+      lecturerId: assign.lecturerId,
+      lecturerName,
+      courseCode: assign.courseCode,
+      courseTitle,
+      programme,
+      semester,
+      studyCentreName,
+      academicSession,
+      assignedDate,
+      rawAssignedDate
     });
   });
 
-  let filteredAllocations = allAllocations.filter(alloc => {
+  let filteredAllocations = mappedAllocations.filter(alloc => {
     const matchesSearch = 
       alloc.lecturerName.toLowerCase().includes(searchQuery) ||
       alloc.courseCode.toLowerCase().includes(searchQuery) ||
-      alloc.courseTitle.toLowerCase().includes(searchQuery);
+      alloc.courseTitle.toLowerCase().includes(searchQuery) ||
+      alloc.programme.toLowerCase().includes(searchQuery) ||
+      alloc.studyCentreName.toLowerCase().includes(searchQuery);
 
     const matchesSemester = semesterFilter === "all" || alloc.semester === semesterFilter;
 
@@ -6864,7 +7015,7 @@ window.renderCoursesAllocationTable = function() {
   if (filteredAllocations.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+        <td colspan="9" style="text-align: center; padding: 3rem; color: var(--text-muted);">
           <i class="fa-solid fa-folder-open" style="font-size: 2rem; display: block; margin-bottom: 0.5rem; color: var(--accent);"></i>
           No active course allocations found matching criteria.
         </td>
@@ -6879,7 +7030,10 @@ window.renderCoursesAllocationTable = function() {
         <td style="padding: 1rem; font-weight: 600; color: var(--primary-dark);">${alloc.lecturerName}</td>
         <td style="padding: 1rem; font-family: monospace; font-weight: 700; color: var(--primary);">${alloc.courseCode}</td>
         <td style="padding: 1rem; font-weight: 500;">${alloc.courseTitle}</td>
+        <td style="padding: 1rem; font-size: 0.85rem; color: var(--text-dark);">${alloc.programme}</td>
         <td style="padding: 1rem;"><span style="background-color: var(--bg-slate); color: var(--primary); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">${alloc.semester}</span></td>
+        <td style="padding: 1rem; font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">${alloc.studyCentreName}</td>
+        <td style="padding: 1rem; font-family: monospace; font-size: 0.85rem; color: var(--primary); font-weight: 600;">${alloc.academicSession}</td>
         <td style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem;"><i class="fa-regular fa-calendar"></i> ${alloc.assignedDate}</td>
         <td style="padding: 1rem; text-align: center;">
           <div style="display: inline-flex; gap: 0.5rem; align-items: center; justify-content: center;">
@@ -6937,6 +7091,9 @@ window.renderCoursesAllocationTable = function() {
           allocationsMetadata: allocationsMetadata,
           updatedAt: new Date().toISOString()
         });
+
+        // Sync centralized assignments collection
+        await syncLecturerAssignments(lecId, arr);
 
         window.showToast("Allocation successfully removed.", "success");
         await loadLecturers();

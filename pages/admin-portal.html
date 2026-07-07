@@ -2335,7 +2335,10 @@
               <h2 class="font-display" style="color: var(--primary); font-size: 2rem; margin-bottom: 0.5rem; font-weight: 800;">Lecturer Management</h2>
               <p style="color: var(--text-muted);">Configure faculty profiles, course allocation vectors, and security controls.</p>
             </div>
-            <div style="display: flex; gap: 0.75rem;">
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+              <button class="btn btn-primary" id="btnRegisterNewLecturerSuper" style="white-space: nowrap; background-color: #1F3B82; color: white; border: none; border-radius: 6px; padding: 0.5rem 1.25rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-user-plus"></i> Add New Lecturer
+              </button>
               <button class="btn sub-tab-btn active" data-subtab="list" title="All Lecturers Directory" style="background-color: #1F3B82; color: white; width: 44px; height: 44px; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; transition: all 0.2s;"><i class="fa-solid fa-list-ul" style="font-size: 1.15rem;"></i></button>
             </div>
           </div>
@@ -2787,7 +2790,10 @@
                     <th style="padding: 1rem;">Lecturer Name</th>
                     <th style="padding: 1rem;">Course Code</th>
                     <th style="padding: 1rem;">Course Title</th>
+                    <th style="padding: 1rem;">Programme</th>
                     <th style="padding: 1rem;">Semester</th>
+                    <th style="padding: 1rem;">Study Centre</th>
+                    <th style="padding: 1rem;">Academic Session</th>
                     <th style="padding: 1rem;">Assigned Date</th>
                     <th style="padding: 1rem; text-align: center;">Actions</th>
                   </tr>
@@ -3299,8 +3305,19 @@
             </div>
 
             <div class="form-group">
+              <label for="regLecProgramme" style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.5rem;">Programme</label>
+              <select id="regLecProgramme" class="form-control" style="width: 100%; padding: 0.75rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                <option value="all">All Programmes</option>
+                <option value="Bachelor of Theology">Bachelor of Theology</option>
+                <option value="Diploma in Theology">Diploma in Theology</option>
+                <option value="Postgraduate Diploma">Postgraduate Diploma in Theology</option>
+              </select>
+            </div>
+
+            <div class="form-group">
               <label for="regLecDepartment" style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.5rem;">Department</label>
               <select id="regLecDepartment" class="form-control" style="width: 100%; padding: 0.75rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                <option value="all">All Departments</option>
                 <option value="Theology">Theology</option>
                 <option value="Biblical Studies">Biblical Studies</option>
                 <option value="Christian Education">Christian Education</option>
@@ -3437,8 +3454,19 @@
             </div>
 
             <div class="form-group">
+              <label for="editLecProgramme" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Programme</label>
+              <select id="editLecProgramme" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                <option value="all">All Programmes</option>
+                <option value="Bachelor of Theology">Bachelor of Theology</option>
+                <option value="Diploma in Theology">Diploma in Theology</option>
+                <option value="Postgraduate Diploma">Postgraduate Diploma in Theology</option>
+              </select>
+            </div>
+
+            <div class="form-group">
               <label for="editLecDepartment" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 0.25rem;">Department</label>
               <select id="editLecDepartment" class="form-control" style="width: 100%; padding: 0.6rem; background-color: var(--bg-slate); border: 1.5px solid var(--border-color); border-radius: 6px; font-family: 'Poppins', sans-serif;" required>
+                <option value="all">All Departments</option>
                 <option value="Theology">Theology</option>
                 <option value="Biblical Studies">Biblical Studies</option>
                 <option value="Christian Education">Christian Education</option>
