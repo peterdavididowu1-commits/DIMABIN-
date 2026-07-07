@@ -2711,8 +2711,9 @@ if (registerLecturerForm) {
     const position = document.getElementById("regLecPosition").value.trim();
     const employmentDate = document.getElementById("regLecEmploymentDate").value;
 
-    if (!email.includes("@")) {
-      window.showToast("Please supply a valid institutional email address.", "error");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      window.showToast("Please supply a valid email address.", "error");
       return;
     }
 
@@ -2973,6 +2974,11 @@ if (editLecForm) {
     const phone = document.getElementById("editLecPhone").value.trim();
     const whatsapp = document.getElementById("editLecWhatsapp").value.trim();
     const email = document.getElementById("editLecEmail").value.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      window.showToast("Please supply a valid email address.", "error");
+      return;
+    }
     const address = document.getElementById("editLecAddress").value.trim();
     const qualification = document.getElementById("editLecQualification").value.trim();
     const department = document.getElementById("editLecDepartment").value;
