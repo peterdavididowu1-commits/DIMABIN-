@@ -1684,22 +1684,8 @@ function populateCourseCheckboxes() {
     editLecProg.dataset.listenerAttached = "true";
   }
 
-  // Determine role and active settings
-  const isCentreAdmin = currentAdminDoc && currentAdminDoc.role === "Centre Admin";
-  const activeSession = window.activeAcademicSession || "2026/2027";
-  const activeSemester = window.activeAcademicSemester || "First Semester";
-
-  // Filter courses for Register modal
-  let registerCourses = allCourses.filter(c => c.status === "Active");
-  if (isCentreAdmin) {
-    // Under Centre Admin, filter by current session, semester, and study centre
-    registerCourses = registerCourses.filter(c => {
-      const matchesSession = !c.academicSession || c.academicSession === "all" || c.academicSession === activeSession;
-      const matchesSemester = c.semester === activeSemester;
-      const matchesCentre = !c.studyCentreId || c.studyCentreId === "global" || c.studyCentreId === currentSelectedStudyCentreId || (c.assignedStudyCentreIds && c.assignedStudyCentreIds.includes(currentSelectedStudyCentreId));
-      return matchesSession && matchesSemester && matchesCentre;
-    });
-  }
+  // Active courses from the global course catalogue created by Super Admin are always loaded for all roles
+  let registerCourses = allCourses.filter(c => c.status === "Active" || c.status === undefined);
 
   const selectedDept = regLecDept ? regLecDept.value : "all";
   const selectedProg = regLecProg ? regLecProg.value : "all";
@@ -1711,15 +1697,7 @@ function populateCourseCheckboxes() {
   }
 
   // Filter courses for Edit modal
-  let editCourses = allCourses.filter(c => c.status === "Active");
-  if (isCentreAdmin) {
-    editCourses = editCourses.filter(c => {
-      const matchesSession = !c.academicSession || c.academicSession === "all" || c.academicSession === activeSession;
-      const matchesSemester = c.semester === activeSemester;
-      const matchesCentre = !c.studyCentreId || c.studyCentreId === "global" || c.studyCentreId === currentSelectedStudyCentreId || (c.assignedStudyCentreIds && c.assignedStudyCentreIds.includes(currentSelectedStudyCentreId));
-      return matchesSession && matchesSemester && matchesCentre;
-    });
-  }
+  let editCourses = allCourses.filter(c => c.status === "Active" || c.status === undefined);
 
   const selectedEditDept = editLecDept ? editLecDept.value : "all";
   const selectedEditProg = editLecProg ? editLecProg.value : "all";
@@ -1790,14 +1768,18 @@ function populateStudyCentreCheckboxes() {
   const editContainer = document.getElementById("editStudyCentreAllocationCheckboxes");
   if (!container && !editContainer) return;
 
-  const centreFormBlock = container.closest('div');
+  // Make sure the form groups are always visible!
+  const centreFormBlock = container.closest('.form-group') || container.parentNode;
   if (centreFormBlock) {
-    if (currentAdminDoc?.role === "Centre Admin") {
-      centreFormBlock.style.display = "none";
-    } else {
-      centreFormBlock.style.display = "block";
-    }
+    centreFormBlock.style.display = "block";
   }
+  const editCentreFormBlock = editContainer.closest('.form-group') || editContainer.parentNode;
+  if (editCentreFormBlock) {
+    editCentreFormBlock.style.display = "block";
+  }
+
+  const isCentreAdmin = currentAdminDoc && currentAdminDoc.role === "Centre Admin";
+  const ownCentreId = isCentreAdmin ? (currentSelectedStudyCentreId || currentAdminDoc.assignedStudyCentreId) : null;
 
   const sortedCentres = [...allStudyCentres].filter(c => c.status === "Active").sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
@@ -1809,9 +1791,19 @@ function populateStudyCentreCheckboxes() {
       const cid = c.id;
       const name = c.name;
       const code = c.code || "";
+      
+      let isChecked = false;
+      let isDisabled = false;
+      if (isCentreAdmin) {
+        if (cid === ownCentreId) {
+          isChecked = true;
+        }
+        isDisabled = true;
+      }
+
       html += `
-        <label style="display: flex; align-items: flex-start; gap: 0.6rem; background-color: var(--bg-white); padding: 0.6rem 0.8rem; border-radius: 6px; border: 1.5px solid var(--border-color); cursor: pointer; font-size: 0.85rem; transition: border-color 0.2s;">
-          <input type="checkbox" name="assignedStudyCentres" value="${cid}" style="margin-top: 0.2rem; accent-color: var(--primary);">
+        <label style="display: flex; align-items: flex-start; gap: 0.6rem; background-color: var(--bg-white); padding: 0.6rem 0.8rem; border-radius: 6px; border: 1.5px solid var(--border-color); cursor: ${isDisabled && !isChecked ? "not-allowed" : "pointer"}; font-size: 0.85rem; transition: border-color 0.2s; ${isDisabled && !isChecked ? "opacity: 0.5;" : ""}">
+          <input type="checkbox" name="assignedStudyCentres" value="${cid}" ${isChecked ? "checked" : ""} ${isDisabled ? "disabled" : ""} style="margin-top: 0.2rem; accent-color: var(--primary);">
           <span style="font-weight: 500;">${name} (${code})</span>
         </label>
       `;
@@ -1827,9 +1819,19 @@ function populateStudyCentreCheckboxes() {
       const cid = c.id;
       const name = c.name;
       const code = c.code || "";
+
+      let isChecked = false;
+      let isDisabled = false;
+      if (isCentreAdmin) {
+        if (cid === ownCentreId) {
+          isChecked = true;
+        }
+        isDisabled = true;
+      }
+
       editHtml += `
-        <label style="display: flex; align-items: flex-start; gap: 0.5rem; background-color: var(--bg-white); padding: 0.5rem 0.7rem; border-radius: 6px; border: 1.5px solid var(--border-color); cursor: pointer; font-size: 0.8rem; transition: border-color 0.2s;">
-          <input type="checkbox" name="editAssignedStudyCentres" value="${cid}" style="margin-top: 0.15rem; accent-color: var(--primary);">
+        <label style="display: flex; align-items: flex-start; gap: 0.5rem; background-color: var(--bg-white); padding: 0.5rem 0.7rem; border-radius: 6px; border: 1.5px solid var(--border-color); cursor: ${isDisabled && !isChecked ? "not-allowed" : "pointer"}; font-size: 0.8rem; transition: border-color 0.2s; ${isDisabled && !isChecked ? "opacity: 0.5;" : ""}">
+          <input type="checkbox" name="editAssignedStudyCentres" value="${cid}" ${isChecked ? "checked" : ""} ${isDisabled ? "disabled" : ""} style="margin-top: 0.15rem; accent-color: var(--primary);">
           <span style="font-weight: 500;">${name} (${code})</span>
         </label>
       `;
@@ -1837,6 +1839,45 @@ function populateStudyCentreCheckboxes() {
   }
   if (editContainer) editContainer.innerHTML = editHtml;
 }
+
+function filterCourseCheckboxes(containerId, searchQuery) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const query = searchQuery.toLowerCase().trim();
+
+  const semesterBlocks = container.querySelectorAll("div[style*='grid-column: 1 / -1'], div[style*='grid-column: 1/-1']");
+  if (semesterBlocks.length > 0) {
+    semesterBlocks.forEach(block => {
+      const labels = block.querySelectorAll("label");
+      let visibleCount = 0;
+      labels.forEach(label => {
+        const text = label.textContent.toLowerCase();
+        if (text.includes(query)) {
+          label.style.display = "flex";
+          visibleCount++;
+        } else {
+          label.style.display = "none";
+        }
+      });
+      if (visibleCount === 0 && query !== "") {
+        block.style.display = "none";
+      } else {
+        block.style.display = "block";
+      }
+    });
+  } else {
+    const labels = container.querySelectorAll("label");
+    labels.forEach(label => {
+      const text = label.textContent.toLowerCase();
+      if (text.includes(query)) {
+        label.style.display = "flex";
+      } else {
+        label.style.display = "none";
+      }
+    });
+  }
+}
+window.filterCourseCheckboxes = filterCourseCheckboxes;
 
 function populateStudyCentreFilterDropdowns() {
   const dropdownIds = [
@@ -2912,6 +2953,13 @@ document.addEventListener("click", (e) => {
     // Repopulate checkboxes
     populateCourseCheckboxes();
     populateStudyCentreCheckboxes();
+
+    // Clear search values and trigger initial filter (clear any old searches)
+    const addLecCourseSearch = document.getElementById("addLecturerCourseSearch");
+    if (addLecCourseSearch) {
+      addLecCourseSearch.value = "";
+      filterCourseCheckboxes("courseAllocationCheckboxes", "");
+    }
     
     if (regLecModal) {
       regLecModal.style.display = "flex";
@@ -2945,47 +2993,21 @@ function openEditLecturerModal(docId) {
   document.getElementById("editLecEmploymentDate").value = lec.employmentDate || "";
   document.getElementById("editLecStatus").value = lec.status || "Active";
 
-  // Match and check assigned checkboxes (filtered for Centre Admin if applicable)
-  const editContainer = document.getElementById("editCourseAllocationCheckboxes");
-  if (editContainer) {
-    let allowedCourses = [...allCourses];
-    if (currentAdminDoc?.role === "Centre Admin") {
-      allowedCourses = allowedCourses.filter(c => c.studyCentreId === currentSelectedStudyCentreId || (c.assignedStudyCentreIds && c.assignedStudyCentreIds.includes(currentSelectedStudyCentreId)));
-    }
-    allowedCourses.sort((a, b) => (a.courseCode || a.code || "").localeCompare(b.courseCode || b.code || ""));
-    
-    let editHtml = "";
-    if (allowedCourses.length === 0) {
-      editHtml = `<div style="color: var(--text-muted); font-size: 0.85rem; grid-column: 1/-1; text-align: center; padding: 1rem;">No courses available for this study centre.</div>`;
-    } else {
-      allowedCourses.forEach(c => {
-        const code = c.courseCode || c.code || c.id || "";
-        const name = c.courseTitle || c.name || "";
-        editHtml += `
-          <label style="display: flex; align-items: flex-start; gap: 0.5rem; background-color: var(--bg-white); padding: 0.5rem 0.7rem; border-radius: 6px; border: 1.5px solid var(--border-color); cursor: pointer; font-size: 0.8rem; transition: border-color 0.2s;">
-            <input type="checkbox" name="editAssignedCourses" value="${code}" style="margin-top: 0.15rem; accent-color: var(--primary);">
-            <span style="font-weight: 500;">[${code}] <span style="color: var(--text-muted);">${name}</span></span>
-          </label>
-        `;
-      });
-    }
-    editContainer.innerHTML = editHtml;
+  // Repopulate checkboxes
+  populateCourseCheckboxes();
+  populateStudyCentreCheckboxes();
+
+  // Clear search values and trigger initial filter (clear any old searches)
+  const editLecCourseSearch = document.getElementById("editLecturerCourseSearch");
+  if (editLecCourseSearch) {
+    editLecCourseSearch.value = "";
+    filterCourseCheckboxes("editCourseAllocationCheckboxes", "");
   }
 
   const assigned = lec.coursesAssigned || lec.assignedCourses || [];
   document.querySelectorAll('#editCourseAllocationCheckboxes input[name="editAssignedCourses"]').forEach(cb => {
     cb.checked = assigned.includes(cb.value);
   });
-
-  // Match and check assigned study centre checkboxes (hidden if Centre Admin)
-  const centreBlock = document.getElementById("editStudyCentreAllocationCheckboxes")?.closest('div');
-  if (centreBlock) {
-    if (currentAdminDoc?.role === "Centre Admin") {
-      centreBlock.style.display = "none";
-    } else {
-      centreBlock.style.display = "block";
-    }
-  }
 
   const assignedCentres = lec.assignedStudyCentreIds || [];
   document.querySelectorAll('#editStudyCentreAllocationCheckboxes input[name="editAssignedStudyCentres"]').forEach(cb => {
