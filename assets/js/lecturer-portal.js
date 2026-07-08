@@ -214,7 +214,7 @@ function resetInactivityTimer() {
 });
 
 // Load App Initial State
-document.addEventListener("DOMContentLoaded", async () => {
+(async () => {
   try {
     // 1. Listen to Timeline coordinates in real-time
     onSnapshot(doc(db, "settings", "timeline_settings"), (docSnap) => {
@@ -257,7 +257,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   } catch (err) {
     console.error("Initialization failed:", err);
   }
-});
+})();
 
 // Dashboard Information Cards Updater
 async function updateAllDashboardCards(session, semester) {
