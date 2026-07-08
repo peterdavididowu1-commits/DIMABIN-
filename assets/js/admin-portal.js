@@ -1026,6 +1026,24 @@ async function processApproval(id) {
     }
     const tempPassword = `Dob${cleanDob}`;
 
+    // Provision student in Firebase Auth
+    if (app.email && app.email !== "N/A" && app.email.trim() !== "") {
+      try {
+        const secAppName = `secRegStudent-${Date.now()}`;
+        const secApp = initializeApp(firebaseConfig, secAppName);
+        const secAuth = getAuth(secApp);
+        await createUserWithEmailAndPassword(secAuth, app.email.toLowerCase().trim(), tempPassword);
+        await signOut(secAuth);
+        await secApp.delete();
+        console.log(`✅ [Student Auth Provisioning] Successfully created Firebase Auth user for ${app.email}`);
+      } catch (authErr) {
+        console.error("❌ Student Auth Provisioning failed:", authErr);
+        if (authErr.code === "auth/email-already-in-use") {
+          console.warn("⚠️ Student email already registered in Firebase Authentication.");
+        }
+      }
+    }
+
     // 3. Create the student record in Firestore
     await setDoc(doc(db, "students", matricNumber.replace(/\//g, "-")), {
       studentId,
@@ -1065,7 +1083,8 @@ async function processApproval(id) {
       applicationNumber: app.applicationNumber || "N/A",
       loginCredentials: {
         username: matricNumber,
-        password: tempPassword
+        password: tempPassword,
+        isTemporary: true
       }
     });
 

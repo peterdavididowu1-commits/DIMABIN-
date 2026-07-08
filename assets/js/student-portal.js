@@ -302,6 +302,24 @@ if (loginForm) {
         sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
       }
 
+      // Sync password reset from Forgot Password if they logged in with a different password
+      const expectedPassword = studentDoc.loginCredentials?.password;
+      const isTemporary = studentDoc.loginCredentials?.isTemporary === true || (studentDoc.loginCredentials?.isTemporary !== false && expectedPassword?.startsWith("Dob"));
+      
+      if (isTemporary && passwordInput !== expectedPassword) {
+        try {
+          const studentDocRef = doc(db, "students", studentDoc.matricNumber.replace(/\//g, "-"));
+          await updateDoc(studentDocRef, {
+            "loginCredentials.password": passwordInput,
+            "loginCredentials.isTemporary": false
+          });
+          studentDoc.loginCredentials.password = passwordInput;
+          studentDoc.loginCredentials.isTemporary = false;
+        } catch (syncErr) {
+          console.error("⚠️ Failed to sync login credentials to Firestore:", syncErr);
+        }
+      }
+
       window.showToast("Logged in successfully!", "success");
       enterDashboard(studentDoc);
 
@@ -351,6 +369,18 @@ if (linkForgotPassword) {
         throw new Error("Could not find a valid registered email address for this student ID.");
       }
 
+      // Check if Auth user needs to be created on-the-fly for legacy/existing students
+      try {
+        const tempPass = studentDoc.loginCredentials?.password || "Dob20260101";
+        const userCred = await createUserWithEmailAndPassword(auth, studentDoc.email, tempPass);
+        // Sign out immediately so we don't accidentally leave them logged in during a reset request
+        await signOut(auth);
+      } catch (createErr) {
+        if (createErr.code !== "auth/email-already-in-use") {
+          console.error("Auto-provisioning during Forgot Password failed:", createErr);
+        }
+      }
+
       await sendPasswordResetEmail(auth, studentDoc.email);
       await window.dimabinAlert(`A secure password reset link has been dispatched to your registered email: ${studentDoc.email}. Please check your inbox and spam folders.`, "success");
     } catch (err) {
@@ -374,6 +404,33 @@ function enterDashboard(studentDoc) {
   // Hide anonymous login block, display authenticated main panel
   document.getElementById("anonymousView").style.display = "none";
   document.getElementById("authenticatedView").style.display = "block";
+
+  // Check if student is using a temporary password
+  const expectedPassword = studentDoc.loginCredentials?.password;
+  const isTemporary = studentDoc.loginCredentials?.isTemporary === true || (studentDoc.loginCredentials?.isTemporary !== false && expectedPassword?.startsWith("Dob"));
+
+  if (isTemporary) {
+    window.dimabinAlert("Security Warning: You are currently logged in with a temporary password. You must update your password before you can access the portal features.", "warning").then(() => {
+      const navButtons = document.querySelectorAll(".sidebar-nav-btn");
+      navButtons.forEach(btn => {
+        if (btn.getAttribute("data-tab") === "security") {
+          btn.click();
+        }
+      });
+      // Hide other navigation buttons to lock them in
+      navButtons.forEach(btn => {
+        if (btn.getAttribute("data-tab") !== "security") {
+          btn.style.display = "none";
+        }
+      });
+    });
+  } else {
+    // Ensure all sidebar buttons are visible
+    const navButtons = document.querySelectorAll(".sidebar-nav-btn");
+    navButtons.forEach(btn => {
+      btn.style.display = "flex";
+    });
+  }
 
   // Populates Sidebar
   document.getElementById("studentNameDisplay").textContent = studentDoc.fullName;
@@ -1369,13 +1426,26 @@ if (passwordChangeForm) {
         const docId = currentStudentDoc.matricNumber.replace(/\//g, "-");
         const ref = doc(db, "students", docId);
         await updateDoc(ref, {
-          "loginCredentials.password": newPassword
+          "loginCredentials.password": newPassword,
+          "loginCredentials.isTemporary": false
         });
         currentStudentDoc.loginCredentials.password = newPassword;
+        currentStudentDoc.loginCredentials.isTemporary = false;
       }
 
       window.showToast("Your portal security password was updated successfully!", "success");
       passwordChangeForm.reset();
+
+      // Show all navigation buttons now that they have updated their temporary password!
+      const navButtons = document.querySelectorAll(".sidebar-nav-btn");
+      navButtons.forEach(btn => {
+        btn.style.display = "flex";
+      });
+      // Programmatically switch to overview tab to show the dashboard
+      const overviewBtn = document.querySelector('.sidebar-nav-btn[data-tab="overview"]');
+      if (overviewBtn) {
+        overviewBtn.click();
+      }
 
     } catch (err) {
       console.error("❌ Password change error:", err);
