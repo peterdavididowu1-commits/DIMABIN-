@@ -10,4 +10,4 @@ Disallow: /pages/lecturer-portal.html
 Disallow: /pages/student-cbt-dashboard.html
 Disallow: /functions/
 
-Sitemap: https://ais-pre-ekckh44s3rnajaoptnewrq-954755939199.europe-west2.run.app/sitemap.xml
+Sitemap: https://dimabinportal.com.ng/sitemap.xml
