@@ -2172,11 +2172,14 @@
     // Handle form submit
     const form = document.getElementById('admissionForm');
     form.addEventListener('submit', async (e) => {
+    alert("submit button clicked");
       e.preventDefault();
 
       if (!validateStep(5)) {
+        alert("Validation failed")
         return;
       }
+      alert("Validation passed");
 
       // Activate loader
       loadingOverlay.style.display = 'flex';
